@@ -1,0 +1,163 @@
+---
+description: Create API endpoint
+globs: src/app/api/**
+alwaysApply: false
+---
+You are an expert backend developer proficient in TypeScript, Next.js. Your task is to produce the most optimized, maintainable and secure API endpoint in Next.js, following best practices and adhering to the principles of clean code and robust architecture.
+
+### Objective
+ - Create a Next.js API endpoint that is not only functional but also adheres to the best practices in performance, security, and maintainability.
+
+### General API Structure
+- All API routes should be written as server actions in the Next.js App Router inside `app/api/`
+- Follow the RESTful convention for naming and structuring API routes
+- Define separate service functions for database interactions in `services/`
+- Use Zod for request validation
+- Use prisma as ORM, here is the databse schema : [schema.prisma](mdc:src/lib/db/schema.prisma)
+- Error handling must use the centralized [errorHandler.ts](mdc:src/utils/errors/errorHandler.ts) function
+- Errors messages should be taken from @errorMessages, if message doesn't exist, create a new one.
+- Secure API routes using [strictlyAuth.ts](mdc:src/hoc/strictlyAuth.ts) HOC when needed
+
+## Core Requirements
+
+### 1. Route File Structure
+```typescript
+// app/api/[resource]/route.ts
+import { errorMessages } from '@/lib/constants/errorMessage';
+import { errorHandler } from '@/utils/errors/errorHandler';
+import { strictlyAuth } from '@/hoc/strictlyAuth';
+import { NextResponse, NextRequest } from 'next/server';
+import { prisma } from '@/lib/db/client';
+
+export const GET = strictlyAuth(async (req: NextRequest) => {
+  try {
+    const { auth } = req;
+    const userId = auth?.user.id;
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: errorMessages.MISSING_FIELDS },
+        { status: 400 }
+      );
+    }
+
+    // Call service function
+    const result = await getResource(userId);
+
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    return errorHandler(error);
+  }
+});
+```
+
+### 2. Authentication & Security
+- Use `strictlyAuth` HOC for protected routes
+- Always validate user ID and permissions
+- Handle authentication errors with appropriate status codes
+- Use centralized error messages from `errorMessages`
+
+### 3. Request Validation
+```typescript
+// schemas/[resource]/updateResourceSchema.ts
+import { z } from 'zod';
+
+export const updateResourceSchema = z.object({
+  field1: z.string(),
+  field2: z.number().optional()
+});
+
+// In route.ts
+const body = await req.json();
+const validatedBody = updateResourceSchema.parse(body);
+```
+
+### 4. Service Layer Pattern
+```typescript
+// services/[resource]/updateResource.ts
+import { prisma } from '@/lib/db/client';
+
+export async function updateResource({ userId, data }: {
+  userId: string;
+  data: any;
+}) {
+  return await prisma.resource.update({
+    where: { userId },
+    data
+  });
+}
+```
+
+### 5. Error Handling
+- Always use the centralized `errorHandler`
+- Use predefined error messages from `@/lib/constants/errorMessage`
+- Return appropriate HTTP status codes
+- Wrap all operations in try-catch blocks
+
+### 6. Database Operations
+- Use Prisma ORM for all database interactions
+- Keep database logic in service functions
+- Handle database errors appropriately
+- Include proper error messages for database operations
+
+### 7. Response Format
+```typescript
+// Success response
+return NextResponse.json(data, { status: 200 });
+
+// Error response
+return NextResponse.json(
+  { error: errorMessages.RESOURCE_NOT_FOUND },
+  { status: 404 }
+);
+```
+
+### 8. Real-time Updates (if applicable)
+- Update user's `lastSeenAt` when appropriate
+- Use date-fns for time calculations
+```typescript
+const now = new Date();
+const threshold = subMinutes(now, 2);
+
+if (!user.lastSeenAt || isBefore(user.lastSeenAt, threshold)) {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { lastSeenAt: now }
+  });
+}
+```
+
+## Example Implementation
+See `src/app/api/me/route.ts` for a complete implementation example demonstrating:
+- User authentication
+- Request validation
+- Service layer usage
+- Error handling
+- Real-time updates
+- Response formatting
+
+## Best Practices
+1. Keep routes focused and single-responsibility
+2. Use appropriate HTTP methods (GET, POST, PUT, DELETE)
+3. Validate all incoming data
+4. Maintain separation of concerns
+5. Use TypeScript for type safety
+6. Document complex logic
+7. Follow RESTful naming conventions
+8. Keep service functions reusable
+9. Use appropriate status codes
+10. Handle edge cases and errors gracefully
+
+## Security Considerations
+- Always use authentication where required
+- Validate user permissions
+- Sanitize input data
+- Handle sensitive data appropriately
+- Follow GDPR compliance requirements
+- Use appropriate rate limiting
+
+
+
+
+
+    

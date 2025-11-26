@@ -1,4 +1,3 @@
-
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
@@ -69,14 +68,20 @@ model Verification {
   @@map("verification")
 }
 
-model Waitlist {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  position  Int?
-  status    String   @default("pending")
+model Article {
+  id             String   @id @default(cuid())
+  title          String
+  description    String?
+  link           String
+  source         String?
+  content        String?
+  summary        String
+  shortSummary   String
+  guid           String?  @unique
+  relevanceScore Int
+  tags           String[]
+  publishedAt    DateTime
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@map("waitlist")
 }
