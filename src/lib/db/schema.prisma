@@ -9,15 +9,17 @@ generator client {
 }
 
 model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+  id                      String                   @id
+  name                    String
+  email                   String
+  emailVerified           Boolean                  @default(false)
+  image                   String?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @default(now()) @updatedAt
+  sessions                Session[]
+  accounts                Account[]
+  userTagPreferences      UserTagPreference[]
+  userArticleInteractions UserArticleInteraction[]
 
   @@unique([email])
   @@map("user")
@@ -79,9 +81,59 @@ model Article {
   shortSummary   String
   guid           String?  @unique
   relevanceScore Int
-  tags           String[]
+  tags           Tag[]
   publishedAt    DateTime
 
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  userArticleInteractions UserArticleInteraction[]
+}
+
+model Tag {
+  id                 String              @id @default(uuid())
+  name               String              @unique
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  userTagPreferences UserTagPreference[]
+  articles           Article[]
+}
+
+model UserTagPreference {
+  id        String   @id @default(uuid())
+  userId    String
+  tagId     String
+  score     Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  tag  Tag  @relation(fields: [tagId], references: [id])
+
+  @@unique([userId, tagId])
+}
+
+model UserArticleInteraction {
+  id              String          @id @default(uuid())
+  userId          String
+  articleId       String
+  interactionType InteractionType
+  dwellTimeMs     Int?
+  createdAt       DateTime        @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  article Article @relation(fields: [articleId], references: [id])
+
+  @@index([userId])
+  @@index([articleId])
+}
+
+enum InteractionType {
+  skip_fast
+  view
+  view_long
+  like
+  bookmark
+  share
+  hide_topic
+  more_like_this
 }

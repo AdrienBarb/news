@@ -5,11 +5,11 @@ import { inngest } from "@/lib/inngest/client";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    console.log("🚀 ~ POST ~ body:", body);
 
     // Handle each entry in new_entries
     if (body.new_entries && Array.isArray(body.new_entries)) {
       for (const entry of body.new_entries) {
-        console.log("🚀 ~ POST ~ entry:", entry);
         // Extract article content from the entry link
         if (entry.title && entry.link) {
           await inngest.send({

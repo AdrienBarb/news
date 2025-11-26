@@ -2,7 +2,6 @@ import { prisma } from "../db/prisma";
 import { extractArticleContent } from "@/lib/utils/articleExtractor";
 import { inngest } from "./client";
 import { analyzeArticleWithLLM } from "@/lib/openai/analyzeArticleLLM";
-import { TAGS } from "@/lib/constants/tags";
 
 export const createArticle = inngest.createFunction(
   { id: "create-article" },
@@ -16,8 +15,6 @@ export const createArticle = inngest.createFunction(
           where: { guid },
         })
       );
-
-      console.log("🚀 ~ existingArticle:", existingArticle);
 
       if (existingArticle) {
         return {
@@ -40,6 +37,11 @@ export const createArticle = inngest.createFunction(
       extractArticleContent(link)
     );
 
+    const allowedTags = await step.run("fetch-tags", async () => {
+      const tags = await prisma.tag.findMany();
+      return tags.map((tag) => tag.name);
+    });
+
     const content = extractedContent || description || title;
 
     const llmResult = await step.run("analyze-and-dedup", async () => {
@@ -47,7 +49,7 @@ export const createArticle = inngest.createFunction(
         newArticle: { title, summary: description ?? "" },
         existingArticles: recentArticles,
         fullContent: content,
-        allowedTags: TAGS,
+        allowedTags,
       });
     });
 
