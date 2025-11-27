@@ -125,6 +125,7 @@ model UserArticleInteraction {
   user    User    @relation(fields: [userId], references: [id])
   article Article @relation(fields: [articleId], references: [id])
 
+  @@unique([userId, articleId])
   @@index([userId])
   @@index([articleId])
 }
