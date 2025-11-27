@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Archivo, Playfair_Display } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import GlobalErrorHandler from "@/components/GlobalErrorHandler";
 import { QueryProviders } from "@/components/providers/QueryProviders";
@@ -22,6 +22,18 @@ const selecta = Inter({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
 });
 
+const archivo = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin"],
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+});
+
+const playfairDisplay = Playfair_Display({
+  variable: "--font-playfair-display",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
+
 export const metadata: Metadata = genPageMetadata({
   title: siteMetadata.title,
   description: siteMetadata.description,
@@ -36,7 +48,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${selecta.variable} antialiased`}
+        className={`${inter.variable} ${selecta.variable} ${archivo.variable} ${playfairDisplay.variable} antialiased`}
       >
         <QueryProviders>
           <PostHogProvider>

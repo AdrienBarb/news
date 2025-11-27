@@ -2,7 +2,7 @@
 
 @theme inline {
   --color-background: 0 0% 100%;
-  --color-foreground: 0 0% 18%;
+  --color-foreground: 0 0% 18.4%;
   --color-card: 0 0% 100%;
   --color-card-foreground: 0 0% 18%;
   --color-popover: 0 0% 100%;
@@ -21,8 +21,10 @@
   --color-input: 0 0% 89.8%;
   --color-ring: 0 0% 18%;
   --radius: 0.5rem;
-  --font-sans: var(--font-inter);
-  --font-mono: var(--font-selecta);
+  --font-inter: var(--font-inter);
+  --font-selecta: var(--font-selecta);
+  --font-archivo: var(--font-archivo);
+  --font-playfair-display: var(--font-playfair-display);
 }
 
 /* Background utilities */
@@ -52,6 +54,10 @@
 
 @utility bg-accent {
   background-color: hsl(var(--color-accent));
+}
+
+@utility bg-foreground {
+  background-color: hsl(var(--color-foreground));
 }
 
 @utility bg-destructive {
@@ -148,5 +154,5 @@
 body {
   background-color: hsl(var(--color-background));
   color: hsl(var(--color-foreground));
-  font-family: var(--font-sans);
+  font-family: var(--font-inter);
 }
