@@ -61,6 +61,8 @@ export const createArticle = inngest.createFunction(
       };
     }
 
+    console.log("🚀 ~ llmResult.analysis.tags:", llmResult.analysis.tags);
+
     const saved = await step.run("save-article", async () => {
       return prisma.article.create({
         data: {
@@ -74,7 +76,11 @@ export const createArticle = inngest.createFunction(
           summary: llmResult.analysis.summary,
           shortSummary: llmResult.analysis.shortSummary,
           relevanceScore: llmResult.analysis.relevanceScore,
-          tags: llmResult.analysis.tags,
+          tags: {
+            connect: llmResult.analysis.tags.map((tagName: string) => ({
+              name: tagName,
+            })),
+          },
         },
       });
     });

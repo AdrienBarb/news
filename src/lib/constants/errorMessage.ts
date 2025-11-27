@@ -3,4 +3,5 @@ export const errorMessages = {
   MISSING_FIELDS: "Missing required fields",
   INVALID_WEBHOOK_PAYLOAD: "Invalid webhook payload",
   WEBHOOK_PROCESSING_FAILED: "Failed to process webhook",
+  UNAUTHORIZED: "Unauthorized. Please sign in to continue",
 };

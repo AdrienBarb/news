@@ -72,7 +72,6 @@ export default function Navbar() {
                 </DropdownMenu>
               ) : (
                 <Button
-                  variant="ghost"
                   onClick={() => setIsSignInModalOpen(true)}
                   className="cursor-pointer"
                 >
