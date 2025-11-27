@@ -46,7 +46,7 @@ export default function SignUpPage() {
   const { mutate: savePreferences } = usePost("/user/tag-preferences", {
     onSuccess: () => {
       localStorage.removeItem(STORAGE_KEY);
-      router.push("/");
+      router.push("/news");
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.error || "Failed to save preferences");

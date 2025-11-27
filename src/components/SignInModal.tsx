@@ -51,7 +51,7 @@ export default function SignInModal({ open, onOpenChange }: SignInModalProps) {
         email: data.email,
         password: data.password,
         rememberMe: true,
-        callbackURL: "/",
+        callbackURL: "/news",
       });
 
       if (result.error) {

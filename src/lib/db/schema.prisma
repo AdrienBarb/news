@@ -20,6 +20,7 @@ model User {
   accounts                Account[]
   userTagPreferences      UserTagPreference[]
   userArticleInteractions UserArticleInteraction[]
+  dailyFeedItems          DailyFeedItem[]
 
   @@unique([email])
   @@map("user")
@@ -87,6 +88,7 @@ model Article {
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   userArticleInteractions UserArticleInteraction[]
+  dailyFeedItems          DailyFeedItem[]
 }
 
 model Tag {
@@ -125,6 +127,22 @@ model UserArticleInteraction {
 
   @@index([userId])
   @@index([articleId])
+}
+
+model DailyFeedItem {
+  id        String   @id @default(uuid())
+  userId    String
+  articleId String
+  feedDate  DateTime
+  position  Int
+
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  article Article @relation(fields: [articleId], references: [id])
+
+  @@unique([userId, feedDate, articleId])
+  @@index([userId, feedDate])
 }
 
 enum InteractionType {
