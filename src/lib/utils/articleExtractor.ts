@@ -1,5 +1,4 @@
 import { Readability } from "@mozilla/readability";
-import { JSDOM } from "jsdom";
 import axios from "axios";
 
 export async function extractArticleContent(url: string) {
@@ -17,6 +16,9 @@ export async function extractArticleContent(url: string) {
     let html = response.data;
     html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
     html = html.replace(/<link[^>]*rel=["']stylesheet["'][^>]*>/gi, "");
+
+    // Dynamically import JSDOM to avoid ESM/CommonJS compatibility issues
+    const { JSDOM } = await import("jsdom");
 
     // Parse HTML with JSDOM
     const dom = new JSDOM(html, {
