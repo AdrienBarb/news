@@ -7,7 +7,8 @@ export const createArticle = inngest.createFunction(
   { id: "create-article" },
   { event: "news/article.received" },
   async ({ event, step }) => {
-    const { title, description, link, publishedAt, source, guid } = event.data;
+    const { title, description, link, publishedAt, imageUrl, source, guid } =
+      event.data;
 
     if (guid) {
       const existingArticle = await step.run("check-duplicate", async () =>
@@ -72,6 +73,7 @@ export const createArticle = inngest.createFunction(
           link,
           source,
           guid: guid,
+          imageUrl,
           publishedAt: publishedAt ? new Date(publishedAt) : new Date(),
           summary: llmResult.analysis.summary,
           shortSummary: llmResult.analysis.shortSummary,

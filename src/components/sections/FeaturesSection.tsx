@@ -23,7 +23,11 @@ const features = [
   },
 ];
 
-export default function FeaturesSection() {
+interface FeaturesSectionProps {
+  getStartedUrl: string;
+}
+
+export default function FeaturesSection({ getStartedUrl }: FeaturesSectionProps) {
   return (
     <section className="container mx-auto px-4 py-20 md:py-32">
       <div className="mx-auto max-w-6xl">
@@ -53,7 +57,7 @@ export default function FeaturesSection() {
         </div>
         <div className="flex justify-center">
           <Button size="lg" className="font-bold" asChild>
-            <Link href="/setup">Get Started</Link>
+            <Link href={getStartedUrl}>Get Started</Link>
           </Button>
         </div>
       </div>

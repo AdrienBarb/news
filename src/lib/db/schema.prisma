@@ -79,6 +79,7 @@ model Article {
   source         String?
   content        String?
   summary        String
+  imageUrl       String?
   shortSummary   String
   guid           String?  @unique
   relevanceScore Int

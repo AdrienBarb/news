@@ -2,7 +2,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  getStartedUrl: string;
+}
+
+export default function HeroSection({ getStartedUrl }: HeroSectionProps) {
   return (
     <section className="container mx-auto px-4 py-20 md:py-32">
       <div className="mx-auto max-w-4xl text-center">
@@ -24,7 +28,7 @@ export default function HeroSection() {
         </div>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button size="lg" className="font-bold" asChild>
-            <Link href="/setup">Get Started</Link>
+            <Link href={getStartedUrl}>Get Started</Link>
           </Button>
         </div>
       </div>

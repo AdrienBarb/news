@@ -10,7 +10,6 @@ export async function POST(req: NextRequest) {
     // Handle each entry in new_entries
     if (body.new_entries && Array.isArray(body.new_entries)) {
       for (const entry of body.new_entries) {
-        console.log("🚀 ~ POST ~ entry:", entry.image);
         // Extract article content from the entry link
         if (entry.title && entry.link) {
           await inngest.send({
@@ -21,6 +20,7 @@ export async function POST(req: NextRequest) {
               link: entry.link,
               publishedAt: entry.time,
               source: body.feed.title,
+              imageUrl: entry?.image?.url || null,
               guid: entry.guid,
             },
           });

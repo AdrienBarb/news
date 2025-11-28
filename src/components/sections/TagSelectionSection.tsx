@@ -12,12 +12,14 @@ interface Tag {
 
 interface TagSelectionSectionProps {
   tags: Tag[];
+  getStartedUrl: string;
 }
 
 const STORAGE_KEY = "onboarding_selected_tags";
 
 export default function TagSelectionSection({
   tags,
+  getStartedUrl,
 }: TagSelectionSectionProps) {
   const router = useRouter();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -35,7 +37,7 @@ export default function TagSelectionSection({
     if (selectedTags.length > 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedTags));
     }
-    router.push("/setup/signup");
+    router.push(getStartedUrl);
   };
 
   return (

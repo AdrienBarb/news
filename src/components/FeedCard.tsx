@@ -23,9 +23,13 @@ export default function FeedCard({
     <div className="aspect-[4/5] w-full rounded-lg bg-background overflow-hidden flex flex-col items-center gap-2">
       <div className="flex-1 flex flex-col items-center border rounded-lg">
         <div
-          className="rounded-t-lg p-4 bg-cover bg-center bg-no-repeat"
+          className={`rounded-t-lg p-4 bg-cover bg-center bg-no-repeat ${
+            !article.imageUrl ? "bg-primary" : ""
+          }`}
           style={{
-            backgroundImage: "url('/bg.jpg')",
+            backgroundImage: article.imageUrl
+              ? `url(${article.imageUrl})`
+              : undefined,
           }}
         >
           <h2 className="text-2xl font-bold text-white font-playfair-display text-center">

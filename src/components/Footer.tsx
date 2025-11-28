@@ -49,7 +49,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <h4 className="text-sm font-semibold">Connect</h4>
             <div className="flex gap-4">
               {config.social.twitter && (
@@ -108,7 +108,7 @@ export default function Footer() {
                 </a>
               )}
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="mt-12 border-t pt-8">
