@@ -161,7 +161,7 @@ export default function SignInModal({ open, onOpenChange }: SignInModalProps) {
           <div className="text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
             <Link
-              href="/setup"
+              href="/onboarding"
               className="text-primary hover:underline font-medium"
               onClick={() => onOpenChange(false)}
             >
