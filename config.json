@@ -1,36 +1,42 @@
 {
   "project": {
-    "name": "SaaS Template",
-    "shortName": "SaaS",
-    "description": "A modern, production-ready SaaS application template",
-    "tagline": "Build amazing SaaS products faster",
-    "url": "https://yourdomain.com",
+    "name": "3 Minute Brief",
+    "shortName": "3minBrief",
+    "description": "Your daily 3-minute tech briefing. Stay sharp, informed, and ahead with 10 curated stories a day.",
+    "tagline": "Tech Moves Fast. Stay Ahead in 3 Minutes a Day.",
+    "url": "https://3minutebrief.com",
     "logo": "/logo.svg",
     "favicon": "/favicon.ico"
   },
   "seo": {
-    "title": "SaaS Template - Build Amazing Products",
-    "description": "A modern, production-ready SaaS application template with authentication, database, email, and analytics.",
+    "title": "3 Minute Brief — Your Daily 3-Minute Tech Briefing",
+    "description": "Get the 10 most important tech stories every morning. No noise. No overwhelm. Stay sharp, informed, and ahead in just 3 minutes a day.",
     "keywords": [
-      "saas",
-      "template",
-      "nextjs",
-      "react",
-      "typescript"
+      "tech news",
+      "daily tech briefing",
+      "curated news",
+      "AI news",
+      "startup news",
+      "engineering news",
+      "product news",
+      "3 minute brief",
+      "tech summaries",
+      "daily tech digest",
+      "VC news"
     ],
-    "author": "Your Name",
+    "author": "3 Minute Brief",
     "ogImage": "/og-image.png",
-    "twitterHandle": "@yourhandle"
+    "twitterHandle": "@3minutebrief"
   },
   "contact": {
-    "email": "hello@coachmaarty.com",
-    "supportEmail": "support@coachmaarty.com"
+    "email": "hello@3minutebrief.com",
+    "supportEmail": "support@3minutebrief.com"
   },
   "social": {
-    "twitter": "https://twitter.com/yourhandle",
+    "twitter": "https://twitter.com/3minutebrief",
     "github": "https://github.com/yourusername",
-    "linkedin": "https://linkedin.com/company/yourcompany",
-    "instagram": "https://instagram.com/yourhandle",
-    "tiktok": "https://tiktok.com/@yourhandle"
+    "linkedin": "https://linkedin.com/company/3minutebrief",
+    "instagram": "https://instagram.com/3minutebrief",
+    "tiktok": "https://tiktok.com/@3minutebrief"
   }
 }

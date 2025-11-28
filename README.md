@@ -1,6 +1,17 @@
-# SaaS Template
+# 3 Minute Brief
 
-A modern, production-ready Next.js SaaS template with authentication, database, email, analytics, and more.
+A tech news application that curates and summarizes the most important tech stories every day. The app fetches tech news articles, uses OpenAI to generate concise summaries, and delivers 10 curated articles daily to users.
+
+## 📰 About
+
+**3 Minute Brief** is your daily tech briefing that helps you stay informed without the overwhelm. Every day, the app:
+
+- Fetches the latest tech news articles from various sources
+- Uses OpenAI to analyze and summarize each article
+- Curates the 10 most important stories
+- Delivers them to users in a clean, digestible format
+
+**Tech Moves Fast. Stay Ahead in 3 Minutes a Day.**
 
 ## 🚀 Tech Stack
 
@@ -28,6 +39,13 @@ A modern, production-ready Next.js SaaS template with authentication, database, 
 - Magic link authentication (passwordless)
 - Session management
 
+### AI & Processing
+
+- **OpenAI** - Article summarization and analysis
+- **Inngest** - Background job processing for article fetching and processing
+- **@mozilla/readability** - Article content extraction
+- **jsdom** - HTML parsing and content extraction
+
 ### State Management
 
 - **Zustand** - Lightweight state management
@@ -53,25 +71,30 @@ A modern, production-ready Next.js SaaS template with authentication, database, 
 
 - **React Hot Toast** - Toast notifications
 - **shadcn/ui** - Pre-built accessible components
+- **Swiper** - Touch slider component
+- **nuqs** - URL state management
 
 ## 📦 Features
 
-- ✅ Authentication with Better-auth (Magic Link)
-- ✅ Database with Prisma + PostgreSQL (Supabase)
-- ✅ Email sending with Resend + React Email
-- ✅ Waitlist functionality
-- ✅ Payment processing with Lemon Squeezy
-- ✅ Global error handling
-- ✅ API client with React Query hooks
-- ✅ State management with Zustand
-- ✅ Analytics with PostHog
-- ✅ UI components with shadcn/ui
-- ✅ TypeScript throughout
-- ✅ Tailwind CSS v4 styling
+- ✅ **Daily Tech News Curation** - Automatically fetches and processes tech news articles
+- ✅ **AI-Powered Summaries** - Uses OpenAI to generate concise, informative summaries
+- ✅ **10 Articles Daily** - Curated selection of the most important tech stories
+- ✅ **User Personalization** - Tag-based preferences for customized feeds
+- ✅ **Authentication** - Magic link authentication with Better-auth
+- ✅ **Database** - Prisma + PostgreSQL (Supabase) for data persistence
+- ✅ **Background Processing** - Inngest for reliable article processing workflows
+- ✅ **Email Notifications** - Resend + React Email for beautiful email templates
+- ✅ **Global Error Handling** - Comprehensive error management
+- ✅ **API Client** - React Query hooks for efficient data fetching
+- ✅ **State Management** - Zustand for client-side state
+- ✅ **Analytics** - PostHog for product analytics
+- ✅ **UI Components** - shadcn/ui for accessible, beautiful components
+- ✅ **TypeScript** - Full type safety throughout
+- ✅ **Tailwind CSS v4** - Modern styling
 
 ## 🛠️ Setup Guide
 
-Follow these steps to get your SaaS template up and running.
+Follow these steps to get the application up and running.
 
 ### Prerequisites
 
@@ -87,7 +110,7 @@ Before you begin, make sure you have installed:
 
 ```bash
 git clone <your-repo-url>
-cd saas-template
+cd news
 ```
 
 ### Step 2: Install Dependencies
@@ -96,7 +119,7 @@ cd saas-template
 npm install
 ```
 
-This will install all required packages including Next.js, Prisma, Better-auth, and other dependencies.
+This will install all required packages including Next.js, Prisma, Better-auth, OpenAI, Inngest, and other dependencies.
 
 ### Step 3: Set Up Environment Variables
 
@@ -134,6 +157,27 @@ BETTER_AUTH_URL="http://localhost:3000"
 NEXT_PUBLIC_BASE_URL="http://localhost:3000"
 ```
 
+#### OpenAI (Required for Article Summarization)
+
+1. Sign up for an account at [OpenAI](https://platform.openai.com)
+2. Get your API key from the API keys section
+3. Add to `.env`:
+
+```env
+OPENAI_API_KEY="sk-your-api-key-here"
+```
+
+#### Inngest (Background Job Processing)
+
+1. Sign up at [Inngest](https://www.inngest.com) (free tier available)
+2. Get your event key and signing key from the dashboard
+3. Add to `.env`:
+
+```env
+INNGEST_EVENT_KEY="your-event-key-here"
+INNGEST_SIGNING_KEY="your-signing-key-here"
+```
+
 #### Email Service (Resend)
 
 1. Sign up for a free account at [Resend](https://resend.com)
@@ -156,35 +200,6 @@ RESEND_API_KEY="re_your_api_key_here"
 NEXT_PUBLIC_POSTHOG_KEY="your_posthog_key_here"
 NEXT_PUBLIC_POSTHOG_HOST="https://app.posthog.com"
 ```
-
-#### Payment Processing (Lemon Squeezy) - Optional
-
-1. Sign up at [Lemon Squeezy](https://lemonsqueezy.com)
-2. Create a store and products/variants
-3. Get checkout URLs from your Lemon Squeezy dashboard
-4. Add checkout URLs to `config.json` in the `pricing.plans` array:
-
-```json
-{
-  "pricing": {
-    "plans": [
-      {
-        "id": "starter",
-        "name": "Starter",
-        "checkoutUrl": "https://yourstore.lemonsqueezy.com/buy/{variant-id}?redirect=https://yourdomain.com/checkout/success"
-      }
-    ]
-  }
-}
-```
-
-**Optional:** If you want to use webhooks for payment events, add to `.env`:
-
-```env
-LEMON_SQUEEZY_WEBHOOK_SECRET="your_webhook_secret_here"
-```
-
-Then configure the webhook URL in your Lemon Squeezy dashboard: `https://yourdomain.com/api/webhooks/lemonsqueezy`
 
 #### App Environment
 
@@ -216,7 +231,7 @@ This will:
 
 ### Step 5: Set Up Database Schema
 
-The template includes a Prisma schema with models for authentication and waitlist. Since the migrations folder is empty (by design), you need to create your initial migration or push the schema directly.
+The application includes a Prisma schema with models for users, articles, tags, and interactions. Since the migrations folder is empty (by design), you need to create your initial migration or push the schema directly.
 
 **Option A: Create Migration (Recommended for Production)**
 
@@ -255,7 +270,10 @@ This is faster and useful for rapid prototyping, but doesn't create migration fi
 - `session` - User sessions
 - `account` - Authentication accounts
 - `verification` - Email verification tokens
-- `waitlist` - Waitlist entries
+- `article` - Tech news articles
+- `tag` - Article tags/categories
+- `userTagPreference` - User tag preferences
+- `interaction` - User interactions with articles
 
 ### Step 6: Generate Prisma Client (if needed)
 
@@ -274,15 +292,15 @@ npm run db:generate
 ```json
 {
   "project": {
-    "name": "Your SaaS Name",
-    "shortName": "YourSaaS",
-    "description": "Your project description",
-    "tagline": "Your tagline here",
-    "url": "https://yourdomain.com"
+    "name": "3 Minute Brief",
+    "shortName": "3minBrief",
+    "description": "Your daily 3-minute tech briefing",
+    "tagline": "Tech Moves Fast. Stay Ahead in 3 Minutes a Day.",
+    "url": "https://3minutebrief.com"
   },
   "contact": {
-    "email": "hello@yourdomain.com",
-    "supportEmail": "support@yourdomain.com"
+    "email": "hello@3minutebrief.com",
+    "supportEmail": "support@3minutebrief.com"
   }
 }
 ```
@@ -299,20 +317,31 @@ Your application will be available at:
 
 - **Frontend:** http://localhost:3000
 - **Supabase Studio:** http://127.0.0.1:54328
+- **Inngest Dev Server:** http://localhost:8288 (if running locally)
 
-### Step 9: Verify Setup
+### Step 9: Set Up Inngest Dev Server (Optional)
+
+For local development of background jobs:
+
+```bash
+npx inngest-cli@latest dev
+```
+
+This will start the Inngest dev server at http://localhost:8288 where you can monitor and test your background jobs.
+
+### Step 10: Verify Setup
 
 1. **Check Authentication:**
    - Click "Sign In" in the navbar
    - Try signing in with a magic link (email will be sent via Resend)
 
-2. **Check Waitlist:**
-   - Scroll to the hero section on the homepage
-   - Try joining the waitlist with an email address
+2. **Check Article Feed:**
+   - Navigate to `/news` to see the article feed
+   - Articles should be displayed with summaries
 
 3. **Check Database:**
    - Open Supabase Studio at http://127.0.0.1:54328
-   - Verify tables are created (user, session, account, waitlist, etc.)
+   - Verify tables are created (user, session, account, article, tag, etc.)
 
 ### Troubleshooting
 
@@ -328,6 +357,18 @@ Your application will be available at:
 - Make sure your database is running: `supabase status`
 - Check Prisma schema syntax: `npx prisma validate`
 
+#### OpenAI API Issues
+
+- Verify `OPENAI_API_KEY` is set correctly
+- Check your OpenAI account has sufficient credits
+- Review API rate limits in OpenAI dashboard
+
+#### Inngest Issues
+
+- Make sure `INNGEST_EVENT_KEY` and `INNGEST_SIGNING_KEY` are set
+- Verify Inngest dev server is running (if testing locally)
+- Check Inngest dashboard for job execution logs
+
 #### Email Not Sending
 
 - Verify `RESEND_API_KEY` is set correctly
@@ -342,9 +383,10 @@ Your application will be available at:
 
 ### Next Steps
 
+- Configure RSS feeds or news sources for article fetching
+- Set up Inngest functions for daily article processing
 - Customize `config.json` with your branding
 - Update landing page content in `src/components/sections/`
-- Add your own features and pages
 - Set up production database (Supabase Cloud or your own PostgreSQL)
 - Configure production environment variables
 
@@ -364,6 +406,13 @@ BETTER_AUTH_SECRET="your-secret-key-here"  # Generate with: openssl rand -base64
 BETTER_AUTH_URL="http://localhost:3000"
 NEXT_PUBLIC_BASE_URL="http://localhost:3000"
 
+# OpenAI (Required for article summarization)
+OPENAI_API_KEY="sk-your-api-key-here"
+
+# Inngest (Background job processing)
+INNGEST_EVENT_KEY="your-event-key-here"
+INNGEST_SIGNING_KEY="your-signing-key-here"
+
 # Resend (for email sending)
 RESEND_API_KEY="re_your_api_key_here"
 RESEND_FROM_EMAIL="onboarding@resend.dev"  # Optional: defaults to config.contact.email
@@ -376,8 +425,8 @@ RESEND_FROM_EMAIL="onboarding@resend.dev"  # Optional: defaults to config.contac
 NEXT_PUBLIC_POSTHOG_KEY="your_posthog_key_here"
 NEXT_PUBLIC_POSTHOG_HOST="https://app.posthog.com"
 
-# Lemon Squeezy Webhooks (optional - only if using webhooks)
-LEMON_SQUEEZY_WEBHOOK_SECRET="your_webhook_secret_here"
+# App Environment
+NEXT_PUBLIC_APP_ENV="development"
 ```
 
 ### Production Variables
@@ -397,7 +446,7 @@ RESEND_FROM_EMAIL="noreply@yourdomain.com"  # Use your verified domain
 
 ## ⚙️ Configuration
 
-This template uses a centralized `config.json` file to manage project-specific settings like SEO, branding, contact info, and feature flags.
+This application uses a centralized `config.json` file to manage project-specific settings like SEO, branding, contact info, and feature flags.
 
 ### Config Structure
 
@@ -407,8 +456,6 @@ The `config.json` file contains:
 - **SEO**: Title, description, keywords, Open Graph settings
 - **Contact**: Email addresses
 - **Social**: Social media links
-- **Pricing**: Pricing plans with checkout URLs (Lemon Squeezy)
-- **Features**: Feature flags (pricing, blog, docs, etc.)
 
 ### Using the Config
 
@@ -436,24 +483,12 @@ function MyComponent() {
 ```json
 {
   "project": {
-    "name": "My Awesome SaaS",
-    "tagline": "The best tool for your needs",
-    "url": "https://myawesomesaas.com"
+    "name": "3 Minute Brief",
+    "tagline": "Tech Moves Fast. Stay Ahead in 3 Minutes a Day.",
+    "url": "https://3minutebrief.com"
   },
   "contact": {
-    "email": "hello@myawesomesaas.com"
-  },
-  "pricing": {
-    "plans": [
-      {
-        "id": "starter",
-        "name": "Starter",
-        "price": "$9",
-        "period": "/month",
-        "checkoutUrl": "https://yourstore.lemonsqueezy.com/buy/{variant-id}?redirect=https://myawesomesaas.com/checkout/success",
-        "features": ["Feature 1", "Feature 2"]
-      }
-    ]
+    "email": "hello@3minutebrief.com"
   }
 }
 ```
@@ -464,70 +499,11 @@ function MyComponent() {
 import config from "@/lib/config";
 
 const { name, tagline } = config.project;
-const plans = config.pricing.plans;
 ```
 
 ### Theme Colors
 
 Theme colors are managed directly in `src/app/globals.css` using Tailwind v4's `@theme` directive. Edit the CSS file to customize colors.
-
-### Complete Config Example
-
-Here's a complete example of what your `config.json` should look like:
-
-```json
-{
-  "project": {
-    "name": "My Awesome SaaS",
-    "shortName": "MySaaS",
-    "description": "A modern SaaS application",
-    "tagline": "Build amazing products faster",
-    "url": "https://myawesomesaas.com",
-    "logo": "/logo.svg",
-    "favicon": "/favicon.ico"
-  },
-  "seo": {
-    "title": "My Awesome SaaS - Build Amazing Products",
-    "description": "A modern SaaS application for building amazing products",
-    "keywords": ["saas", "productivity", "tools"],
-    "author": "Your Name",
-    "ogImage": "/og-image.png",
-    "twitterHandle": "@yourhandle"
-  },
-  "contact": {
-    "email": "hello@myawesomesaas.com",
-    "supportEmail": "support@myawesomesaas.com"
-  },
-  "social": {
-    "twitter": "https://twitter.com/yourhandle",
-    "github": "https://github.com/yourusername",
-    "linkedin": "https://linkedin.com/company/yourcompany",
-    "instagram": "https://instagram.com/yourhandle",
-    "tiktok": "https://tiktok.com/@yourhandle"
-  },
-  "pricing": {
-    "plans": [
-      {
-        "id": "starter",
-        "name": "Starter",
-        "price": "$9",
-        "period": "/month",
-        "description": "Perfect for individuals",
-        "checkoutUrl": "https://yourstore.lemonsqueezy.com/buy/{variant-id}?redirect=https://myawesomesaas.com/checkout/success",
-        "features": ["Feature 1", "Feature 2", "Feature 3"]
-      }
-    ]
-  },
-  "features": {
-    "auth": true,
-    "waitlist": {
-      "enabled": true,
-      "showPosition": true,
-      "confirmationEmail": true
-    }
-  }
-}
-```
 
 ## 📁 Project Structure
 
@@ -535,25 +511,41 @@ Here's a complete example of what your `config.json` should look like:
 src/
 ├── app/                    # Next.js App Router
 │   ├── api/               # API routes
-│   │   └── auth/          # Better-auth endpoints
+│   │   ├── auth/          # Better-auth endpoints
+│   │   ├── inngest/       # Inngest webhook handler
+│   │   ├── interactions/  # User interaction endpoints
+│   │   ├── tags/          # Tag endpoints
+│   │   ├── user/          # User endpoints
+│   │   └── webhooks/      # Webhook handlers (RSS, etc.)
+│   ├── news/              # News feed page
+│   ├── onboarding/        # User onboarding flow
 │   ├── globals.css        # Global styles + Tailwind
 │   └── layout.tsx         # Root layout
 ├── components/            # React components
 │   ├── ui/               # shadcn/ui components
 │   ├── providers/        # Context providers
-│   └── tracking/         # Analytics components
+│   ├── sections/         # Landing page sections
+│   ├── setup/            # Setup/onboarding components
+│   ├── tracking/         # Analytics components
+│   ├── FeedCard.tsx      # Article feed card component
+│   ├── UserFeed.tsx      # User feed component
+│   └── ...
 ├── lib/                  # Library code
 │   ├── api/             # API client (Axios)
 │   ├── better-auth/     # Auth configuration
 │   ├── db/              # Prisma client & schema
 │   ├── emails/          # Email templates
 │   ├── hooks/           # Custom React hooks
+│   ├── inngest/         # Inngest functions
+│   ├── openai/          # OpenAI client & article analysis
 │   ├── resend/          # Email client
+│   ├── schemas/         # Zod schemas
+│   ├── services/        # Business logic services
 │   ├── stores/          # Zustand stores
 │   ├── tracking/        # PostHog client
-│   └── utils.ts         # Utility functions
-└── utils/               # Utility functions
-    └── environments.ts  # Environment helpers
+│   └── utils/           # Utility functions
+└── data/                # Static data
+    └── siteMetadata.ts  # Site metadata
 ```
 
 ## 🎯 Usage Examples
@@ -585,24 +577,21 @@ function MyComponent() {
   const { useGet, usePost, usePut } = useApi();
 
   // GET request
-  const { data, isLoading, error } = useGet("/users", { page: 1 });
+  const { data, isLoading, error } = useGet("/api/articles", { page: 1 });
 
   // POST request
-  const createUser = usePost("/users", {
+  const createInteraction = usePost("/api/interactions", {
     onSuccess: () => {
-      console.log("User created!");
+      console.log("Interaction created!");
     },
   });
-
-  // PUT request
-  const updateUser = usePut("/users");
 
   return (
     <div>
       {isLoading && <p>Loading...</p>}
       {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
-      <button onClick={() => createUser.mutate({ name: "John" })}>
-        Create User
+      <button onClick={() => createInteraction.mutate({ articleId: "123" })}>
+        Create Interaction
       </button>
     </div>
   );
@@ -640,6 +629,15 @@ await resendClient.emails.send({
   subject: "Welcome!",
   html: emailHtml,
 });
+```
+
+### Using OpenAI for Article Analysis
+
+```typescript
+import { analyzeArticleLLM } from "@/lib/openai/analyzeArticleLLM";
+
+const articleContent = "Full article text here...";
+const summary = await analyzeArticleLLM(articleContent);
 ```
 
 ### Using shadcn/ui Components
@@ -697,13 +695,16 @@ postHogClient.capture({
 The schema includes:
 
 - User authentication models (User, Session, Account, Verification)
-- Waitlist model for collecting early signups
+- Article models for storing tech news articles
+- Tag models for categorizing articles
+- UserTagPreference for personalized feeds
+- Interaction models for tracking user engagement
 
 ### Database Migrations
 
 **First Time Setup:**
 
-When you first clone this template, the migrations folder is empty. You need to apply the database schema. You have two options:
+When you first clone this repository, the migrations folder is empty. You need to apply the database schema. You have two options:
 
 **1. Create Initial Migration (Recommended)**
 
@@ -781,7 +782,7 @@ Open http://127.0.0.1:54328 in your browser to:
 
 **View Test Emails:**
 
-Open http://127.0.0.1:54331 to see emails sent during development (magic links, waitlist confirmations, etc.)
+Open http://127.0.0.1:54331 to see emails sent during development (magic links, welcome emails, etc.)
 
 ### Production Database
 
@@ -791,19 +792,6 @@ For production, you can use:
 - **Your own PostgreSQL** - Self-hosted or managed (AWS RDS, Railway, etc.)
 
 Update `DATABASE_URL` and `DIRECT_URL` in your production environment variables.
-
-## 🎨 Adding shadcn/ui Components
-
-```bash
-npx shadcn@latest add [component-name]
-```
-
-Examples:
-
-- `npx shadcn@latest add card`
-- `npx shadcn@latest add input`
-- `npx shadcn@latest add dialog`
-- `npx shadcn@latest add form`
 
 ## 🔧 Configuration Files
 
@@ -820,6 +808,8 @@ Examples:
 - [Next.js](https://nextjs.org/docs)
 - [Prisma](https://www.prisma.io/docs)
 - [Better-auth](https://www.better-auth.com/docs)
+- [OpenAI](https://platform.openai.com/docs)
+- [Inngest](https://www.inngest.com/docs)
 - [TanStack Query](https://tanstack.com/query/latest)
 - [Zustand](https://docs.pmnd.rs/zustand)
 - [shadcn/ui](https://ui.shadcn.com)
@@ -840,6 +830,10 @@ Make sure to set all environment variables in your hosting platform:
 ### Database
 
 For production, use Supabase Cloud or your own PostgreSQL instance. Update `DATABASE_URL` and `DIRECT_URL` in your production environment.
+
+### Inngest
+
+Set up Inngest in production and configure the webhook endpoint at `/api/inngest/route.ts` in your Inngest dashboard.
 
 ## 📝 License
 
