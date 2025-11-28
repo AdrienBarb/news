@@ -42,15 +42,6 @@ export default function FeaturesSection() {
               key={index}
               className="p-6 rounded-lg border bg-background hover:shadow-lg transition-shadow"
             >
-              <div className="mb-4 flex justify-center">
-                <Image
-                  src={feature.image}
-                  alt={feature.title}
-                  width={200}
-                  height={200}
-                  className="w-full max-w-[200px] h-auto"
-                />
-              </div>
               <h3 className="text-xl font-semibold mb-3 text-center">
                 {feature.title}
               </h3>

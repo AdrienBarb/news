@@ -1,9 +1,8 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { magicLink } from "better-auth/plugins";
 import { prisma } from "@/lib/db/prisma";
 import { resendClient } from "@/lib/resend/resendClient";
-import { MagicLinkEmail } from "@/lib/emails/MagicLinkEmail";
+import { ResetPasswordEmail } from "@/lib/emails/ResetPasswordEmail";
 import config from "@/lib/config";
 
 export const auth = betterAuth({
@@ -12,6 +11,14 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    sendResetPassword: async ({ user, url }) => {
+      await resendClient.emails.send({
+        from: config.contact.email,
+        to: user.email,
+        subject: "Reset your password",
+        react: ResetPasswordEmail({ resetUrl: url }),
+      });
+    },
   },
   baseURL:
     process.env.BETTER_AUTH_URL ||

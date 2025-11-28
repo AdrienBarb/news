@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import ResetPasswordModal from "./ResetPasswordModal";
 
 const signInSchema = z.object({
   email: z.email("Please enter a valid email address"),
@@ -34,6 +35,7 @@ interface SignInModalProps {
 export default function SignInModal({ open, onOpenChange }: SignInModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
 
   const {
     register,
@@ -135,17 +137,43 @@ export default function SignInModal({ open, onOpenChange }: SignInModalProps) {
             {isLoading ? "Signing in..." : "Sign In"}
           </Button>
         </form>
-        <div className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/setup"
-            className="text-primary hover:underline font-medium"
-            onClick={() => onOpenChange(false)}
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={() => {
+              onOpenChange(false);
+              setResetPasswordOpen(true);
+            }}
+            className="text-sm text-muted-foreground hover:text-primary hover:underline w-full text-center cursor-pointer"
           >
-            Sign up
-          </Link>
+            Forget your password?
+          </button>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Or
+              </span>
+            </div>
+          </div>
+          <div className="text-center text-sm text-muted-foreground">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/setup"
+              className="text-primary hover:underline font-medium"
+              onClick={() => onOpenChange(false)}
+            >
+              Sign up
+            </Link>
+          </div>
         </div>
       </DialogContent>
+      <ResetPasswordModal
+        open={resetPasswordOpen}
+        onOpenChange={setResetPasswordOpen}
+      />
     </Dialog>
   );
 }

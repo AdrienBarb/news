@@ -48,37 +48,33 @@ export default function Navbar() {
             {config.project.shortName || config.project.name}
           </Link>
 
-          {config.features.auth && (
-            <>
-              {session?.user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="cursor-pointer">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>
-                          {getInitials(session.user.name, session.user.email)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-background">
-                    <DropdownMenuItem
-                      onClick={handleSignOut}
-                      className="cursor-pointer"
-                    >
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button
-                  onClick={() => setIsSignInModalOpen(true)}
+          {session?.user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="cursor-pointer">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>
+                      {getInitials(session.user.name, session.user.email)}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-background">
+                <DropdownMenuItem
+                  onClick={handleSignOut}
                   className="cursor-pointer"
                 >
-                  Sign In
-                </Button>
-              )}
-            </>
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button
+              onClick={() => setIsSignInModalOpen(true)}
+              className="cursor-pointer"
+            >
+              Sign In
+            </Button>
           )}
         </nav>
       </header>
