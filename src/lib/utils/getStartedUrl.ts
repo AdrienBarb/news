@@ -5,5 +5,5 @@
  * @returns "/news" if authenticated, "/setup" if not authenticated
  */
 export function getStartedUrl(isAuthenticated: boolean): string {
-  return isAuthenticated ? "/news" : "/setup";
+  return isAuthenticated ? "/news" : "/onboarding";
 }

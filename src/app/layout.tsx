@@ -4,8 +4,8 @@ import { Toaster } from "react-hot-toast";
 import GlobalErrorHandler from "@/components/GlobalErrorHandler";
 import { QueryProviders } from "@/components/providers/QueryProviders";
 import { PostHogProvider } from "@/components/tracking/PostHogProvider";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import "./globals.css";
 import { genPageMetadata } from "@/lib/seo/genPageMetadata";
 import { siteMetadata } from "@/data/siteMetadata";
@@ -50,17 +50,18 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${selecta.variable} ${archivo.variable} ${playfairDisplay.variable} antialiased`}
       >
-        <QueryProviders>
-          <PostHogProvider>
-            <div className="flex min-h-screen flex-col">
-              <Navbar />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
-            <Toaster position="bottom-center" />
-            <GlobalErrorHandler />
-          </PostHogProvider>
-        </QueryProviders>
+        <NuqsAdapter>
+          <QueryProviders>
+            <PostHogProvider>
+              <div className="flex min-h-screen flex-col">
+                <Navbar />
+                <main className="flex-1">{children}</main>
+              </div>
+              <Toaster position="bottom-center" />
+              <GlobalErrorHandler />
+            </PostHogProvider>
+          </QueryProviders>
+        </NuqsAdapter>
       </body>
     </html>
   );
