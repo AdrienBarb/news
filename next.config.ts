@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Prevent Next.js from bundling jsdom to avoid ESM/CommonJS compatibility issues
+  serverExternalPackages: ["jsdom"],
 };
 
 export default nextConfig;
