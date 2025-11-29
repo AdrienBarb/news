@@ -33,7 +33,7 @@ export default function FeedCard({
           }}
         >
           <h2 className="text-2xl font-bold text-white font-playfair-display text-center">
-            {article.title}
+            {article.headline || article.title}
           </h2>
         </div>
 

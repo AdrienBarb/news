@@ -84,7 +84,7 @@ model Article {
   content        String?
   summary        String
   imageUrl       String?
-  shortSummary   String
+  headline       String?
   guid           String?  @unique
   relevanceScore Int
   tags           Tag[]

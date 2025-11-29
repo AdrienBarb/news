@@ -76,7 +76,7 @@ export const createArticle = inngest.createFunction(
           imageUrl,
           publishedAt: publishedAt ? new Date(publishedAt) : new Date(),
           summary: llmResult.analysis.summary,
-          shortSummary: llmResult.analysis.shortSummary,
+          headline: llmResult.analysis.headline,
           relevanceScore: llmResult.analysis.relevanceScore,
           tags: {
             connect: llmResult.analysis.tags.map((tagName: string) => ({
