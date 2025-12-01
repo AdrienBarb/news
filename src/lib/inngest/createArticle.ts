@@ -10,12 +10,16 @@ export const createArticle = inngest.createFunction(
     const { title, description, link, publishedAt, imageUrl, source, guid } =
       event.data;
 
+    console.log("🚀 ~ event.data:", event.data);
+
     if (guid) {
       const existingArticle = await step.run("check-duplicate", async () =>
         prisma.article.findFirst({
           where: { guid },
         })
       );
+
+      console.log("🚀 ~ existingArticle:", existingArticle);
 
       if (existingArticle) {
         return {
@@ -53,6 +57,8 @@ export const createArticle = inngest.createFunction(
         allowedTags,
       });
     });
+
+    console.log("🚀 ~ llmResult:", llmResult);
 
     if (llmResult.isDuplicate) {
       return {

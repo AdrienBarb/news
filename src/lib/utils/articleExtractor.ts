@@ -3,8 +3,11 @@ import axios from "axios";
 
 export async function extractArticleContent(url: string) {
   try {
+    // Validate and normalize URL using WHATWG URL API to avoid deprecation warnings
+    const validatedUrl = new URL(url).href;
+
     // Fetch the webpage
-    const response = await axios.get(url, {
+    const response = await axios.get(validatedUrl, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
@@ -20,9 +23,9 @@ export async function extractArticleContent(url: string) {
     // Dynamically import JSDOM to avoid ESM/CommonJS compatibility issues
     const { JSDOM } = await import("jsdom");
 
-    // Parse HTML with JSDOM
+    // Parse HTML with JSDOM using validated URL
     const dom = new JSDOM(html, {
-      url,
+      url: validatedUrl,
       runScripts: "outside-only",
     });
 
