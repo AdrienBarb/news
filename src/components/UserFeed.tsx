@@ -3,8 +3,10 @@
 import type { Article, Tag } from "@prisma/client";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Mousewheel, Pagination } from "swiper/modules";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import FeedCard from "./FeedCard";
+import WelcomeCard from "./WelcomeCard";
+import EndCard from "./EndCard";
 import useApi from "@/lib/hooks/useApi";
 import type { Reaction } from "@/lib/types/interactions";
 import toast from "react-hot-toast";
@@ -62,53 +64,50 @@ export default function UserFeed({ articles }: UserFeedProps) {
     }
   };
 
-  useEffect(() => {
-    if (articles.length > 0) {
-      const firstArticleId = articles[0].id;
-      setInteractions((prev) => {
-        const newMap = new Map(prev);
-        if (!newMap.has(firstArticleId)) {
-          newMap.set(firstArticleId, {
-            startTime: Date.now(),
-            reaction: null,
-            hasSent: false,
-          });
-        }
-        return newMap;
-      });
-    }
-  }, [articles]);
-
   const handleSlideChange = (swiper: { activeIndex: number }) => {
     const newIndex = swiper.activeIndex;
     const previousIndex = activeSlideIndex;
 
-    if (previousIndex >= 0 && previousIndex < articles.length) {
-      const previousArticleId = articles[previousIndex].id;
-      sendInteraction(previousArticleId);
+    // Calculate article indices (welcome card is at 0, articles start at 1, end card is at articles.length + 1)
+    const totalSlides = articles.length + 2; // welcome + articles + end
+    const isWelcomeCard = (index: number) => index === 0;
+    const isEndCard = (index: number) => index === totalSlides - 1;
+    const getArticleIndex = (slideIndex: number) => slideIndex - 1; // Convert slide index to article index
+
+    // Send interaction for previous article if it was an article (not welcome/end card)
+    if (!isWelcomeCard(previousIndex) && !isEndCard(previousIndex)) {
+      const previousArticleIndex = getArticleIndex(previousIndex);
+      if (previousArticleIndex >= 0 && previousArticleIndex < articles.length) {
+        const previousArticleId = articles[previousArticleIndex].id;
+        sendInteraction(previousArticleId);
+      }
     }
 
-    const newArticleId = articles[newIndex]?.id;
-    if (newArticleId) {
-      setInteractions((prev) => {
-        const newMap = new Map(prev);
-        const existing = newMap.get(newArticleId);
+    // Start tracking interaction for new article if it's an article (not welcome/end card)
+    if (!isWelcomeCard(newIndex) && !isEndCard(newIndex)) {
+      const newArticleIndex = getArticleIndex(newIndex);
+      const newArticleId = articles[newArticleIndex]?.id;
+      if (newArticleId) {
+        setInteractions((prev) => {
+          const newMap = new Map(prev);
+          const existing = newMap.get(newArticleId);
 
-        if (existing) {
-          newMap.set(newArticleId, {
-            startTime: Date.now(),
-            reaction: existing.reaction,
-            hasSent: false,
-          });
-        } else {
-          newMap.set(newArticleId, {
-            startTime: Date.now(),
-            reaction: null,
-            hasSent: false,
-          });
-        }
-        return newMap;
-      });
+          if (existing) {
+            newMap.set(newArticleId, {
+              startTime: Date.now(),
+              reaction: existing.reaction,
+              hasSent: false,
+            });
+          } else {
+            newMap.set(newArticleId, {
+              startTime: Date.now(),
+              reaction: null,
+              hasSent: false,
+            });
+          }
+          return newMap;
+        });
+      }
     }
 
     setActiveSlideIndex(newIndex);
@@ -157,6 +156,16 @@ export default function UserFeed({ articles }: UserFeedProps) {
         resistanceRatio={0.85}
         onSlideChange={handleSlideChange}
       >
+        {/* Welcome Card - First Slide */}
+        <SwiperSlide key="welcome" className="h-full">
+          <div className="h-full flex items-center justify-center p-4">
+            <div className="w-full max-w-md">
+              <WelcomeCard />
+            </div>
+          </div>
+        </SwiperSlide>
+
+        {/* Article Cards */}
         {articles.map((article) => {
           const interaction = interactions.get(article.id);
           const reaction = interaction?.reaction || null;
@@ -182,6 +191,15 @@ export default function UserFeed({ articles }: UserFeedProps) {
             </SwiperSlide>
           );
         })}
+
+        {/* End Card - Last Slide */}
+        <SwiperSlide key="end" className="h-full">
+          <div className="h-full flex items-center justify-center p-4">
+            <div className="w-full max-w-md">
+              <EndCard />
+            </div>
+          </div>
+        </SwiperSlide>
       </Swiper>
     </div>
   );
