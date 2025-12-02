@@ -7,19 +7,19 @@ const features = [
     title: "Stay informed effortlessly",
     description:
       "Whether you're commuting, getting ready, or between meetings, you get a clean, concise, easy-to-digest briefing every morning. One scroll, and you're up to date.",
-    image: "/one.png",
+    image: "/stay-informed.gif",
   },
   {
     title: "Personalized to your interests",
     description:
       "You choose the topics that matter to you — AI, startups, product, engineering, VC, and more. Your daily briefing adapts to your taste, your industry, and your goals.",
-    image: "/two.png",
+    image: "/personalized.gif",
   },
   {
     title: "Build a habit of staying sharp",
     description:
       "Staying ahead shouldn't feel like work. With a 3-minute daily rhythm and a simple streak system, you stay consistent, focused, and mentally one step ahead.",
-    image: "/three.png",
+    image: "/build-habbit.gif",
   },
 ];
 
@@ -27,7 +27,9 @@ interface FeaturesSectionProps {
   getStartedUrl: string;
 }
 
-export default function FeaturesSection({ getStartedUrl }: FeaturesSectionProps) {
+export default function FeaturesSection({
+  getStartedUrl,
+}: FeaturesSectionProps) {
   return (
     <section className="container mx-auto px-4 py-20 md:py-32">
       <div className="mx-auto max-w-6xl">
@@ -46,6 +48,15 @@ export default function FeaturesSection({ getStartedUrl }: FeaturesSectionProps)
               key={index}
               className="p-6 rounded-lg border bg-background hover:shadow-lg transition-shadow"
             >
+              <div className="mb-8 flex justify-center">
+                <Image
+                  src={feature.image}
+                  alt={feature.title}
+                  width={160}
+                  height={160}
+                  className="rounded-lg"
+                />
+              </div>
               <h3 className="text-xl font-semibold mb-3 text-center">
                 {feature.title}
               </h3>
