@@ -14,6 +14,7 @@ import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
 import useApi from "@/lib/hooks/useApi";
 import { cn } from "@/lib/utils";
+import { useClientPostHogEvent } from "@/lib/tracking/useClientPostHogEvent";
 
 const TOTAL_STEPS = 7;
 
@@ -81,6 +82,7 @@ export default function OnboardingPageClient({
   tags,
 }: OnboardingPageClientProps) {
   const { usePost } = useApi();
+  const { sendEvent } = useClientPostHogEvent();
   const [step, setStep] = useQueryState("step", {
     defaultValue: "1",
     parse: (value) => value || "1",
@@ -145,6 +147,13 @@ export default function OnboardingPageClient({
     "/checkout/create-session",
     {
       onSuccess: (data: { url: string }) => {
+        sendEvent({
+          eventName: "onboarding_checkout_session_created",
+          properties: {
+            step: 7,
+            step_name: "payment",
+          },
+        });
         if (data.url) {
           window.location.href = data.url;
         }
@@ -221,30 +230,71 @@ export default function OnboardingPageClient({
           toast.error("Please select at least one tag");
           return;
         }
+        sendEvent({
+          eventName: "onboarding_step_completed",
+          properties: {
+            step: currentStep,
+            step_name: "tag_selection",
+            selected_tags_count: selectedTags.length,
+            selected_tags: selectedTags,
+          },
+        });
         break;
       case 2:
         if (!techLevel) {
           toast.error("Please select your tech knowledge level");
           return;
         }
+        sendEvent({
+          eventName: "onboarding_step_completed",
+          properties: {
+            step: currentStep,
+            step_name: "tech_level",
+            tech_level: techLevel,
+          },
+        });
         break;
       case 3:
         if (!motivation) {
           toast.error("Please select your motivation");
           return;
         }
+        sendEvent({
+          eventName: "onboarding_step_completed",
+          properties: {
+            step: currentStep,
+            step_name: "motivation",
+            motivation: motivation,
+          },
+        });
         break;
       case 4:
         if (!depthPreference) {
           toast.error("Please select your preferred content depth");
           return;
         }
+        sendEvent({
+          eventName: "onboarding_step_completed",
+          properties: {
+            step: currentStep,
+            step_name: "depth_preference",
+            depth_preference: depthPreference,
+          },
+        });
         break;
       case 5:
         if (!dailyTime) {
           toast.error("Please select your daily time preference");
           return;
         }
+        sendEvent({
+          eventName: "onboarding_step_completed",
+          properties: {
+            step: currentStep,
+            step_name: "daily_time",
+            daily_time: dailyTime,
+          },
+        });
         break;
       case 6:
         break;
@@ -255,6 +305,13 @@ export default function OnboardingPageClient({
   };
 
   const handleActivateTrial = async () => {
+    sendEvent({
+      eventName: "onboarding_payment_initiated",
+      properties: {
+        step: 7,
+        step_name: "payment",
+      },
+    });
     setIsCreatingCheckout(true);
     createCheckoutSession({});
   };
@@ -304,6 +361,20 @@ export default function OnboardingPageClient({
           );
         }
       }
+
+      sendEvent({
+        eventName: "onboarding_account_created",
+        properties: {
+          step: 6,
+          step_name: "account_creation",
+          email: data.email,
+          selected_tags_count: tagIds.length,
+          tech_level: onboardingData.techLevel,
+          motivation: onboardingData.motivation,
+          depth_preference: onboardingData.depthPreference,
+          daily_time: onboardingData.dailyTime,
+        },
+      });
 
       saveOnboarding({
         techLevel: onboardingData.techLevel,
