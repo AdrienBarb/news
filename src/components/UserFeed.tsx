@@ -10,6 +10,9 @@ import EndCard from "./EndCard";
 import useApi from "@/lib/hooks/useApi";
 import type { Reaction } from "@/lib/types/interactions";
 import toast from "react-hot-toast";
+import { useUser } from "@/lib/hooks/useUser";
+import { isSubscriptionActive } from "@/lib/utils/subscription";
+import { Button } from "@/components/ui/button";
 import "swiper/css";
 import "swiper/css/pagination";
 
@@ -27,10 +30,12 @@ interface UserFeedProps {
 
 export default function UserFeed({ articles }: UserFeedProps) {
   const { usePost } = useApi();
+  const { user } = useUser();
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [interactions, setInteractions] = useState<
     Map<string, InteractionState>
   >(new Map());
+  const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
 
   const sendInteractionMutation = usePost("/interactions", {
     onError: (error: unknown) => {
@@ -40,6 +45,38 @@ export default function UserFeed({ articles }: UserFeedProps) {
       toast.error(errorMessage);
     },
   });
+
+  const { mutate: createCheckoutSession } = usePost(
+    "/checkout/create-session",
+    {
+      onSuccess: (data: { url: string }) => {
+        if (data.url) {
+          window.location.href = data.url;
+        }
+      },
+      onError: (error: unknown) => {
+        const errorMessage =
+          error &&
+          typeof error === "object" &&
+          "response" in error &&
+          error.response &&
+          typeof error.response === "object" &&
+          "data" in error.response &&
+          error.response.data &&
+          typeof error.response.data === "object" &&
+          "error" in error.response.data
+            ? String(error.response.data.error)
+            : undefined;
+        toast.error(errorMessage || "Failed to create checkout session");
+        setIsCreatingCheckout(false);
+      },
+    }
+  );
+
+  const handleActivateTrial = async () => {
+    setIsCreatingCheckout(true);
+    createCheckoutSession({});
+  };
 
   const sendInteraction = (articleId: string) => {
     const interaction = interactions.get(articleId);
@@ -68,13 +105,11 @@ export default function UserFeed({ articles }: UserFeedProps) {
     const newIndex = swiper.activeIndex;
     const previousIndex = activeSlideIndex;
 
-    // Calculate article indices (welcome card is at 0, articles start at 1, end card is at articles.length + 1)
-    const totalSlides = articles.length + 2; // welcome + articles + end
+    const totalSlides = articles.length + 2;
     const isWelcomeCard = (index: number) => index === 0;
     const isEndCard = (index: number) => index === totalSlides - 1;
-    const getArticleIndex = (slideIndex: number) => slideIndex - 1; // Convert slide index to article index
+    const getArticleIndex = (slideIndex: number) => slideIndex - 1;
 
-    // Send interaction for previous article if it was an article (not welcome/end card)
     if (!isWelcomeCard(previousIndex) && !isEndCard(previousIndex)) {
       const previousArticleIndex = getArticleIndex(previousIndex);
       if (previousArticleIndex >= 0 && previousArticleIndex < articles.length) {
@@ -83,7 +118,6 @@ export default function UserFeed({ articles }: UserFeedProps) {
       }
     }
 
-    // Start tracking interaction for new article if it's an article (not welcome/end card)
     if (!isWelcomeCard(newIndex) && !isEndCard(newIndex)) {
       const newArticleIndex = getArticleIndex(newIndex);
       const newArticleId = articles[newArticleIndex]?.id;
@@ -125,6 +159,52 @@ export default function UserFeed({ articles }: UserFeedProps) {
       return newMap;
     });
   };
+
+  if (!isSubscriptionActive(user?.subscriptionStatus)) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="aspect-[4/5] w-full rounded-lg bg-background overflow-hidden flex flex-col items-center gap-2">
+            <div className="flex-1 flex flex-col items-center justify-center border rounded-lg p-6">
+              <div className="text-center space-y-6 w-full">
+                <div className="space-y-2">
+                  <h2 className="text-3xl font-bold text-primary font-playfair-display">
+                    Subscribe to use the app
+                  </h2>
+                  <p className="text-base font-bold font-archivo text-muted-foreground">
+                    Get access to personalized tech news and start your free
+                    trial today.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-2xl font-bold mb-1">
+                      €4.99 per month
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      (billed annually)
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleActivateTrial}
+                  size="lg"
+                  disabled={isCreatingCheckout}
+                  className="w-full font-extrabold text-xl text-white"
+                >
+                  {isCreatingCheckout
+                    ? "Redirecting to checkout..."
+                    : "Activate free trial"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (articles.length === 0) {
     return (

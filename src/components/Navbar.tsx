@@ -13,13 +13,24 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSession, signOut } from "@/lib/better-auth/auth-client";
 import SignInModal from "@/components/SignInModal";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/lib/hooks/useUser";
+import { isSubscriptionActive } from "@/lib/utils/subscription";
 
 export default function Navbar() {
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
   const { data: session } = useSession();
+  const router = useRouter();
+  const { user } = useUser();
 
   const handleSignOut = async () => {
-    await signOut();
+    await signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/");
+        },
+      },
+    });
   };
 
   const getInitials = (name?: string | null, email?: string | null) => {
@@ -52,8 +63,8 @@ export default function Navbar() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="cursor-pointer">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>
+                  <Avatar className="h-8 w-8 bg-primary">
+                    <AvatarFallback className="bg-primary text-white font-medium">
                       {getInitials(session.user.name, session.user.email)}
                     </AvatarFallback>
                   </Avatar>
@@ -66,6 +77,14 @@ export default function Navbar() {
                     News
                   </Link>
                 </DropdownMenuItem>
+                {isSubscriptionActive(user?.subscriptionStatus) &&
+                  user?.portalUrl && (
+                    <DropdownMenuItem asChild>
+                      <Link href={user.portalUrl} className="cursor-pointer">
+                        Manage Subscription
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                 <DropdownMenuItem
                   onClick={handleSignOut}
                   className="cursor-pointer"

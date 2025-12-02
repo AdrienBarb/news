@@ -5,19 +5,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQueryState } from "nuqs";
+import Link from "next/link";
 import { authClient } from "@/lib/better-auth/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import useApi from "@/lib/hooks/useApi";
 import { cn } from "@/lib/utils";
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
-// Tech knowledge level options
 const TECH_LEVEL_OPTIONS = [
   "Beginner",
   "Intermediate",
@@ -25,7 +24,6 @@ const TECH_LEVEL_OPTIONS = [
   "Expert / Engineer",
 ] as const;
 
-// Motivation options
 const MOTIVATION_OPTIONS = [
   "To stay ahead at work",
   "To find new opportunities",
@@ -33,7 +31,6 @@ const MOTIVATION_OPTIONS = [
   "Just out of curiosity",
 ] as const;
 
-// Depth preference options
 const DEPTH_OPTIONS = [
   "Quick summaries only",
   "Normal articles",
@@ -41,7 +38,6 @@ const DEPTH_OPTIONS = [
   "Mix of both",
 ] as const;
 
-// Daily time options
 const DAILY_TIME_OPTIONS = [
   "< 5 minutes",
   "5–10 minutes",
@@ -49,7 +45,6 @@ const DAILY_TIME_OPTIONS = [
   "As much as possible",
 ] as const;
 
-// Signup form schema
 const signUpSchema = z.object({
   email: z.email("Please enter a valid email address"),
   password: z
@@ -63,7 +58,6 @@ const signUpSchema = z.object({
 
 type SignUpFormData = z.infer<typeof signUpSchema>;
 
-// localStorage keys
 const STORAGE_KEYS = {
   tags: "onboarding.tags",
   techLevel: "onboarding.techLevel",
@@ -72,7 +66,6 @@ const STORAGE_KEYS = {
   dailyTime: "onboarding.dailyTime",
 } as const;
 
-// Continue button style
 const CONTINUE_BUTTON_CLASSES = "w-full font-extrabold text-xl text-white";
 
 interface Tag {
@@ -87,7 +80,6 @@ interface OnboardingPageClientProps {
 export default function OnboardingPageClient({
   tags,
 }: OnboardingPageClientProps) {
-  const router = useRouter();
   const { usePost } = useApi();
   const [step, setStep] = useQueryState("step", {
     defaultValue: "1",
@@ -97,16 +89,15 @@ export default function OnboardingPageClient({
 
   const currentStep = parseInt(step, 10) || 1;
 
-  // Step 1: Tags selection state
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  // Step 2-5: Single choice states
   const [techLevel, setTechLevel] = useState<string>("");
   const [motivation, setMotivation] = useState<string>("");
   const [depthPreference, setDepthPreference] = useState<string>("");
   const [dailyTime, setDailyTime] = useState<string>("");
 
-  // Step 6: Signup form
+  const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -118,7 +109,6 @@ export default function OnboardingPageClient({
     resolver: zodResolver(signUpSchema),
   });
 
-  // Load data from localStorage on mount
   useEffect(() => {
     const storedTags = localStorage.getItem(STORAGE_KEYS.tags);
     if (storedTags) {
@@ -145,20 +135,45 @@ export default function OnboardingPageClient({
     if (storedTime) setDailyTime(storedTime);
   }, []);
 
-  // Save tags to localStorage
   useEffect(() => {
     if (selectedTags.length > 0) {
       localStorage.setItem(STORAGE_KEYS.tags, JSON.stringify(selectedTags));
     }
   }, [selectedTags]);
 
+  const { mutate: createCheckoutSession } = usePost(
+    "/checkout/create-session",
+    {
+      onSuccess: (data: { url: string }) => {
+        if (data.url) {
+          window.location.href = data.url;
+        }
+      },
+      onError: (error: unknown) => {
+        const errorMessage =
+          error &&
+          typeof error === "object" &&
+          "response" in error &&
+          error.response &&
+          typeof error.response === "object" &&
+          "data" in error.response &&
+          error.response.data &&
+          typeof error.response.data === "object" &&
+          "error" in error.response.data
+            ? String(error.response.data.error)
+            : undefined;
+        toast.error(errorMessage || "Failed to create checkout session");
+        setIsCreatingCheckout(false);
+      },
+    }
+  );
+
   const { mutate: saveOnboarding } = usePost("/user/onboarding", {
     onSuccess: () => {
-      // Clear all onboarding data from localStorage
       Object.values(STORAGE_KEYS).forEach((key) => {
         localStorage.removeItem(key);
       });
-      router.push("/news");
+      setStep("7");
     },
     onError: (error: unknown) => {
       const errorMessage =
@@ -231,8 +246,17 @@ export default function OnboardingPageClient({
           return;
         }
         break;
+      case 6:
+        break;
+      case 7:
+        break;
     }
     handleNext();
+  };
+
+  const handleActivateTrial = async () => {
+    setIsCreatingCheckout(true);
+    createCheckoutSession({});
   };
 
   const onSubmit = async (data: SignUpFormData) => {
@@ -248,7 +272,6 @@ export default function OnboardingPageClient({
         throw new Error(result.error.message || "Failed to create account");
       }
 
-      // Get onboarding data from localStorage
       const onboardingData = {
         tags: JSON.parse(
           localStorage.getItem(STORAGE_KEYS.tags) || "[]"
@@ -260,11 +283,9 @@ export default function OnboardingPageClient({
         dailyTime: localStorage.getItem(STORAGE_KEYS.dailyTime) || null,
       };
 
-      // Map tag names to tag IDs if tags are loaded
       let tagIds: string[] = [];
       if (onboardingData.tags.length > 0) {
         if (tags.length === 0) {
-          // Tags not loaded yet, wait a bit and try again or proceed without tags
           toast.error("Tags not loaded. Please try again.");
           setIsLoading(false);
           return;
@@ -278,14 +299,12 @@ export default function OnboardingPageClient({
           .filter((id): id is string => !!id);
 
         if (tagIds.length === 0 && onboardingData.tags.length > 0) {
-          // Selected tags don't match any tags in DB
           toast.error(
             "Some selected tags were not found. Proceeding without tags."
           );
         }
       }
 
-      // Save all onboarding data (including tag preferences) in one call
       saveOnboarding({
         techLevel: onboardingData.techLevel,
         motivation: onboardingData.motivation,
@@ -293,7 +312,6 @@ export default function OnboardingPageClient({
         dailyTime: onboardingData.dailyTime,
         tagIds: tagIds.length > 0 ? tagIds : undefined,
       });
-      // Don't navigate yet - wait for saveOnboarding success callback
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -309,8 +327,7 @@ export default function OnboardingPageClient({
   const progress = (currentStep / TOTAL_STEPS) * 100;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl min-h-[calc(100vh-4rem)] flex flex-col">
-      {/* Progress Bar */}
+    <div className="container mx-auto px-4 py-8 max-w-xl min-h-[calc(100vh-4rem)] flex flex-col">
       <div className="mb-8">
         <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
           <div
@@ -320,9 +337,7 @@ export default function OnboardingPageClient({
         </div>
       </div>
 
-      {/* Step Content */}
       <div className="flex-1 flex flex-col space-y-8">
-        {/* Step 1: Tags Selection */}
         {currentStep === 1 && (
           <div className="flex-1 flex flex-col space-y-6">
             <div className="text-center space-y-2 mb-16">
@@ -374,7 +389,6 @@ export default function OnboardingPageClient({
           </div>
         )}
 
-        {/* Step 2: Tech Knowledge Level */}
         {currentStep === 2 && (
           <div className="flex-1 flex flex-col space-y-6">
             <div className="text-center space-y-2 mb-8">
@@ -420,7 +434,6 @@ export default function OnboardingPageClient({
           </div>
         )}
 
-        {/* Step 3: Motivation */}
         {currentStep === 3 && (
           <div className="flex-1 flex flex-col space-y-6">
             <div className="text-center space-y-2 mb-8">
@@ -466,7 +479,6 @@ export default function OnboardingPageClient({
           </div>
         )}
 
-        {/* Step 4: Preferred Depth */}
         {currentStep === 4 && (
           <div className="flex-1 flex flex-col space-y-6">
             <div className="text-center space-y-2 mb-8">
@@ -512,7 +524,6 @@ export default function OnboardingPageClient({
           </div>
         )}
 
-        {/* Step 5: Daily Time */}
         {currentStep === 5 && (
           <div className="flex-1 flex flex-col space-y-6">
             <div className="text-center space-y-2 mb-8">
@@ -558,7 +569,6 @@ export default function OnboardingPageClient({
           </div>
         )}
 
-        {/* Step 6: Signup Form */}
         {currentStep === 6 && (
           <div className="flex-1 flex flex-col space-y-6">
             <div className="text-center space-y-2 mb-8">
@@ -627,6 +637,87 @@ export default function OnboardingPageClient({
                 </Button>
               </div>
             </form>
+          </div>
+        )}
+
+        {currentStep === 7 && (
+          <div className="flex-1 flex flex-col space-y-6">
+            <div className="text-center space-y-2 mb-8">
+              <h1 className="text-3xl font-bold">
+                Try 3minBrief, free for 7 days
+              </h1>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-6 mb-6">
+              <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                <div className="flex-1 flex flex-row items-center gap-4 sm:flex-col sm:text-center sm:gap-0">
+                  <div className=" w-4 h-4 bg-primary rounded-full mx-auto mb-2"></div>
+                  <div>
+                    <p className="text-sm font-semibold text-primary mb-1">
+                      NOW
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Unlock the full 3minBrief library and start learning{" "}
+                      <span className="font-bold">today</span>.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex-1 flex flex-row items-center gap-4 sm:flex-col sm:text-center sm:gap-0">
+                  <div className="w-4 h-4 bg-gray-300 rounded-full mx-auto mb-2"></div>
+                  <div>
+                    <p className="text-sm font-semibold text-primary mb-1">
+                      IN 5 DAYS
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Receive a <span className="font-bold">reminder</span> that
+                      your free trial is ending.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex-1 flex flex-row items-center gap-4 sm:flex-col sm:text-center sm:gap-0">
+                  <div className="w-4 h-4 bg-gray-300 rounded-full mx-auto mb-2"></div>
+                  <div>
+                    <p className="text-sm font-semibold text-primary mb-1">
+                      IN 7 DAYS
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      You&apos;ll be <span className="font-bold">charged</span>{" "}
+                      for 3minBrief. Cancel anytime.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center mb-6">
+              <div className="mb-2">
+                <span className="text-2xl font-bold">€4.99 per month</span>
+              </div>
+              <p className="text-sm text-muted-foreground">(billed annually)</p>
+            </div>
+
+            <div className="space-y-4">
+              <Button
+                onClick={handleActivateTrial}
+                size="lg"
+                disabled={isCreatingCheckout}
+                className={CONTINUE_BUTTON_CLASSES}
+              >
+                {isCreatingCheckout
+                  ? "Redirecting to checkout..."
+                  : "Activate free trial"}
+              </Button>
+              <div className="text-center">
+                <Link
+                  href="/news"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Skip for now
+                </Link>
+              </div>
+            </div>
           </div>
         )}
       </div>

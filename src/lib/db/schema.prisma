@@ -9,17 +9,23 @@ generator client {
 }
 
 model User {
-  id                      String                   @id
-  name                    String
-  email                   String
-  emailVerified           Boolean                  @default(false)
-  image                   String?
-  techLevel               String?
-  motivation              String?
-  depthPreference         String?
-  dailyTime               String?
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @default(now()) @updatedAt
+  id              String   @id
+  name            String
+  email           String
+  emailVerified   Boolean  @default(false)
+  image           String?
+  techLevel       String?
+  motivation      String?
+  depthPreference String?
+  dailyTime       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  stripeCustomerId     String?
+  stripeSubscriptionId String?            @unique
+  subscriptionPlan     String?
+  subscriptionStatus   SubscriptionStatus @default(NONE)
+
   sessions                Session[]
   accounts                Account[]
   userTagPreferences      UserTagPreference[]
@@ -160,4 +166,13 @@ enum InteractionType {
   share
   hide_topic
   more_like_this
+}
+
+enum SubscriptionStatus {
+  NONE
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
 }
