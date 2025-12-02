@@ -55,7 +55,12 @@ export default function FeedCard({
       {/* Action Buttons */}
       <div className="w-full flex gap-3 p-4 justify-end">
         <button
-          onClick={onLike}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onLike();
+          }}
           className={`w-10 h-10 rounded-full border-2 flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer ${
             isLiked ? "border-gray-300 bg-gray-200" : "border-gray-300 bg-white"
           }`}
@@ -67,7 +72,12 @@ export default function FeedCard({
           />
         </button>
         <button
-          onClick={onBookmark}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onBookmark();
+          }}
           className={`w-10 h-10 rounded-full border-2 flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer ${
             isBookmarked
               ? "border-gray-300 bg-gray-200"

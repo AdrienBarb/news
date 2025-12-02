@@ -7,36 +7,33 @@ import { useState } from "react";
 import FeedCard from "./FeedCard";
 import WelcomeCard from "./WelcomeCard";
 import EndCard from "./EndCard";
+import SubscriptionCard from "./SubscriptionCard";
 import useApi from "@/lib/hooks/useApi";
 import toast from "react-hot-toast";
 import { useUser } from "@/lib/hooks/useUser";
 import { isSubscriptionActive } from "@/lib/utils/subscription";
-import { Button } from "@/components/ui/button";
 import "swiper/css";
 import "swiper/css/pagination";
 
 type ArticleWithTags = Article & { tags: Tag[] };
 
-interface InteractionState {
-  startTime: number;
-  isLiked: boolean;
-  isBookmarked: boolean;
-  hasSentLike: boolean;
-  hasSentBookmark: boolean;
-}
-
 interface UserFeedProps {
   articles: ArticleWithTags[];
+  initialLikes?: string[];
+  initialBookmarks?: string[];
 }
 
-export default function UserFeed({ articles }: UserFeedProps) {
+export default function UserFeed({
+  articles,
+  initialLikes = [],
+  initialBookmarks = [],
+}: UserFeedProps) {
   const { usePost } = useApi();
   const { user } = useUser();
-  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
-  const [interactions, setInteractions] = useState<
-    Map<string, InteractionState>
-  >(new Map());
-  const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
+  const [likes, setLikes] = useState<Set<string>>(new Set(initialLikes));
+  const [bookmarks, setBookmarks] = useState<Set<string>>(
+    new Set(initialBookmarks)
+  );
 
   const sendInteractionMutation = usePost("/interactions", {
     onError: (error: unknown) => {
@@ -47,203 +44,52 @@ export default function UserFeed({ articles }: UserFeedProps) {
     },
   });
 
-  const { mutate: createCheckoutSession } = usePost(
-    "/checkout/create-session",
-    {
-      onSuccess: (data: { url: string }) => {
-        if (data.url) {
-          window.location.href = data.url;
-        }
-      },
-      onError: (error: unknown) => {
-        const errorMessage =
-          error &&
-          typeof error === "object" &&
-          "response" in error &&
-          error.response &&
-          typeof error.response === "object" &&
-          "data" in error.response &&
-          error.response.data &&
-          typeof error.response.data === "object" &&
-          "error" in error.response.data
-            ? String(error.response.data.error)
-            : undefined;
-        toast.error(errorMessage || "Failed to create checkout session");
-        setIsCreatingCheckout(false);
-      },
-    }
-  );
-
-  const handleActivateTrial = async () => {
-    setIsCreatingCheckout(true);
-    createCheckoutSession({});
-  };
-
-  const sendInteraction = (articleId: string) => {
-    const interaction = interactions.get(articleId);
-    if (
-      !interaction ||
-      interaction.hasSentLike ||
-      interaction.hasSentBookmark
-    ) {
-      return;
-    }
-
-    const dwellTimeMs = Date.now() - interaction.startTime;
-    if (dwellTimeMs <= 0) return;
-
-    setInteractions((prev) => {
-      const newMap = new Map(prev);
-      const current = newMap.get(articleId);
-      if (current) {
-        newMap.set(articleId, {
-          ...current,
-          hasSentLike: true,
-          hasSentBookmark: true,
-        });
-      }
-      return newMap;
-    });
-
-    // Send single API call with both states
-    sendInteractionMutation.mutate({
-      articleId,
-      dwellTimeMs,
-      isLiked: interaction.isLiked,
-      isBookmarked: interaction.isBookmarked,
-    });
-  };
-
-  const handleSlideChange = (swiper: { activeIndex: number }) => {
-    const newIndex = swiper.activeIndex;
-    const previousIndex = activeSlideIndex;
-
-    const totalSlides = articles.length + 2;
-    const isWelcomeCard = (index: number) => index === 0;
-    const isEndCard = (index: number) => index === totalSlides - 1;
-    const getArticleIndex = (slideIndex: number) => slideIndex - 1;
-
-    if (!isWelcomeCard(previousIndex) && !isEndCard(previousIndex)) {
-      const previousArticleIndex = getArticleIndex(previousIndex);
-      if (previousArticleIndex >= 0 && previousArticleIndex < articles.length) {
-        const previousArticleId = articles[previousArticleIndex].id;
-        sendInteraction(previousArticleId);
-      }
-    }
-
-    if (!isWelcomeCard(newIndex) && !isEndCard(newIndex)) {
-      const newArticleIndex = getArticleIndex(newIndex);
-      const newArticleId = articles[newArticleIndex]?.id;
-      if (newArticleId) {
-        setInteractions((prev) => {
-          const newMap = new Map(prev);
-          const existing = newMap.get(newArticleId);
-
-          if (existing) {
-            newMap.set(newArticleId, {
-              startTime: Date.now(),
-              isLiked: existing.isLiked,
-              isBookmarked: existing.isBookmarked,
-              hasSentLike: false,
-              hasSentBookmark: false,
-            });
-          } else {
-            newMap.set(newArticleId, {
-              startTime: Date.now(),
-              isLiked: false,
-              isBookmarked: false,
-              hasSentLike: false,
-              hasSentBookmark: false,
-            });
-          }
-          return newMap;
-        });
-      }
-    }
-
-    setActiveSlideIndex(newIndex);
-  };
+  const handleSlideChange = () => {};
 
   const handleLikeToggle = (articleId: string) => {
-    setInteractions((prev) => {
-      const newMap = new Map(prev);
-      const current = newMap.get(articleId) || {
-        startTime: Date.now(),
-        isLiked: false,
-        isBookmarked: false,
-        hasSentLike: false,
-        hasSentBookmark: false,
-      };
-      newMap.set(articleId, {
-        ...current,
-        isLiked: !current.isLiked,
-      });
-      return newMap;
+    const isLiked = likes.has(articleId);
+    const newLikeState = !isLiked;
+
+    setLikes((prev) => {
+      const newSet = new Set(prev);
+      if (newLikeState) {
+        newSet.add(articleId);
+      } else {
+        newSet.delete(articleId);
+      }
+      return newSet;
+    });
+
+    sendInteractionMutation.mutate({
+      articleId,
+      isLiked: newLikeState,
+      isBookmarked: bookmarks.has(articleId),
     });
   };
 
   const handleBookmarkToggle = (articleId: string) => {
-    setInteractions((prev) => {
-      const newMap = new Map(prev);
-      const current = newMap.get(articleId) || {
-        startTime: Date.now(),
-        isLiked: false,
-        isBookmarked: false,
-        hasSentLike: false,
-        hasSentBookmark: false,
-      };
-      newMap.set(articleId, {
-        ...current,
-        isBookmarked: !current.isBookmarked,
-      });
-      return newMap;
+    const isBookmarked = bookmarks.has(articleId);
+    const newBookmarkState = !isBookmarked;
+
+    setBookmarks((prev) => {
+      const newSet = new Set(prev);
+      if (newBookmarkState) {
+        newSet.add(articleId);
+      } else {
+        newSet.delete(articleId);
+      }
+      return newSet;
+    });
+
+    sendInteractionMutation.mutate({
+      articleId,
+      isLiked: likes.has(articleId),
+      isBookmarked: newBookmarkState,
     });
   };
 
   if (!isSubscriptionActive(user?.subscriptionStatus)) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <div className="aspect-[4/5] w-full rounded-lg bg-background overflow-hidden flex flex-col items-center gap-2">
-            <div className="flex-1 flex flex-col items-center justify-center border rounded-lg p-6">
-              <div className="text-center space-y-6 w-full">
-                <div className="space-y-2">
-                  <h2 className="text-3xl font-bold text-primary font-playfair-display">
-                    Subscribe to use the app
-                  </h2>
-                  <p className="text-base font-bold font-archivo text-muted-foreground">
-                    Get access to personalized tech news and start your free
-                    trial today.
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-2xl font-bold mb-1">
-                      €4.99 per month
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      (billed annually)
-                    </p>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handleActivateTrial}
-                  size="lg"
-                  disabled={isCreatingCheckout}
-                  className="w-full font-extrabold text-xl text-white"
-                >
-                  {isCreatingCheckout
-                    ? "Redirecting to checkout..."
-                    : "Activate free trial"}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <SubscriptionCard />;
   }
 
   if (articles.length === 0) {
@@ -276,7 +122,6 @@ export default function UserFeed({ articles }: UserFeedProps) {
         resistanceRatio={0.85}
         onSlideChange={handleSlideChange}
       >
-        {/* Welcome Card - First Slide */}
         <SwiperSlide key="welcome" className="h-full">
           <div className="h-full flex items-center justify-center p-4">
             <div className="w-full max-w-md">
@@ -285,30 +130,22 @@ export default function UserFeed({ articles }: UserFeedProps) {
           </div>
         </SwiperSlide>
 
-        {/* Article Cards */}
-        {articles.map((article) => {
-          const interaction = interactions.get(article.id);
-          const isLiked = interaction?.isLiked || false;
-          const isBookmarked = interaction?.isBookmarked || false;
-
-          return (
-            <SwiperSlide key={article.id} className="h-full">
-              <div className="h-full flex items-center justify-center p-4">
-                <div className="w-full max-w-md">
-                  <FeedCard
-                    article={article}
-                    isLiked={isLiked}
-                    isBookmarked={isBookmarked}
-                    onLike={() => handleLikeToggle(article.id)}
-                    onBookmark={() => handleBookmarkToggle(article.id)}
-                  />
-                </div>
+        {articles.map((article) => (
+          <SwiperSlide key={article.id} className="h-full">
+            <div className="h-full flex items-center justify-center p-4">
+              <div className="w-full max-w-md">
+                <FeedCard
+                  article={article}
+                  isLiked={likes.has(article.id)}
+                  isBookmarked={bookmarks.has(article.id)}
+                  onLike={() => handleLikeToggle(article.id)}
+                  onBookmark={() => handleBookmarkToggle(article.id)}
+                />
               </div>
-            </SwiperSlide>
-          );
-        })}
+            </div>
+          </SwiperSlide>
+        ))}
 
-        {/* End Card - Last Slide */}
         <SwiperSlide key="end" className="h-full">
           <div className="h-full flex items-center justify-center p-4">
             <div className="w-full max-w-md">

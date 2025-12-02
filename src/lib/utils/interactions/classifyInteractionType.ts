@@ -1,9 +1,5 @@
 import { InteractionType } from "@prisma/client";
 
-/**
- * Classifies view interaction type based on dwell time
- * Used when user doesn't explicitly like or bookmark
- */
 export function classifyViewInteractionType(
   dwellTimeMs: number
 ): InteractionType {

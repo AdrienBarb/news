@@ -77,6 +77,11 @@ export default function Navbar() {
                     News
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/bookmarks" className="cursor-pointer">
+                    Bookmarks
+                  </Link>
+                </DropdownMenuItem>
                 {isSubscriptionActive(user?.subscriptionStatus) &&
                   user?.portalUrl && (
                     <DropdownMenuItem asChild>
