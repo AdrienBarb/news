@@ -644,7 +644,7 @@ export default function OnboardingPageClient({
           <div className="flex-1 flex flex-col space-y-6">
             <div className="text-center space-y-2 mb-8">
               <h1 className="text-3xl font-bold">
-                Try 3minBrief, free for 7 days
+                Try 3mininuteBrief, free for 7 days
               </h1>
             </div>
 
@@ -657,7 +657,7 @@ export default function OnboardingPageClient({
                       NOW
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Unlock the full 3minBrief library and start learning{" "}
+                      Unlock the full 3minuteBrief library and start learning{" "}
                       <span className="font-bold">today</span>.
                     </p>
                   </div>
@@ -684,7 +684,7 @@ export default function OnboardingPageClient({
                     </p>
                     <p className="text-xs text-muted-foreground">
                       You&apos;ll be <span className="font-bold">charged</span>{" "}
-                      for 3minBrief. Cancel anytime.
+                      for 3minuteBrief. Cancel anytime.
                     </p>
                   </div>
                 </div>

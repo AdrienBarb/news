@@ -54,7 +54,7 @@ export default function Navbar() {
         <nav className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link
             href="/"
-            className="text-xl font-semibold hover:opacity-80 transition-opacity"
+            className="text-xl font-semibold hover:opacity-80 font-playfair-display transition-opacity"
           >
             {config.project.shortName || config.project.name}
           </Link>
