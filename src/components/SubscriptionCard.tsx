@@ -45,23 +45,21 @@ export default function SubscriptionCard() {
     <div className="w-full h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="aspect-[4/5] w-full rounded-lg bg-background overflow-hidden flex flex-col items-center gap-2">
-          <div className="flex-1 flex flex-col items-center justify-center border rounded-lg p-6">
+          <div className="flex-1 flex flex-col items-center justify-center p-6">
             <div className="text-center space-y-6 w-full">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold text-primary font-playfair-display">
                   Subscribe to use the app
                 </h2>
                 <p className="text-base font-bold font-archivo text-muted-foreground">
-                  Get access to personalized tech news and start your free
-                  trial today.
+                  Get access to personalized tech news and start your free trial
+                  today.
                 </p>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <div className="text-2xl font-bold mb-1">
-                    €4.99 per month
-                  </div>
+                  <div className="text-2xl font-bold mb-1">€4.99 per month</div>
                   <p className="text-sm text-muted-foreground">
                     (billed annually)
                   </p>
@@ -85,4 +83,3 @@ export default function SubscriptionCard() {
     </div>
   );
 }
-
