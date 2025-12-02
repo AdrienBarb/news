@@ -20,17 +20,14 @@ export async function extractArticleContent(url: string) {
     html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
     html = html.replace(/<link[^>]*rel=["']stylesheet["'][^>]*>/gi, "");
 
-    // Dynamically import JSDOM to avoid ESM/CommonJS compatibility issues
-    const { JSDOM } = await import("jsdom");
+    // Use linkedom instead of jsdom to avoid ESM/CommonJS compatibility issues in serverless
+    const { parseHTML } = await import("linkedom");
 
-    // Parse HTML with JSDOM using validated URL
-    const dom = new JSDOM(html, {
-      url: validatedUrl,
-      runScripts: "outside-only",
-    });
+    // Parse HTML with linkedom - returns { document, defaultView }
+    const { document } = parseHTML(html);
 
     // Extract article content using Readability
-    const reader = new Readability(dom.window.document);
+    const reader = new Readability(document);
     const article = reader.parse();
 
     if (!article?.textContent) {
