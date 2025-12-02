@@ -8,7 +8,6 @@ import FeedCard from "./FeedCard";
 import WelcomeCard from "./WelcomeCard";
 import EndCard from "./EndCard";
 import useApi from "@/lib/hooks/useApi";
-import type { Reaction } from "@/lib/types/interactions";
 import toast from "react-hot-toast";
 import { useUser } from "@/lib/hooks/useUser";
 import { isSubscriptionActive } from "@/lib/utils/subscription";
@@ -20,8 +19,10 @@ type ArticleWithTags = Article & { tags: Tag[] };
 
 interface InteractionState {
   startTime: number;
-  reaction: Reaction;
-  hasSent: boolean;
+  isLiked: boolean;
+  isBookmarked: boolean;
+  hasSentLike: boolean;
+  hasSentBookmark: boolean;
 }
 
 interface UserFeedProps {
@@ -80,25 +81,37 @@ export default function UserFeed({ articles }: UserFeedProps) {
 
   const sendInteraction = (articleId: string) => {
     const interaction = interactions.get(articleId);
-    if (!interaction || interaction.hasSent) return;
+    if (
+      !interaction ||
+      interaction.hasSentLike ||
+      interaction.hasSentBookmark
+    ) {
+      return;
+    }
 
     const dwellTimeMs = Date.now() - interaction.startTime;
-    if (dwellTimeMs > 0) {
-      setInteractions((prev) => {
-        const newMap = new Map(prev);
-        const current = newMap.get(articleId);
-        if (current) {
-          newMap.set(articleId, { ...current, hasSent: true });
-        }
-        return newMap;
-      });
+    if (dwellTimeMs <= 0) return;
 
-      sendInteractionMutation.mutate({
-        articleId,
-        dwellTimeMs,
-        reaction: interaction.reaction,
-      });
-    }
+    setInteractions((prev) => {
+      const newMap = new Map(prev);
+      const current = newMap.get(articleId);
+      if (current) {
+        newMap.set(articleId, {
+          ...current,
+          hasSentLike: true,
+          hasSentBookmark: true,
+        });
+      }
+      return newMap;
+    });
+
+    // Send single API call with both states
+    sendInteractionMutation.mutate({
+      articleId,
+      dwellTimeMs,
+      isLiked: interaction.isLiked,
+      isBookmarked: interaction.isBookmarked,
+    });
   };
 
   const handleSlideChange = (swiper: { activeIndex: number }) => {
@@ -129,14 +142,18 @@ export default function UserFeed({ articles }: UserFeedProps) {
           if (existing) {
             newMap.set(newArticleId, {
               startTime: Date.now(),
-              reaction: existing.reaction,
-              hasSent: false,
+              isLiked: existing.isLiked,
+              isBookmarked: existing.isBookmarked,
+              hasSentLike: false,
+              hasSentBookmark: false,
             });
           } else {
             newMap.set(newArticleId, {
               startTime: Date.now(),
-              reaction: null,
-              hasSent: false,
+              isLiked: false,
+              isBookmarked: false,
+              hasSentLike: false,
+              hasSentBookmark: false,
             });
           }
           return newMap;
@@ -147,15 +164,38 @@ export default function UserFeed({ articles }: UserFeedProps) {
     setActiveSlideIndex(newIndex);
   };
 
-  const handleReactionChange = (articleId: string, reaction: Reaction) => {
+  const handleLikeToggle = (articleId: string) => {
     setInteractions((prev) => {
       const newMap = new Map(prev);
       const current = newMap.get(articleId) || {
         startTime: Date.now(),
-        reaction: null,
-        hasSent: false,
+        isLiked: false,
+        isBookmarked: false,
+        hasSentLike: false,
+        hasSentBookmark: false,
       };
-      newMap.set(articleId, { ...current, reaction });
+      newMap.set(articleId, {
+        ...current,
+        isLiked: !current.isLiked,
+      });
+      return newMap;
+    });
+  };
+
+  const handleBookmarkToggle = (articleId: string) => {
+    setInteractions((prev) => {
+      const newMap = new Map(prev);
+      const current = newMap.get(articleId) || {
+        startTime: Date.now(),
+        isLiked: false,
+        isBookmarked: false,
+        hasSentLike: false,
+        hasSentBookmark: false,
+      };
+      newMap.set(articleId, {
+        ...current,
+        isBookmarked: !current.isBookmarked,
+      });
       return newMap;
     });
   };
@@ -248,7 +288,8 @@ export default function UserFeed({ articles }: UserFeedProps) {
         {/* Article Cards */}
         {articles.map((article) => {
           const interaction = interactions.get(article.id);
-          const reaction = interaction?.reaction || null;
+          const isLiked = interaction?.isLiked || false;
+          const isBookmarked = interaction?.isBookmarked || false;
 
           return (
             <SwiperSlide key={article.id} className="h-full">
@@ -256,15 +297,10 @@ export default function UserFeed({ articles }: UserFeedProps) {
                 <div className="w-full max-w-md">
                   <FeedCard
                     article={article}
-                    reaction={reaction}
-                    onThumbsUp={() => {
-                      const newReaction = reaction === "up" ? null : "up";
-                      handleReactionChange(article.id, newReaction);
-                    }}
-                    onThumbsDown={() => {
-                      const newReaction = reaction === "down" ? null : "down";
-                      handleReactionChange(article.id, newReaction);
-                    }}
+                    isLiked={isLiked}
+                    isBookmarked={isBookmarked}
+                    onLike={() => handleLikeToggle(article.id)}
+                    onBookmark={() => handleBookmarkToggle(article.id)}
                   />
                 </div>
               </div>

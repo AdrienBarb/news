@@ -1,23 +1,12 @@
-import { Reaction } from "@/lib/types/interactions";
 import { InteractionType } from "@prisma/client";
 
-interface ClassifyParams {
-  dwellTimeMs: number;
-  reaction: Reaction;
-}
-
-export function classifyInteractionType({
-  dwellTimeMs,
-  reaction,
-}: ClassifyParams): InteractionType {
-  if (reaction === "up") {
-    return InteractionType.like;
-  }
-
-  if (reaction === "down") {
-    return InteractionType.hide_topic;
-  }
-
+/**
+ * Classifies view interaction type based on dwell time
+ * Used when user doesn't explicitly like or bookmark
+ */
+export function classifyViewInteractionType(
+  dwellTimeMs: number
+): InteractionType {
   if (dwellTimeMs < 3000) {
     return InteractionType.skip_fast;
   }

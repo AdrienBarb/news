@@ -1,1 +1,1 @@
-export type Reaction = "up" | "down" | null;
+export type Reaction = "like" | "bookmark" | null;

@@ -1,81 +1,82 @@
 "use client";
 
 import type { Article, Tag } from "@prisma/client";
-import { ThumbsUp, ThumbsDown } from "lucide-react";
-import type { Reaction } from "@/lib/types/interactions";
+import { Heart, Bookmark } from "lucide-react";
 
 type ArticleWithTags = Article & { tags: Tag[] };
 
 interface FeedCardProps {
   article: ArticleWithTags;
-  reaction: Reaction;
-  onThumbsUp: () => void;
-  onThumbsDown: () => void;
+  isLiked: boolean;
+  isBookmarked: boolean;
+  onLike: () => void;
+  onBookmark: () => void;
 }
 
 export default function FeedCard({
   article,
-  reaction,
-  onThumbsUp,
-  onThumbsDown,
+  isLiked,
+  isBookmarked,
+  onLike,
+  onBookmark,
 }: FeedCardProps) {
   return (
-    <div className="aspect-[4/5] w-full rounded-lg bg-background overflow-hidden flex flex-col items-center gap-2">
-      <div className="flex-1 flex flex-col items-center border rounded-lg">
-        <div
-          className={`rounded-t-lg p-4 bg-cover bg-center bg-no-repeat ${
-            !article.imageUrl ? "bg-primary" : ""
-          }`}
-          style={{
-            backgroundImage: article.imageUrl
-              ? `url(${article.imageUrl})`
-              : undefined,
-          }}
-        >
-          <h2 className="text-2xl font-bold text-white font-playfair-display text-center">
-            {article.headline || article.title}
-          </h2>
+    <div className="w-full rounded-lg bg-white overflow-hidden flex flex-col">
+      <div className="flex flex-col">
+        <div className="relative w-full h-32 overflow-hidden rounded-lg">
+          {article.imageUrl ? (
+            <img
+              src={article.imageUrl}
+              alt={article.headline || article.title}
+              className="w-full h-full object-cover opacity-70"
+            />
+          ) : (
+            <div className="w-full h-full bg-primary" />
+          )}
         </div>
 
-        <div className="p-6 flex items-center justify-center h-full">
-          <p className="text-base font-bold font-archivo text-center">
+        <div className="p-6 flex flex-col gap-4">
+          {article.tags && article.tags.length > 0 && (
+            <span className="px-3 py-1 w-fit rounded-full bg-foreground text-white text-xs font-semibold">
+              {article.tags[0].name}
+            </span>
+          )}
+
+          <h2 className="text-2xl font-bold text-gray-900 font-playfair-display">
+            {article.headline || article.title}
+          </h2>
+
+          <p className="text-base text-gray-700 leading-relaxed">
             {article.summary}
           </p>
         </div>
       </div>
 
-      <div className="w-full flex gap-2">
+      {/* Action Buttons */}
+      <div className="w-full flex gap-3 p-4 justify-end">
         <button
-          onClick={onThumbsDown}
-          className={`flex-1 bg-white border rounded-lg p-3 flex items-center justify-center gap-2 hover:opacity-80 transition-opacity cursor-pointer ${
-            reaction === "down" ? "bg-red-50 border-red-300" : ""
+          onClick={onLike}
+          className={`w-10 h-10 rounded-full border-2 flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer ${
+            isLiked ? "border-gray-300 bg-gray-200" : "border-gray-300 bg-white"
           }`}
         >
-          <ThumbsDown
-            className="text-primary font-bold"
-            color={
-              reaction === "down"
-                ? "hsl(var(--color-destructive))"
-                : "hsl(var(--color-primary))"
-            }
-            strokeWidth={3}
+          <Heart
+            className={isLiked ? "fill-black text-black" : "text-gray-600"}
+            strokeWidth={2}
             size={20}
           />
         </button>
         <button
-          onClick={onThumbsUp}
-          className={`flex-1 bg-white border rounded-lg p-3 flex items-center justify-center gap-2 hover:opacity-80 transition-opacity cursor-pointer ${
-            reaction === "up" ? "bg-green-50 border-green-300" : ""
+          onClick={onBookmark}
+          className={`w-10 h-10 rounded-full border-2 flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer ${
+            isBookmarked
+              ? "border-gray-300 bg-gray-200"
+              : "border-gray-300 bg-white"
           }`}
         >
-          <ThumbsUp
-            className="text-primary font-bold"
-            color={
-              reaction === "up"
-                ? "hsl(var(--color-primary))"
-                : "hsl(var(--color-secondary))"
-            }
-            strokeWidth={3}
+          <Bookmark
+            className={isBookmarked ? "fill-black text-black" : "text-gray-600"}
+            strokeWidth={2}
             size={20}
           />
         </button>

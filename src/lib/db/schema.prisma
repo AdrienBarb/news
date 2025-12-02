@@ -136,9 +136,10 @@ model UserArticleInteraction {
   user    User    @relation(fields: [userId], references: [id])
   article Article @relation(fields: [articleId], references: [id])
 
-  @@unique([userId, articleId])
+  @@unique([userId, articleId, interactionType])
   @@index([userId])
   @@index([articleId])
+  @@index([userId, interactionType])
 }
 
 model DailyFeedItem {
