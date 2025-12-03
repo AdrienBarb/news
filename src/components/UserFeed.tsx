@@ -118,8 +118,8 @@ export default function UserFeed({
         onSlideChange={handleSlideChange}
       >
         <SwiperSlide key="welcome" className="h-full">
-          <div className="h-full flex items-center justify-center p-4">
-            <div className="w-full max-w-md">
+          <div className="flex items-center justify-center p-4 h-[calc(100dvh-4rem)]">
+            <div className="w-full max-w-md ">
               <WelcomeCard />
             </div>
           </div>
@@ -127,7 +127,7 @@ export default function UserFeed({
 
         {articles.map((article) => (
           <SwiperSlide key={article.id} className="h-full">
-            <div className="h-full flex items-center justify-center p-4">
+            <div className="flex items-center justify-center p-4 h-[calc(100dvh-4rem)]">
               <div className="w-full max-w-md">
                 <FeedCard
                   article={article}
@@ -142,7 +142,7 @@ export default function UserFeed({
         ))}
 
         <SwiperSlide key="end" className="h-full">
-          <div className="h-full flex items-center justify-center p-4">
+          <div className="flex items-center justify-center p-4 h-[calc(100dvh-4rem)]">
             <div className="w-full max-w-md">
               <EndCard />
             </div>
