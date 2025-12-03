@@ -2,7 +2,7 @@
 
 import type { Article, Tag } from "@prisma/client";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Mousewheel, Pagination } from "swiper/modules";
+import { Mousewheel } from "swiper/modules";
 import { useState } from "react";
 import FeedCard from "./FeedCard";
 import WelcomeCard from "./WelcomeCard";
@@ -13,7 +13,6 @@ import toast from "react-hot-toast";
 import { useUser } from "@/lib/hooks/useUser";
 import { isSubscriptionActive } from "@/lib/utils/subscription";
 import "swiper/css";
-import "swiper/css/pagination";
 
 type ArticleWithTags = Article & { tags: Tag[] };
 
@@ -88,20 +87,20 @@ export default function UserFeed({
     });
   };
 
-  if (!isSubscriptionActive(user?.subscriptionStatus)) {
-    return <SubscriptionCard />;
-  }
+  // if (!isSubscriptionActive(user?.subscriptionStatus)) {
+  //   return <SubscriptionCard />;
+  // }
 
   if (articles.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-dvh">
         <p className="text-muted-foreground text-lg">No articles available</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-screen">
+    <div className="w-full h-dvh">
       <Swiper
         direction="vertical"
         slidesPerView={1}
@@ -111,11 +110,7 @@ export default function UserFeed({
           sensitivity: 1,
           releaseOnEdges: true,
         }}
-        pagination={{
-          clickable: true,
-          dynamicBullets: true,
-        }}
-        modules={[Mousewheel, Pagination]}
+        modules={[Mousewheel]}
         className="h-full w-full"
         speed={500}
         resistance={true}

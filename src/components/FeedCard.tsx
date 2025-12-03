@@ -23,7 +23,7 @@ export default function FeedCard({
   return (
     <div className="w-full rounded-lg bg-white overflow-hidden flex flex-col">
       <div className="flex flex-col">
-        <div className="relative w-full h-32 overflow-hidden rounded-lg">
+        {/* <div className="relative w-full h-32 overflow-hidden rounded-lg">
           {article.imageUrl ? (
             <img
               src={article.imageUrl}
@@ -33,9 +33,9 @@ export default function FeedCard({
           ) : (
             <div className="w-full h-full bg-primary" />
           )}
-        </div>
+        </div> */}
 
-        <div className="p-6 flex flex-col gap-4">
+        <div className="px-4 flex flex-col gap-4">
           {article.tags && article.tags.length > 0 && (
             <span className="px-3 py-1 w-fit rounded-full bg-foreground text-white text-xs font-semibold">
               {article.tags[0].name}

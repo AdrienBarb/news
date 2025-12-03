@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQueryState } from "nuqs";
-import Link from "next/link";
+// import Link from "next/link"; // Payment step commented out
 import { authClient } from "@/lib/better-auth/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import useApi from "@/lib/hooks/useApi";
 import { cn } from "@/lib/utils";
 import { useClientPostHogEvent } from "@/lib/tracking/useClientPostHogEvent";
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 6; // Payment step (step 7) is commented out
 
 const TECH_LEVEL_OPTIONS = [
   "Beginner",
@@ -98,7 +98,7 @@ export default function OnboardingPageClient({
   const [depthPreference, setDepthPreference] = useState<string>("");
   const [dailyTime, setDailyTime] = useState<string>("");
 
-  const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
+  // const [isCreatingCheckout, setIsCreatingCheckout] = useState(false); // Payment step commented out
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -143,46 +143,49 @@ export default function OnboardingPageClient({
     }
   }, [selectedTags]);
 
-  const { mutate: createCheckoutSession } = usePost(
-    "/checkout/create-session",
-    {
-      onSuccess: (data: { url: string }) => {
-        sendEvent({
-          eventName: "onboarding_checkout_session_created",
-          properties: {
-            step: 7,
-            step_name: "payment",
-          },
-        });
-        if (data.url) {
-          window.location.href = data.url;
-        }
-      },
-      onError: (error: unknown) => {
-        const errorMessage =
-          error &&
-          typeof error === "object" &&
-          "response" in error &&
-          error.response &&
-          typeof error.response === "object" &&
-          "data" in error.response &&
-          error.response.data &&
-          typeof error.response.data === "object" &&
-          "error" in error.response.data
-            ? String(error.response.data.error)
-            : undefined;
-        toast.error(errorMessage || "Failed to create checkout session");
-        setIsCreatingCheckout(false);
-      },
-    }
-  );
+  // Payment step commented out
+  // const { mutate: createCheckoutSession } = usePost(
+  //   "/checkout/create-session",
+  //   {
+  //     onSuccess: (data: { url: string }) => {
+  //       sendEvent({
+  //         eventName: "onboarding_checkout_session_created",
+  //         properties: {
+  //           step: 7,
+  //           step_name: "payment",
+  //         },
+  //       });
+  //       if (data.url) {
+  //         window.location.href = data.url;
+  //       }
+  //     },
+  //     onError: (error: unknown) => {
+  //       const errorMessage =
+  //         error &&
+  //         typeof error === "object" &&
+  //         "response" in error &&
+  //         error.response &&
+  //         typeof error.response === "object" &&
+  //         "data" in error.response &&
+  //         error.response.data &&
+  //         typeof error.response.data === "object" &&
+  //         "error" in error.response.data
+  //           ? String(error.response.data.error)
+  //           : undefined;
+  //       toast.error(errorMessage || "Failed to create checkout session");
+  //       setIsCreatingCheckout(false);
+  //     },
+  //   }
+  // );
 
   const { mutate: saveOnboarding } = usePost("/user/onboarding", {
     onSuccess: () => {
       Object.values(STORAGE_KEYS).forEach((key) => {
         localStorage.removeItem(key);
       });
-      setStep("7");
+      // Redirect to news page instead of payment step
+      window.location.href = "/news";
+      // setStep("7"); // Payment step commented out
     },
     onError: (error: unknown) => {
       const errorMessage =
@@ -304,17 +307,18 @@ export default function OnboardingPageClient({
     handleNext();
   };
 
-  const handleActivateTrial = async () => {
-    sendEvent({
-      eventName: "onboarding_payment_initiated",
-      properties: {
-        step: 7,
-        step_name: "payment",
-      },
-    });
-    setIsCreatingCheckout(true);
-    createCheckoutSession({});
-  };
+  // Payment step commented out
+  // const handleActivateTrial = async () => {
+  //   sendEvent({
+  //     eventName: "onboarding_payment_initiated",
+  //     properties: {
+  //       step: 7,
+  //       step_name: "payment",
+  //     },
+  //   });
+  //   setIsCreatingCheckout(true);
+  //   createCheckoutSession({});
+  // };
 
   const onSubmit = async (data: SignUpFormData) => {
     setIsLoading(true);
@@ -711,7 +715,8 @@ export default function OnboardingPageClient({
           </div>
         )}
 
-        {currentStep === 7 && (
+        {/* Payment step (step 7) commented out */}
+        {/* {currentStep === 7 && (
           <div className="flex-1 flex flex-col space-y-6">
             <div className="text-center space-y-2 mb-8">
               <h1 className="text-3xl font-bold">
@@ -790,7 +795,7 @@ export default function OnboardingPageClient({
               </div>
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

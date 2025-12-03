@@ -82,14 +82,14 @@ export default function Navbar() {
                     Bookmarks
                   </Link>
                 </DropdownMenuItem>
-                {isSubscriptionActive(user?.subscriptionStatus) &&
+                {/* {isSubscriptionActive(user?.subscriptionStatus) &&
                   user?.portalUrl && (
                     <DropdownMenuItem asChild>
                       <Link href={user.portalUrl} className="cursor-pointer">
                         Manage Subscription
                       </Link>
                     </DropdownMenuItem>
-                  )}
+                  )} */}
                 <DropdownMenuItem
                   onClick={handleSignOut}
                   className="cursor-pointer"

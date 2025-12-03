@@ -21,13 +21,15 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{config.project.name}</h3>
+            <h3 className="text-lg font-semibold font-playfair-display">
+              {config.project.shortName}
+            </h3>
             <p className="text-sm text-muted-foreground">
               {config.project.description}
             </p>
           </div>
 
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <h4 className="text-sm font-semibold">Support</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
@@ -47,7 +49,7 @@ export default function Footer() {
                 </a>
               </li>
             </ul>
-          </div>
+          </div> */}
 
           {/* <div className="space-y-4">
             <h4 className="text-sm font-semibold">Connect</h4>
