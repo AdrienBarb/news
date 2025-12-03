@@ -54,8 +54,10 @@ For the new article, produce:
   - Start directly with the subject.
 
 - "tags":
-  - Choose 0–4 tags ONLY from this list: ${allowedTags.join(", ")}
+  - Choose 0–4 tags ONLY from this EXACT list: ${allowedTags.join(", ")}
+  - You MUST use the EXACT tag names as provided. Do not modify, abbreviate, or create variations.
   - If nothing fits, return [].
+  - Example: If the list contains "Science & Innovation", use exactly "Science & Innovation", not "Science", "Innovation", or "Health & Medicine".
 
 - "relevanceScore":
   - A number 1–10.

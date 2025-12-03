@@ -70,6 +70,17 @@ export const createArticle = inngest.createFunction(
 
     console.log("🚀 ~ llmResult.analysis.tags:", llmResult.analysis.tags);
 
+    // Filter tags to only include those that exist in the database
+    const validTags = llmResult.analysis.tags.filter((tagName: string) =>
+      allowedTags.includes(tagName)
+    );
+
+    if (llmResult.analysis.tags.length !== validTags.length) {
+      console.warn(
+        `⚠️ Filtered out invalid tags. Original: ${JSON.stringify(llmResult.analysis.tags)}, Valid: ${JSON.stringify(validTags)}`
+      );
+    }
+
     const saved = await step.run("save-article", async () => {
       return prisma.article.create({
         data: {
@@ -85,7 +96,7 @@ export const createArticle = inngest.createFunction(
           headline: llmResult.analysis.headline,
           relevanceScore: llmResult.analysis.relevanceScore,
           tags: {
-            connect: llmResult.analysis.tags.map((tagName: string) => ({
+            connect: validTags.map((tagName: string) => ({
               name: tagName,
             })),
           },
