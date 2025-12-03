@@ -178,7 +178,7 @@ export default function OnboardingPageClient({
   //   }
   // );
 
-  const { mutate: saveOnboarding } = usePost("/user/onboarding", {
+  const { mutate: saveOnboarding, isPending } = usePost("/user/onboarding", {
     onSuccess: () => {
       Object.values(STORAGE_KEYS).forEach((key) => {
         localStorage.removeItem(key);
@@ -705,10 +705,10 @@ export default function OnboardingPageClient({
                 <Button
                   type="submit"
                   size="lg"
-                  disabled={isLoading}
+                  disabled={isLoading || isPending}
                   className={CONTINUE_BUTTON_CLASSES}
                 >
-                  {isLoading ? "Creating Account..." : "Sign Up"}
+                  {isLoading || isPending ? "Creating Account..." : "Sign Up"}
                 </Button>
               </div>
             </form>
