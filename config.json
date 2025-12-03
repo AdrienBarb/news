@@ -1,10 +1,10 @@
 {
   "project": {
-    "name": "3 Minute Brief",
-    "shortName": "3minuteBrief",
+    "name": "The Hacker Brief",
+    "shortName": "thehackerbrief",
     "description": "Your daily 3-minute tech briefing. Stay sharp, informed, and ahead with 10 curated stories a day.",
     "tagline": "Tech Moves Fast. Stay Ahead in 3 Minutes a Day.",
-    "url": "https://3minutebrief.com",
+    "url": "https://thehackerbrief.com",
     "logo": "/logo.png",
     "favicon": "/favicon.ico"
   },
@@ -26,17 +26,17 @@
     ],
     "author": "3 Minute Brief",
     "ogImage": "/og-image.png",
-    "twitterHandle": "@3minutebrief"
+    "twitterHandle": "@thehackerbrief"
   },
   "contact": {
-    "email": "hello@3minutebrief.com",
-    "supportEmail": "support@3minutebrief.com"
+    "email": "hello@thehackerbrief.com",
+    "supportEmail": "support@thehackerbrief.com"
   },
   "social": {
-    "twitter": "https://twitter.com/3minutebrief",
+    "twitter": "https://twitter.com/thehackerbrief",
     "github": "https://github.com/yourusername",
-    "linkedin": "https://linkedin.com/company/3minutebrief",
-    "instagram": "https://instagram.com/3minutebrief",
-    "tiktok": "https://tiktok.com/@3minutebrief"
+    "linkedin": "https://linkedin.com/company/thehackerbrief",
+    "instagram": "https://instagram.com/thehackerbrief",
+    "tiktok": "https://tiktok.com/@thehackerbrief"
   }
 }

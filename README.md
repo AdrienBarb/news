@@ -296,11 +296,11 @@ npm run db:generate
     "shortName": "3minBrief",
     "description": "Your daily 3-minute tech briefing",
     "tagline": "Tech Moves Fast. Stay Ahead in 3 Minutes a Day.",
-    "url": "https://3minutebrief.com"
+    "url": "https://thehackerbrief.com"
   },
   "contact": {
-    "email": "hello@3minutebrief.com",
-    "supportEmail": "support@3minutebrief.com"
+    "email": "hello@thehackerbrief.com",
+    "supportEmail": "support@thehackerbrief.com"
   }
 }
 ```
@@ -485,10 +485,10 @@ function MyComponent() {
   "project": {
     "name": "3 Minute Brief",
     "tagline": "Tech Moves Fast. Stay Ahead in 3 Minutes a Day.",
-    "url": "https://3minutebrief.com"
+    "url": "https://thehackerbrief.com"
   },
   "contact": {
-    "email": "hello@3minutebrief.com"
+    "email": "hello@thehackerbrief.com"
   }
 }
 ```

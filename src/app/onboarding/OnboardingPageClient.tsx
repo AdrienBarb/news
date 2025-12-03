@@ -733,7 +733,7 @@ export default function OnboardingPageClient({
                       NOW
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Unlock the full 3minuteBrief library and start learning{" "}
+                      Unlock the full thehackerbrief library and start learning{" "}
                       <span className="font-bold">today</span>.
                     </p>
                   </div>
@@ -760,7 +760,7 @@ export default function OnboardingPageClient({
                     </p>
                     <p className="text-xs text-muted-foreground">
                       You&apos;ll be <span className="font-bold">charged</span>{" "}
-                      for 3minuteBrief. Cancel anytime.
+                      for thehackerbrief. Cancel anytime.
                     </p>
                   </div>
                 </div>
