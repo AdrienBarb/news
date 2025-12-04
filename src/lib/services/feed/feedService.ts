@@ -5,7 +5,7 @@ import type { Article, Tag } from "@prisma/client";
 type ArticleWithTags = Article & { tags: Tag[] };
 
 const FEED_SIZE = 10;
-const ARTICLE_LOOKBACK_DAYS = 7;
+const ARTICLE_LOOKBACK_DAYS = 1;
 const MIN_RELEVANCE_SCORE = 7;
 
 export async function getOrCreateTodayFeed(
