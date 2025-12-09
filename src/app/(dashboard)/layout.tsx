@@ -4,6 +4,9 @@ import { prisma } from "@/lib/db/prisma";
 import { isSubscriptionActive } from "@/lib/utils/subscription";
 import SubscriptionModal from "@/components/SubscriptionModal";
 import { redirect } from "next/navigation";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SiteHeader } from "@/components/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default async function DashboardLayout({
   children,
@@ -37,7 +40,24 @@ export default async function DashboardLayout({
 
   return (
     <>
-      <main className="flex-1">{children}</main>
+      <SidebarProvider
+        style={
+          {
+            "--sidebar-width": "calc(var(--spacing) * 72)",
+            "--header-height": "calc(var(--spacing) * 12)",
+          } as React.CSSProperties
+        }
+      >
+        <AppSidebar variant="inset" />
+        <SidebarInset>
+          <SiteHeader />
+          <main className="flex flex-1 flex-col">
+            <div className="@container/main flex flex-1 flex-col gap-2">
+              {children}
+            </div>
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
       {session?.user && !subscriptionActive && <SubscriptionModal />}
     </>
   );
