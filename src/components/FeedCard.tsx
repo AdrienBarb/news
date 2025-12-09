@@ -43,7 +43,7 @@ export default function FeedCard({
           )}
 
           <h2 className="text-2xl font-bold text-gray-900 font-playfair-display">
-            {article.headline || article.title}
+            {article.headline}
           </h2>
 
           <p className="text-base text-gray-700 leading-relaxed">

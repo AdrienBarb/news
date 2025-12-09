@@ -81,12 +81,10 @@ model Verification {
 
 model Article {
   id             String   @id @default(cuid())
-  title          String
-  description    String?
   link           String
   source         String?
-  content        String?
   summary        String
+  digest         String?
   imageUrl       String?
   headline       String?
   guid           String?  @unique

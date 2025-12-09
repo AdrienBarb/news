@@ -10,16 +10,12 @@ export const createArticle = inngest.createFunction(
     const { title, description, link, publishedAt, imageUrl, source, guid } =
       event.data;
 
-    console.log("🚀 ~ event.data:", event.data);
-
     if (guid) {
       const existingArticle = await step.run("check-duplicate", async () =>
         prisma.article.findFirst({
           where: { guid },
         })
       );
-
-      console.log("🚀 ~ existingArticle:", existingArticle);
 
       if (existingArticle) {
         return {
@@ -34,7 +30,7 @@ export const createArticle = inngest.createFunction(
       return prisma.article.findMany({
         orderBy: { createdAt: "desc" },
         take: 20,
-        select: { id: true, title: true, summary: true },
+        select: { id: true, headline: true, summary: true },
       });
     });
 
@@ -58,8 +54,6 @@ export const createArticle = inngest.createFunction(
       });
     });
 
-    console.log("🚀 ~ llmResult:", llmResult);
-
     if (llmResult.isDuplicate) {
       return {
         status: "skipped",
@@ -67,8 +61,6 @@ export const createArticle = inngest.createFunction(
         duplicateOfId: llmResult.duplicateOfId,
       };
     }
-
-    console.log("🚀 ~ llmResult.analysis.tags:", llmResult.analysis.tags);
 
     // Filter tags to only include those that exist in the database
     const validTags = llmResult.analysis.tags.filter((tagName: string) =>
@@ -84,15 +76,13 @@ export const createArticle = inngest.createFunction(
     const saved = await step.run("save-article", async () => {
       return prisma.article.create({
         data: {
-          title,
-          description,
-          content,
           link,
           source,
           guid: guid,
           imageUrl,
           publishedAt: publishedAt ? new Date(publishedAt) : new Date(),
           summary: llmResult.analysis.summary,
+          digest: llmResult.analysis.digest,
           headline: llmResult.analysis.headline,
           relevanceScore: llmResult.analysis.relevanceScore,
           tags: {

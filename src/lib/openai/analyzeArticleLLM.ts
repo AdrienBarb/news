@@ -4,7 +4,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
 export async function analyzeArticleWithLLM(input: {
   newArticle: { title: string; summary: string };
-  existingArticles: { id: string; title: string; summary: string }[];
+  existingArticles: { id: string; headline?: string | null; summary: string }[];
   fullContent: string;
   allowedTags: string[];
 }) {
@@ -53,6 +53,15 @@ For the new article, produce:
   - NEVER start with phrases like "The article", "This article", "This piece".
   - Start directly with the subject.
 
+- "digest":
+  - A concise but informative breakdown of the article.
+  - 3-5 short paragraphs, each 2-3 sentences.
+  - Separate each paragraph with a double newline (\\n\\n).
+  - Cover: what happened, why it matters, key details.
+  - Keep it accessible — no jargon, explain technical terms.
+  - Total length: ~150-250 words.
+  - Start directly with the subject, never with "The article" or "This piece".
+
 - "tags":
   - Choose 0–4 tags ONLY from this EXACT list: ${allowedTags.join(", ")}
   - You MUST use the EXACT tag names as provided. Do not modify, abbreviate, or create variations.
@@ -76,6 +85,7 @@ Return ONLY this JSON:
   "analysis": {
     "headline": string,
     "summary": string,
+    "digest": string,
     "tags": string[],
     "relevanceScore": number
   }
