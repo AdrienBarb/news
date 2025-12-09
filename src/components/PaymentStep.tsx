@@ -68,7 +68,11 @@ export default function PaymentStep({ onSkip }: PaymentStepProps) {
     });
     setSelectedPlan(plan);
     setIsCreatingCheckout(true);
-    createCheckoutSession({ plan });
+    createCheckoutSession({
+      plan,
+      successUrl: "/news",
+      cancelUrl: "/onboarding?step=7",
+    });
   };
 
   const features = [

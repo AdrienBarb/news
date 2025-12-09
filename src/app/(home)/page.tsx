@@ -3,7 +3,6 @@ import HeroSection from "@/components/sections/HeroSection";
 import FeaturesSection from "@/components/sections/FeaturesSection";
 import TagSelectionSection from "@/components/sections/TagSelectionSection";
 import FAQSection from "@/components/sections/FAQSection";
-import Footer from "@/components/Footer";
 import { getTags } from "@/lib/services/tags/getTags";
 import { auth } from "@/lib/better-auth/auth";
 import { getStartedUrl } from "@/lib/utils/getStartedUrl";
@@ -21,7 +20,6 @@ export default async function Home() {
       <FeaturesSection getStartedUrl={getStartedUrlValue} />
       <TagSelectionSection tags={tags} getStartedUrl={getStartedUrlValue} />
       <FAQSection />
-      <Footer />
     </div>
   );
 }

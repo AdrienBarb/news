@@ -49,7 +49,7 @@ export default function ResetPasswordModal({
     try {
       const result = await authClient.requestPasswordReset({
         email: data.email,
-        redirectTo: process.env.NEXT_PUBLIC_BASE_URL || "/",
+        redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password`,
       });
 
       if (result.error) {
