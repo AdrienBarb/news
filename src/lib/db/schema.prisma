@@ -21,10 +21,8 @@ model User {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @default(now()) @updatedAt
 
-  stripeCustomerId     String?
-  stripeSubscriptionId String?            @unique
-  subscriptionPlan     String?
-  subscriptionStatus   SubscriptionStatus @default(NONE)
+  planType        PlanType  @default(NONE)
+  accessExpiresAt DateTime?
 
   sessions                Session[]
   accounts                Account[]
@@ -169,11 +167,8 @@ enum InteractionType {
   more_like_this
 }
 
-enum SubscriptionStatus {
+enum PlanType {
   NONE
-  TRIALING
-  ACTIVE
-  PAST_DUE
-  CANCELED
-  INCOMPLETE
+  YEAR
+  LIFETIME
 }

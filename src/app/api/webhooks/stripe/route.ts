@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { addYears } from "date-fns";
 import { prisma } from "@/lib/db/prisma";
 import { stripe } from "@/lib/stripe/client";
+import { PlanType } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
   const sig = req.headers.get("stripe-signature");
@@ -30,41 +32,31 @@ export async function POST(req: NextRequest) {
 
   try {
     switch (event.type) {
-      case "customer.subscription.created": {
-        const subscription = event.data.object as Stripe.Subscription;
-        const userId = subscription.metadata?.userId;
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const userId = session.metadata?.userId;
+        const plan = session.metadata?.plan;
 
-        if (userId) {
-          await prisma.user.update({
-            where: { id: userId },
-            data: {
-              stripeCustomerId: subscription.customer as string,
-              stripeSubscriptionId: subscription.id,
-              subscriptionPlan: subscription.metadata?.planId ?? "annual",
-              subscriptionStatus: mapStripeStatusToLocal(subscription.status),
-            },
+        if (!userId || !plan) {
+          console.error("⚠️ Missing userId or plan in session metadata", {
+            userId,
+            plan,
           });
+          break;
         }
-        break;
-      }
 
-      case "customer.subscription.updated":
-      case "customer.subscription.deleted": {
-        const subscription = event.data.object as Stripe.Subscription;
-        const stripeSubscriptionId = subscription.id;
-
-        await prisma.user.updateMany({
-          where: { stripeSubscriptionId },
+        await prisma.user.update({
+          where: { id: userId },
           data: {
-            subscriptionStatus: mapStripeStatusToLocal(subscription.status),
+            planType: plan as PlanType,
+            accessExpiresAt:
+              plan === PlanType.YEAR ? addYears(new Date(), 1) : null,
           },
         });
-
         break;
       }
 
       default:
-        // ignore others for now
         break;
     }
 
@@ -72,25 +64,5 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("Webhook handler error:", err);
     return new NextResponse("Webhook handler error", { status: 500 });
-  }
-}
-
-function mapStripeStatusToLocal(
-  status: Stripe.Subscription.Status
-): "NONE" | "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELED" | "INCOMPLETE" {
-  switch (status) {
-    case "trialing":
-      return "TRIALING";
-    case "active":
-      return "ACTIVE";
-    case "past_due":
-      return "PAST_DUE";
-    case "canceled":
-      return "CANCELED";
-    case "incomplete":
-    case "incomplete_expired":
-      return "INCOMPLETE";
-    default:
-      return "NONE";
   }
 }

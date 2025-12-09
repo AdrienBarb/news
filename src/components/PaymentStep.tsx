@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { useClientPostHogEvent } from "@/lib/tracking/useClientPostHogEvent";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
+import { PlanType } from "@prisma/client";
 
 interface PaymentStepProps {
   onSkip?: () => void;
@@ -17,9 +18,7 @@ export default function PaymentStep({ onSkip }: PaymentStepProps) {
   const { usePost } = useApi();
   const { sendEvent } = useClientPostHogEvent();
   const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<
-    "annual" | "lifetime" | null
-  >(null);
+  const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
 
   const { mutate: createCheckoutSession } = usePost(
     "/checkout/create-session",
@@ -56,7 +55,7 @@ export default function PaymentStep({ onSkip }: PaymentStepProps) {
     }
   );
 
-  const handleActivateTrial = (plan: "annual" | "lifetime") => {
+  const handleActivateTrial = (plan: PlanType) => {
     if (!plan) return;
 
     sendEvent({
@@ -131,7 +130,7 @@ export default function PaymentStep({ onSkip }: PaymentStepProps) {
                 One-time payment. No subscription
               </p>
               <Button
-                onClick={() => handleActivateTrial("annual")}
+                onClick={() => handleActivateTrial(PlanType.YEAR)}
                 disabled={isCreatingCheckout}
                 className={cn(
                   "w-full font-semibold uppercase mt-auto",
@@ -165,7 +164,7 @@ export default function PaymentStep({ onSkip }: PaymentStepProps) {
                 One-time payment. No subscription
               </p>
               <Button
-                onClick={() => handleActivateTrial("lifetime")}
+                onClick={() => handleActivateTrial(PlanType.LIFETIME)}
                 disabled={isCreatingCheckout}
                 className={cn(
                   "w-full font-semibold uppercase mt-auto",

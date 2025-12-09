@@ -4,6 +4,7 @@ import { errorHandler } from "@/lib/errors/errorHandler";
 import { errorMessages } from "@/lib/constants/errorMessage";
 import { auth } from "@/lib/better-auth/auth";
 import { stripe } from "@/lib/stripe/client";
+import { PlanType } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,20 +20,14 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const plan = body.plan || "annual"; // Default to annual for backward compatibility
+    const plan = body.plan || PlanType.YEAR;
 
     let priceId: string | undefined;
-    let mode: "subscription" | "payment";
-    let planId: string;
 
-    if (plan === "lifetime") {
+    if (plan === PlanType.LIFETIME) {
       priceId = process.env.STRIPE_PRICE_ID_LIFETIME;
-      mode = "payment";
-      planId = "lifetime";
     } else {
       priceId = process.env.STRIPE_PRICE_ID_ANNUAL;
-      mode = "subscription";
-      planId = "annual";
     }
 
     if (!priceId) {
@@ -44,9 +39,8 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-    // Create Stripe Checkout Session
     const checkoutSessionParams: Stripe.Checkout.SessionCreateParams = {
-      mode,
+      mode: "payment",
       payment_method_types: ["card"],
       line_items: [
         {
@@ -57,18 +51,10 @@ export async function POST(req: NextRequest) {
       customer_email: session.user.email,
       metadata: {
         userId: session.user.id,
-        planId,
+        plan,
       },
       success_url: `${baseUrl}/news?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/onboarding?step=7`,
-      ...(mode === "subscription" && {
-        subscription_data: {
-          trial_period_days: 7,
-          metadata: {
-            userId: session.user.id,
-          },
-        },
-      }),
     };
 
     const checkoutSession = await stripe.checkout.sessions.create(
