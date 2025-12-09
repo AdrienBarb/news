@@ -137,7 +137,7 @@ export default function PaymentStep({ onSkip }: PaymentStepProps) {
                   isCreatingCheckout && "opacity-50 cursor-not-allowed"
                 )}
               >
-                {isCreatingCheckout && selectedPlan === "annual"
+                {isCreatingCheckout && selectedPlan === PlanType.YEAR
                   ? "Redirecting..."
                   : "GET 1-YEAR ACCESS"}
               </Button>
@@ -171,7 +171,7 @@ export default function PaymentStep({ onSkip }: PaymentStepProps) {
                   isCreatingCheckout && "opacity-50 cursor-not-allowed"
                 )}
               >
-                {isCreatingCheckout && selectedPlan === "lifetime"
+                {isCreatingCheckout && selectedPlan === PlanType.LIFETIME
                   ? "Redirecting..."
                   : "GET LIFETIME ACCESS"}
               </Button>
