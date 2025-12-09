@@ -18,12 +18,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Annual plan only
-    const priceId = process.env.STRIPE_PRICE_ID_ANNUAL;
+    const body = await req.json();
+    const plan = body.plan || "annual"; // Default to annual for backward compatibility
+
+    let priceId: string | undefined;
+    let mode: "subscription" | "payment";
+    let planId: string;
+
+    if (plan === "lifetime") {
+      priceId = process.env.STRIPE_PRICE_ID_LIFETIME;
+      mode = "payment";
+      planId = "lifetime";
+    } else {
+      priceId = process.env.STRIPE_PRICE_ID_ANNUAL;
+      mode = "subscription";
+      planId = "annual";
+    }
 
     if (!priceId) {
       return NextResponse.json(
-        { error: "Plan not configured" },
+        { error: `Plan not configured for ${plan}` },
         { status: 400 }
       );
     }
@@ -32,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     // Create Stripe Checkout Session
     const checkoutSessionParams: Stripe.Checkout.SessionCreateParams = {
-      mode: "subscription",
+      mode,
       payment_method_types: ["card"],
       line_items: [
         {
@@ -43,16 +57,18 @@ export async function POST(req: NextRequest) {
       customer_email: session.user.email,
       metadata: {
         userId: session.user.id,
-        planId: "annual",
+        planId,
       },
       success_url: `${baseUrl}/news?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/onboarding?step=7`,
-      subscription_data: {
-        trial_period_days: 7,
-        metadata: {
-          userId: session.user.id,
+      ...(mode === "subscription" && {
+        subscription_data: {
+          trial_period_days: 7,
+          metadata: {
+            userId: session.user.id,
+          },
         },
-      },
+      }),
     };
 
     const checkoutSession = await stripe.checkout.sessions.create(

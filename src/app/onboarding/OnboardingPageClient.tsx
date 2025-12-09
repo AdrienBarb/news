@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQueryState } from "nuqs";
-// import Link from "next/link"; // Payment step commented out
 import { authClient } from "@/lib/better-auth/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +14,9 @@ import { Eye, EyeOff } from "lucide-react";
 import useApi from "@/lib/hooks/useApi";
 import { cn } from "@/lib/utils";
 import { useClientPostHogEvent } from "@/lib/tracking/useClientPostHogEvent";
+import PaymentStep from "@/components/PaymentStep";
 
-const TOTAL_STEPS = 6; // Payment step (step 7) is commented out
+const TOTAL_STEPS = 7;
 
 const TECH_LEVEL_OPTIONS = [
   "Beginner",
@@ -98,8 +98,6 @@ export default function OnboardingPageClient({
   const [depthPreference, setDepthPreference] = useState<string>("");
   const [dailyTime, setDailyTime] = useState<string>("");
 
-  // const [isCreatingCheckout, setIsCreatingCheckout] = useState(false); // Payment step commented out
-
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -143,49 +141,12 @@ export default function OnboardingPageClient({
     }
   }, [selectedTags]);
 
-  // Payment step commented out
-  // const { mutate: createCheckoutSession } = usePost(
-  //   "/checkout/create-session",
-  //   {
-  //     onSuccess: (data: { url: string }) => {
-  //       sendEvent({
-  //         eventName: "onboarding_checkout_session_created",
-  //         properties: {
-  //           step: 7,
-  //           step_name: "payment",
-  //         },
-  //       });
-  //       if (data.url) {
-  //         window.location.href = data.url;
-  //       }
-  //     },
-  //     onError: (error: unknown) => {
-  //       const errorMessage =
-  //         error &&
-  //         typeof error === "object" &&
-  //         "response" in error &&
-  //         error.response &&
-  //         typeof error.response === "object" &&
-  //         "data" in error.response &&
-  //         error.response.data &&
-  //         typeof error.response.data === "object" &&
-  //         "error" in error.response.data
-  //           ? String(error.response.data.error)
-  //           : undefined;
-  //       toast.error(errorMessage || "Failed to create checkout session");
-  //       setIsCreatingCheckout(false);
-  //     },
-  //   }
-  // );
-
   const { mutate: saveOnboarding, isPending } = usePost("/user/onboarding", {
     onSuccess: () => {
       Object.values(STORAGE_KEYS).forEach((key) => {
         localStorage.removeItem(key);
       });
-      // Redirect to news page instead of payment step
-      window.location.href = "/news";
-      // setStep("7"); // Payment step commented out
+      setStep("7");
     },
     onError: (error: unknown) => {
       const errorMessage =
@@ -306,19 +267,6 @@ export default function OnboardingPageClient({
     }
     handleNext();
   };
-
-  // Payment step commented out
-  // const handleActivateTrial = async () => {
-  //   sendEvent({
-  //     eventName: "onboarding_payment_initiated",
-  //     properties: {
-  //       step: 7,
-  //       step_name: "payment",
-  //     },
-  //   });
-  //   setIsCreatingCheckout(true);
-  //   createCheckoutSession({});
-  // };
 
   const onSubmit = async (data: SignUpFormData) => {
     setIsLoading(true);
@@ -715,87 +663,7 @@ export default function OnboardingPageClient({
           </div>
         )}
 
-        {/* Payment step (step 7) commented out */}
-        {/* {currentStep === 7 && (
-          <div className="flex-1 flex flex-col space-y-6">
-            <div className="text-center space-y-2 mb-8">
-              <h1 className="text-3xl font-bold">
-                Try 3mininuteBrief, free for 7 days
-              </h1>
-            </div>
-
-            <div className="bg-gray-50 rounded-lg p-6 mb-6">
-              <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-                <div className="flex-1 flex flex-row items-center gap-4 sm:flex-col sm:text-center sm:gap-0">
-                  <div className=" w-4 h-4 bg-primary rounded-full mx-auto mb-2"></div>
-                  <div>
-                    <p className="text-sm font-semibold text-primary mb-1">
-                      NOW
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Unlock the full thehackerbrief library and start learning{" "}
-                      <span className="font-bold">today</span>.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex-1 flex flex-row items-center gap-4 sm:flex-col sm:text-center sm:gap-0">
-                  <div className="w-4 h-4 bg-gray-300 rounded-full mx-auto mb-2"></div>
-                  <div>
-                    <p className="text-sm font-semibold text-primary mb-1">
-                      IN 5 DAYS
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Receive a <span className="font-bold">reminder</span> that
-                      your free trial is ending.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex-1 flex flex-row items-center gap-4 sm:flex-col sm:text-center sm:gap-0">
-                  <div className="w-4 h-4 bg-gray-300 rounded-full mx-auto mb-2"></div>
-                  <div>
-                    <p className="text-sm font-semibold text-primary mb-1">
-                      IN 7 DAYS
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      You&apos;ll be <span className="font-bold">charged</span>{" "}
-                      for thehackerbrief. Cancel anytime.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-center mb-6">
-              <div className="mb-2">
-                <span className="text-2xl font-bold">€4.99 per month</span>
-              </div>
-              <p className="text-sm text-muted-foreground">(billed annually)</p>
-            </div>
-
-            <div className="space-y-4">
-              <Button
-                onClick={handleActivateTrial}
-                size="lg"
-                disabled={isCreatingCheckout}
-                className={CONTINUE_BUTTON_CLASSES}
-              >
-                {isCreatingCheckout
-                  ? "Redirecting to checkout..."
-                  : "Activate free trial"}
-              </Button>
-              <div className="text-center">
-                <Link
-                  href="/news"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Skip for now
-                </Link>
-              </div>
-            </div>
-          </div>
-        )} */}
+        {currentStep === 7 && <PaymentStep />}
       </div>
     </div>
   );
