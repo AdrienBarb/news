@@ -21,6 +21,8 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const plan = body.plan || PlanType.YEAR;
+    const successUrl = body.successUrl;
+    const cancelUrl = body.cancelUrl;
 
     let priceId: string | undefined;
 
@@ -37,8 +39,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-
     const checkoutSessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: "payment",
       payment_method_types: ["card"],
@@ -53,8 +53,8 @@ export async function POST(req: NextRequest) {
         userId: session.user.id,
         plan,
       },
-      success_url: `${baseUrl}/news?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/onboarding?step=7`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}${cancelUrl}`,
     };
 
     const checkoutSession = await stripe.checkout.sessions.create(

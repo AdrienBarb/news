@@ -4,49 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import config from "@/lib/config";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useSession, signOut } from "@/lib/better-auth/auth-client";
 import SignInModal from "@/components/SignInModal";
-import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/hooks/useUser";
-import { isSubscriptionActive } from "@/lib/utils/subscription";
 
 export default function Navbar() {
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
-  const { data: session } = useSession();
-  const router = useRouter();
   const { user } = useUser();
-
-  const handleSignOut = async () => {
-    await signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          router.push("/");
-        },
-      },
-    });
-  };
-
-  const getInitials = (name?: string | null, email?: string | null) => {
-    if (name) {
-      return name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
-    }
-    if (email) {
-      return email[0].toUpperCase();
-    }
-    return "U";
-  };
 
   return (
     <>
@@ -59,45 +22,10 @@ export default function Navbar() {
             {config.project.shortName || config.project.name}
           </Link>
 
-          {session?.user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="cursor-pointer">
-                  <Avatar className="h-8 w-8 bg-primary">
-                    <AvatarFallback className="bg-primary text-white font-medium">
-                      {getInitials(session.user.name, session.user.email)}
-                    </AvatarFallback>
-                  </Avatar>
-                </button>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent align="end" className="bg-background">
-                <DropdownMenuItem asChild>
-                  <Link href="/news" className="cursor-pointer">
-                    News
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/bookmarks" className="cursor-pointer">
-                    Bookmarks
-                  </Link>
-                </DropdownMenuItem>
-                {/* {isSubscriptionActive(user?.subscriptionStatus) &&
-                  user?.portalUrl && (
-                    <DropdownMenuItem asChild>
-                      <Link href={user.portalUrl} className="cursor-pointer">
-                        Manage Subscription
-                      </Link>
-                    </DropdownMenuItem>
-                  )} */}
-                <DropdownMenuItem
-                  onClick={handleSignOut}
-                  className="cursor-pointer"
-                >
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          {user ? (
+            <Button asChild className="cursor-pointer">
+              <Link href="/news">Launch app</Link>
+            </Button>
           ) : (
             <Button
               onClick={() => setIsSignInModalOpen(true)}

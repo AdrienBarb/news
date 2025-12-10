@@ -1,0 +1,66 @@
+import { headers } from "next/headers";
+import { auth } from "@/lib/better-auth/auth";
+import { prisma } from "@/lib/db/prisma";
+import { isSubscriptionActive } from "@/lib/utils/subscription";
+import SubscriptionModal from "@/components/SubscriptionModal";
+import { redirect } from "next/navigation";
+import { AppSidebar } from "@/components/AppSidebar";
+import { SiteHeader } from "@/components/SiteHeader";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+
+export default async function DashboardLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  let subscriptionActive = false;
+
+  if (!session?.user) {
+    redirect("/");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      planType: true,
+      accessExpiresAt: true,
+      createdAt: true,
+    },
+  });
+
+  if (user) {
+    subscriptionActive = isSubscriptionActive(
+      user.planType,
+      user.accessExpiresAt,
+      user.createdAt
+    );
+  }
+
+  return (
+    <>
+      <SidebarProvider
+        style={
+          {
+            "--sidebar-width": "calc(var(--spacing) * 72)",
+            "--header-height": "calc(var(--spacing) * 12)",
+          } as React.CSSProperties
+        }
+      >
+        <AppSidebar variant="inset" />
+        <SidebarInset>
+          <SiteHeader />
+          <main className="flex flex-1 flex-col">
+            <div className="@container/main flex flex-1 flex-col gap-2">
+              {children}
+            </div>
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+      {session?.user && !subscriptionActive && <SubscriptionModal />}
+    </>
+  );
+}
