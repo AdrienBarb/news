@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
         email: true,
         planType: true,
         accessExpiresAt: true,
+        createdAt: true,
       },
     });
 

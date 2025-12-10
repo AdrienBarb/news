@@ -1,78 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import useApi from "@/lib/hooks/useApi";
-import toast from "react-hot-toast";
 import { useClientPostHogEvent } from "@/lib/tracking/useClientPostHogEvent";
-import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { PlanType } from "@prisma/client";
+import { useRouter } from "next/navigation";
 
-interface PaymentStepProps {
-  onSkip?: () => void;
-}
-
-export default function PaymentStep({ onSkip }: PaymentStepProps) {
-  const { usePost } = useApi();
+export default function PaymentStep() {
   const { sendEvent } = useClientPostHogEvent();
-  const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
 
-  const { mutate: createCheckoutSession } = usePost(
-    "/checkout/create-session",
-    {
-      onSuccess: (data: { url: string }) => {
-        sendEvent({
-          eventName: "onboarding_checkout_session_created",
-          properties: {
-            step: 7,
-            step_name: "payment",
-            plan: selectedPlan,
-          },
-        });
-        if (data.url) {
-          window.location.href = data.url;
-        }
-      },
-      onError: (error: unknown) => {
-        const errorMessage =
-          error &&
-          typeof error === "object" &&
-          "response" in error &&
-          error.response &&
-          typeof error.response === "object" &&
-          "data" in error.response &&
-          error.response.data &&
-          typeof error.response.data === "object" &&
-          "error" in error.response.data
-            ? String(error.response.data.error)
-            : undefined;
-        toast.error(errorMessage || "Failed to create checkout session");
-        setIsCreatingCheckout(false);
-      },
-    }
-  );
-
+  const router = useRouter();
   const handleActivateTrial = (plan: PlanType) => {
     if (!plan) return;
 
     sendEvent({
-      eventName: "onboarding_payment_initiated",
+      eventName: "onboarding_trial_started",
       properties: {
-        step: 7,
-        step_name: "payment",
         plan: plan,
       },
     });
-    setSelectedPlan(plan);
-    setIsCreatingCheckout(true);
-    createCheckoutSession({
-      plan,
-      successUrl: "/news",
-      cancelUrl: "/onboarding?step=7",
-    });
+
+    router.push("/news");
   };
 
   const features = [
@@ -88,21 +36,32 @@ export default function PaymentStep({ onSkip }: PaymentStepProps) {
   return (
     <div className="flex-1 flex flex-col">
       <div className="bg-white rounded-lg border border-gray-200 p-8 shadow-sm">
-        <div className="text-center space-y-2 mb-8">
+        <div className="text-center space-y-2 mb-4">
           <h1 className="text-3xl font-bold text-black">
-            Stay sharp on tech in 3 minutes a day
+            Start your 7-day free trial
           </h1>
           <p className="text-gray-600">
-            Unlock your personal daily brief with one simple, no-subscription
-            payment.
+            Get full access to your daily tech brief for 7 days. Choose how you
+            want to continue afterward with a simple one-time payment, no
+            subscription.
           </p>
+          <p className="text-xs text-gray-500">
+            You&apos;ll only pay if you decide to continue after your 7-day
+            trial.
+          </p>
+        </div>
+
+        <div className="text-center mb-8">
+          <span className="inline-flex items-center rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 border border-green-100">
+            7-day free trial on every plan
+          </span>
         </div>
 
         <div className="flex flex-col gap-8">
           {/* Features List - Not a card */}
           <div className="text-center">
             <h2 className="text-xl font-bold text-black mb-4">
-              What you unlock
+              What you get during your trial
             </h2>
             <ul className="space-y-3">
               {features.map((feature, index) => (
@@ -119,9 +78,9 @@ export default function PaymentStep({ onSkip }: PaymentStepProps) {
 
           {/* Pricing Cards */}
           <div className="flex flex-col sm:flex-row gap-8 sm:gap-4">
-            {/* 1-Year Pass Card */}
-            <div className="flex-1 bg-gray-50 rounded-lg border border-gray-200 p-6 flex flex-col text-center">
-              <h3 className="text-lg font-semibold text-black mb-4">
+            {/* 1-Year Access Card */}
+            <div className="relative flex-1 bg-gray-50 rounded-lg border border-gray-200 p-6 flex flex-col text-center">
+              <h3 className="text-lg font-semibold text-black mb-4 mt-2">
                 1-Year Access
               </h3>
               <div className="mb-2">
@@ -131,27 +90,18 @@ export default function PaymentStep({ onSkip }: PaymentStepProps) {
                 </div>
               </div>
               <p className="text-gray-600 text-xs mb-6">
-                One-time payment. No subscription
+                After your 7-day free trial, unlock 12 months of full access
+                with a single 55€ payment. No subscription, no auto-renew.
               </p>
               <Button
                 onClick={() => handleActivateTrial(PlanType.YEAR)}
-                disabled={isCreatingCheckout}
-                className={cn(
-                  "w-full font-semibold uppercase mt-auto",
-                  isCreatingCheckout && "opacity-50 cursor-not-allowed"
-                )}
+                className="w-full font-semibold uppercase mt-auto"
               >
-                {isCreatingCheckout && selectedPlan === PlanType.YEAR
-                  ? "Redirecting..."
-                  : "GET 1-YEAR ACCESS"}
+                START 7-DAY TRIAL
               </Button>
             </div>
 
-            {/* Lifetime Deal Card */}
-            <div className="flex-1 bg-gray-50 rounded-lg border border-gray-200 p-6 flex flex-col relative text-center">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">
-                POPULAR
-              </div>
+            <div className="relative flex-1 bg-gray-50 rounded-lg border border-gray-200 p-6 flex flex-col text-center">
               <h3 className="text-lg font-semibold text-black mb-4 mt-2">
                 Lifetime Access
               </h3>
@@ -165,32 +115,18 @@ export default function PaymentStep({ onSkip }: PaymentStepProps) {
                 </div>
               </div>
               <p className="text-gray-600 text-xs mb-6">
-                One-time payment. No subscription
+                Lock in lifetime access after your 7-day free trial for a
+                one-time 95€ payment instead of 149€. No subscription, no
+                recurring fees.
               </p>
               <Button
                 onClick={() => handleActivateTrial(PlanType.LIFETIME)}
-                disabled={isCreatingCheckout}
-                className={cn(
-                  "w-full font-semibold uppercase mt-auto",
-                  isCreatingCheckout && "opacity-50 cursor-not-allowed"
-                )}
+                className="w-full font-semibold uppercase mt-auto"
               >
-                {isCreatingCheckout && selectedPlan === PlanType.LIFETIME
-                  ? "Redirecting..."
-                  : "GET LIFETIME ACCESS"}
+                START 7-DAY TRIAL
               </Button>
             </div>
           </div>
-        </div>
-
-        <div className="text-center mt-8">
-          <Link
-            href="/news"
-            onClick={onSkip}
-            className="text-sm text-gray-600 hover:text-black transition-colors"
-          >
-            Skip for now
-          </Link>
         </div>
       </div>
     </div>

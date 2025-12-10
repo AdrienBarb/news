@@ -4,8 +4,8 @@ import { prisma } from "@/lib/db/prisma";
 import { isSubscriptionActive } from "@/lib/utils/subscription";
 import SubscriptionModal from "@/components/SubscriptionModal";
 import { redirect } from "next/navigation";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
+import { AppSidebar } from "@/components/AppSidebar";
+import { SiteHeader } from "@/components/SiteHeader";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default async function DashboardLayout({
@@ -28,13 +28,15 @@ export default async function DashboardLayout({
     select: {
       planType: true,
       accessExpiresAt: true,
+      createdAt: true,
     },
   });
 
   if (user) {
     subscriptionActive = isSubscriptionActive(
       user.planType,
-      user.accessExpiresAt
+      user.accessExpiresAt,
+      user.createdAt
     );
   }
 

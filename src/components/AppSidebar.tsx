@@ -4,12 +4,14 @@ import * as React from "react";
 import {
   ArrowUpCircleIcon,
   BarChartIcon,
+  BookmarkIcon,
   CameraIcon,
   FileCodeIcon,
   FileTextIcon,
   FolderIcon,
   LayoutDashboardIcon,
   ListIcon,
+  NewspaperIcon,
   UsersIcon,
 } from "lucide-react";
 
@@ -34,29 +36,14 @@ const data = {
   },
   navMain: [
     {
-      title: "Dashboard",
-      url: "#",
-      icon: LayoutDashboardIcon,
+      title: "Feed",
+      url: "/news",
+      icon: NewspaperIcon,
     },
     {
-      title: "Lifecycle",
-      url: "#",
-      icon: ListIcon,
-    },
-    {
-      title: "Analytics",
-      url: "#",
-      icon: BarChartIcon,
-    },
-    {
-      title: "Projects",
-      url: "#",
-      icon: FolderIcon,
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: UsersIcon,
+      title: "Saved",
+      url: "/bookmarks",
+      icon: BookmarkIcon,
     },
   ],
 };

@@ -1,18 +1,11 @@
 "use client";
 
 import type { Article, Tag } from "@prisma/client";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Mousewheel } from "swiper/modules";
 import { useState } from "react";
 import FeedCard from "./FeedCard";
-import WelcomeCard from "./WelcomeCard";
-import EndCard from "./EndCard";
-import SubscriptionCard from "./SubscriptionCard";
 import useApi from "@/lib/hooks/useApi";
 import toast from "react-hot-toast";
 import { useUser } from "@/lib/hooks/useUser";
-import { isSubscriptionActive } from "@/lib/utils/subscription";
-import "swiper/css";
 
 type ArticleWithTags = Article & { tags: Tag[] };
 
@@ -42,8 +35,6 @@ export default function UserFeed({
       toast.error(errorMessage);
     },
   });
-
-  const handleSlideChange = () => {};
 
   const handleLikeToggle = (articleId: string) => {
     const isLiked = likes.has(articleId);
@@ -87,10 +78,6 @@ export default function UserFeed({
     });
   };
 
-  // if (!isSubscriptionActive(user?.subscriptionStatus)) {
-  //   return <SubscriptionCard />;
-  // }
-
   if (articles.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-dvh">
@@ -100,55 +87,17 @@ export default function UserFeed({
   }
 
   return (
-    <div className="w-full h-dvh">
-      <Swiper
-        direction="vertical"
-        slidesPerView={1}
-        spaceBetween={0}
-        mousewheel={{
-          forceToAxis: true,
-          sensitivity: 1,
-          releaseOnEdges: true,
-        }}
-        modules={[Mousewheel]}
-        className="h-full w-full"
-        speed={500}
-        resistance={true}
-        resistanceRatio={0.85}
-        onSlideChange={handleSlideChange}
-      >
-        <SwiperSlide key="welcome" className="h-full">
-          <div className="flex items-center justify-center p-4 h-[calc(100dvh-4rem)]">
-            <div className="w-full max-w-md ">
-              <WelcomeCard />
-            </div>
-          </div>
-        </SwiperSlide>
-
-        {articles.map((article) => (
-          <SwiperSlide key={article.id} className="h-full">
-            <div className="flex items-center justify-center p-4 h-[calc(100dvh-4rem)]">
-              <div className="w-full max-w-md">
-                <FeedCard
-                  article={article}
-                  isLiked={likes.has(article.id)}
-                  isBookmarked={bookmarks.has(article.id)}
-                  onLike={() => handleLikeToggle(article.id)}
-                  onBookmark={() => handleBookmarkToggle(article.id)}
-                />
-              </div>
-            </div>
-          </SwiperSlide>
-        ))}
-
-        <SwiperSlide key="end" className="h-full">
-          <div className="flex items-center justify-center p-4 h-[calc(100dvh-4rem)]">
-            <div className="w-full max-w-md">
-              <EndCard />
-            </div>
-          </div>
-        </SwiperSlide>
-      </Swiper>
+    <div className="container mx-auto p-4 flex flex-col gap-6">
+      {articles.map((article) => (
+        <FeedCard
+          key={article.id}
+          article={article}
+          isLiked={likes.has(article.id)}
+          isBookmarked={bookmarks.has(article.id)}
+          onLike={() => handleLikeToggle(article.id)}
+          onBookmark={() => handleBookmarkToggle(article.id)}
+        />
+      ))}
     </div>
   );
 }

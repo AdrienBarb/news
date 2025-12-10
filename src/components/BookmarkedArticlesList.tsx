@@ -78,25 +78,17 @@ export default function BookmarkedArticlesList({
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-2 font-playfair-display">
-        Bookmarked Articles
-      </h1>
-      <p className="text-muted-foreground mb-8">
-        {articles.length} {articles.length === 1 ? "article" : "articles"} saved
-      </p>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {articles.map((article) => (
-          <FeedCard
-            key={article.id}
-            article={article}
-            isLiked={likes.has(article.id)}
-            isBookmarked={true}
-            onLike={() => handleLikeToggle(article.id)}
-            onBookmark={() => handleBookmarkToggle(article.id)}
-          />
-        ))}
-      </div>
+    <div className="container mx-auto p-4 flex flex-col gap-6">
+      {articles.map((article) => (
+        <FeedCard
+          key={article.id}
+          article={article}
+          isLiked={likes.has(article.id)}
+          isBookmarked={true}
+          onLike={() => handleLikeToggle(article.id)}
+          onBookmark={() => handleBookmarkToggle(article.id)}
+        />
+      ))}
     </div>
   );
 }
