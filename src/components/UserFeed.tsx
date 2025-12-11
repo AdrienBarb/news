@@ -87,7 +87,7 @@ export default function UserFeed({
   }
 
   return (
-    <div className="container mx-auto p-4 flex flex-col gap-6">
+    <div className="mx-auto p-4 flex flex-col gap-6">
       {articles.map((article) => (
         <FeedCard
           key={article.id}

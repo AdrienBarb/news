@@ -1,7 +1,7 @@
 "use client";
 
 import type { Article, Tag } from "@prisma/client";
-import { Heart, Bookmark } from "lucide-react";
+import { Heart, Bookmark, ExternalLink } from "lucide-react";
 
 type ArticleWithTags = Article & { tags: Tag[] };
 
@@ -21,19 +21,7 @@ export default function FeedCard({
   onBookmark,
 }: FeedCardProps) {
   return (
-    <div className="w-full rounded-lg bg-gray-50 border border-transparent hover:border-gray-200 transition-colors overflow-hidden flex flex-col md:flex-row md:items-stretch">
-      <div className="relative w-full h-48 md:w-32 md:h-auto md:self-stretch flex-shrink-0 overflow-hidden rounded-t-lg md:rounded-l-lg">
-        {article.imageUrl ? (
-          <img
-            src={article.imageUrl}
-            alt={article.headline || ""}
-            className="w-full h-full object-cover opacity-70"
-          />
-        ) : (
-          <div className="w-full h-full bg-primary" />
-        )}
-      </div>
-
+    <div className="w-full rounded-lg bg-gray-50 border border-transparent hover:border-gray-200 transition-colors overflow-hidden flex flex-col">
       <div className="flex flex-col flex-1 p-4">
         <div className="flex items-center justify-between gap-4 mb-2">
           <div className="flex flex-col gap-2 flex-1">
@@ -44,8 +32,7 @@ export default function FeedCard({
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 flex-shrink-0">
+          <div className="flex gap-2 shrink-0">
             <button
               type="button"
               onClick={(e) => {
@@ -86,6 +73,21 @@ export default function FeedCard({
                 size={14}
               />
             </button>
+            <a
+              href={article.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              className="w-8 h-8 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              <ExternalLink
+                className="text-gray-600"
+                strokeWidth={2}
+                size={14}
+              />
+            </a>
           </div>
         </div>
 
