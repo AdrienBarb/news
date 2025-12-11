@@ -1,83 +1,15 @@
 "use client";
 
 import type { Article, Tag } from "@prisma/client";
-import { useState } from "react";
 import FeedCard from "./FeedCard";
-import useApi from "@/lib/hooks/useApi";
-import toast from "react-hot-toast";
-import { useUser } from "@/lib/hooks/useUser";
 
 type ArticleWithTags = Article & { tags: Tag[] };
 
 interface UserFeedProps {
   articles: ArticleWithTags[];
-  initialLikes?: string[];
-  initialBookmarks?: string[];
 }
 
-export default function UserFeed({
-  articles,
-  initialLikes = [],
-  initialBookmarks = [],
-}: UserFeedProps) {
-  const { usePost } = useApi();
-  const { user } = useUser();
-  const [likes, setLikes] = useState<Set<string>>(new Set(initialLikes));
-  const [bookmarks, setBookmarks] = useState<Set<string>>(
-    new Set(initialBookmarks)
-  );
-
-  const sendInteractionMutation = usePost("/interactions", {
-    onError: (error: unknown) => {
-      const errorMessage =
-        (error as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error || "Failed to save interaction";
-      toast.error(errorMessage);
-    },
-  });
-
-  const handleLikeToggle = (articleId: string) => {
-    const isLiked = likes.has(articleId);
-    const newLikeState = !isLiked;
-
-    setLikes((prev) => {
-      const newSet = new Set(prev);
-      if (newLikeState) {
-        newSet.add(articleId);
-      } else {
-        newSet.delete(articleId);
-      }
-      return newSet;
-    });
-
-    sendInteractionMutation.mutate({
-      articleId,
-      isLiked: newLikeState,
-      isBookmarked: bookmarks.has(articleId),
-    });
-  };
-
-  const handleBookmarkToggle = (articleId: string) => {
-    const isBookmarked = bookmarks.has(articleId);
-    const newBookmarkState = !isBookmarked;
-
-    setBookmarks((prev) => {
-      const newSet = new Set(prev);
-      if (newBookmarkState) {
-        newSet.add(articleId);
-      } else {
-        newSet.delete(articleId);
-      }
-      return newSet;
-    });
-
-    sendInteractionMutation.mutate({
-      articleId,
-      isLiked: likes.has(articleId),
-      isBookmarked: newBookmarkState,
-    });
-  };
-
+export default function UserFeed({ articles }: UserFeedProps) {
   if (articles.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-dvh">
@@ -89,14 +21,7 @@ export default function UserFeed({
   return (
     <div className="mx-auto p-4 flex flex-col gap-6">
       {articles.map((article) => (
-        <FeedCard
-          key={article.id}
-          article={article}
-          isLiked={likes.has(article.id)}
-          isBookmarked={bookmarks.has(article.id)}
-          onLike={() => handleLikeToggle(article.id)}
-          onBookmark={() => handleBookmarkToggle(article.id)}
-        />
+        <FeedCard key={article.id} article={article} />
       ))}
     </div>
   );

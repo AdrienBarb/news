@@ -9,6 +9,7 @@ import {
   FileCodeIcon,
   FileTextIcon,
   FolderIcon,
+  House,
   LayoutDashboardIcon,
   ListIcon,
   NewspaperIcon,
@@ -36,15 +37,20 @@ const data = {
   },
   navMain: [
     {
-      title: "Feed",
+      title: "Your Feed",
       url: "/news",
-      icon: NewspaperIcon,
+      icon: House,
     },
     {
-      title: "Saved",
-      url: "/bookmarks",
-      icon: BookmarkIcon,
+      title: "All Articles",
+      url: "/all-news",
+      icon: NewspaperIcon,
     },
+    // {
+    //   title: "Saved",
+    //   url: "/bookmarks",
+    //   icon: BookmarkIcon,
+    // },
   ],
 };
 

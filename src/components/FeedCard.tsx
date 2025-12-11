@@ -7,19 +7,9 @@ type ArticleWithTags = Article & { tags: Tag[] };
 
 interface FeedCardProps {
   article: ArticleWithTags;
-  isLiked: boolean;
-  isBookmarked: boolean;
-  onLike: () => void;
-  onBookmark: () => void;
 }
 
-export default function FeedCard({
-  article,
-  isLiked,
-  isBookmarked,
-  onLike,
-  onBookmark,
-}: FeedCardProps) {
+export default function FeedCard({ article }: FeedCardProps) {
   return (
     <div className="w-full rounded-lg bg-gray-50 border border-transparent hover:border-gray-200 transition-colors overflow-hidden flex flex-col">
       <div className="flex flex-col flex-1 p-4">
@@ -33,46 +23,6 @@ export default function FeedCard({
           </div>
 
           <div className="flex gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onLike();
-              }}
-              className={`w-8 h-8 rounded-full border-2 flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer ${
-                isLiked
-                  ? "border-gray-300 bg-gray-200"
-                  : "border-gray-300 bg-white"
-              }`}
-            >
-              <Heart
-                className={isLiked ? "fill-black text-black" : "text-gray-600"}
-                strokeWidth={2}
-                size={14}
-              />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onBookmark();
-              }}
-              className={`w-8 h-8 rounded-full border-2 flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer ${
-                isBookmarked
-                  ? "border-gray-300 bg-gray-200"
-                  : "border-gray-300 bg-white"
-              }`}
-            >
-              <Bookmark
-                className={
-                  isBookmarked ? "fill-black text-black" : "text-gray-600"
-                }
-                strokeWidth={2}
-                size={14}
-              />
-            </button>
             <a
               href={article.link}
               target="_blank"
