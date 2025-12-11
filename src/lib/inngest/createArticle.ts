@@ -82,7 +82,6 @@ export const createArticle = inngest.createFunction(
           imageUrl,
           publishedAt: publishedAt ? new Date(publishedAt) : new Date(),
           summary: llmResult.analysis.summary,
-          digest: llmResult.analysis.digest,
           headline: llmResult.analysis.headline,
           relevanceScore: llmResult.analysis.relevanceScore,
           tags: {
