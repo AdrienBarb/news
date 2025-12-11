@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const page = parseInt(searchParams.get("page") || "1", 10);
     const pageSize = parseInt(searchParams.get("pageSize") || "10", 10);
+    const tagFilter = searchParams.get("tag") || undefined;
 
     // Validate pagination parameters
     if (page < 1) {
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const result = await getAllArticles(page, pageSize);
+    const result = await getAllArticles(page, pageSize, tagFilter);
 
     // Fetch user interactions for the articles
     const articleIds = result.articles.map((article) => article.id);

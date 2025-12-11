@@ -4,7 +4,9 @@ import type { Article, Tag } from "@prisma/client";
 import { useEffect } from "react";
 import { useQueryState } from "nuqs";
 import FeedCard from "./FeedCard";
+import TagSelector from "./TagSelector";
 import useApi from "@/lib/hooks/useApi";
+import { cn } from "@/lib/utils";
 import {
   Pagination,
   PaginationContent,
@@ -22,6 +24,8 @@ interface AllNewsPageClientProps {
   initialPage: number;
   initialTotalPages: number;
   initialTotal: number;
+  initialTag: string | null;
+  allTags: Tag[];
 }
 
 export default function AllNewsPageClient({
@@ -29,6 +33,8 @@ export default function AllNewsPageClient({
   initialPage,
   initialTotalPages,
   initialTotal,
+  initialTag,
+  allTags,
 }: AllNewsPageClientProps) {
   const { useGet } = useApi();
   const [page, setPage] = useQueryState("page", {
@@ -40,14 +46,21 @@ export default function AllNewsPageClient({
     serialize: (value) => value || String(initialPage),
   });
 
+  const [tagParam, setTagParam] = useQueryState("tag");
+  const selectedTag = tagParam || null;
+
   const currentPage = parseInt(page || String(initialPage), 10) || 1;
 
   const { data, isLoading, error, refetch } = useGet(
     "/articles",
-    { page: currentPage, pageSize: 10 },
+    {
+      page: currentPage,
+      pageSize: 10,
+      ...(selectedTag && { tag: selectedTag }),
+    },
     {
       initialData:
-        currentPage === initialPage
+        currentPage === initialPage && selectedTag === initialTag
           ? {
               articles: initialArticles,
               page: initialPage,
@@ -60,11 +73,24 @@ export default function AllNewsPageClient({
     }
   );
 
+  const handleTagToggle = (tagName: string) => {
+    // If clicking the same tag, deselect it; otherwise select the new tag
+    const newTag = selectedTag === tagName ? null : tagName;
+    setTagParam(newTag);
+    // Reset to page 1 when tag changes
+    setPage("1");
+  };
+
+  const handleResetFilter = () => {
+    setTagParam(null);
+    setPage("1");
+  };
+
   useEffect(() => {
-    if (currentPage !== initialPage) {
+    if (currentPage !== initialPage || selectedTag !== initialTag) {
       refetch();
     }
-  }, [currentPage, initialPage, refetch]);
+  }, [currentPage, initialPage, selectedTag, initialTag, refetch]);
 
   const articles: ArticleWithTags[] = data?.articles || initialArticles;
   const totalPages = data?.totalPages || initialTotalPages;
@@ -79,7 +105,8 @@ export default function AllNewsPageClient({
 
   const renderPaginationItems = () => {
     const items: React.ReactNode[] = [];
-    const maxVisiblePages = 7;
+    // Show fewer pages on mobile - use responsive approach
+    const maxVisiblePages = 5; // Reduced from 7 for better mobile fit
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
@@ -92,19 +119,19 @@ export default function AllNewsPageClient({
       <PaginationItem key="prev">
         <PaginationPrevious
           onClick={() => handlePageChange(currentPage - 1)}
-          className={
+          className={cn(
             currentPage === 1
               ? "pointer-events-none opacity-50"
               : "cursor-pointer"
-          }
+          )}
         />
       </PaginationItem>
     );
 
-    // First page
+    // First page - hide on mobile (sm:hidden)
     if (startPage > 1) {
       items.push(
-        <PaginationItem key="1">
+        <PaginationItem key="1" className="hidden sm:block">
           <PaginationLink
             onClick={() => handlePageChange(1)}
             isActive={currentPage === 1}
@@ -115,7 +142,7 @@ export default function AllNewsPageClient({
       );
       if (startPage > 2) {
         items.push(
-          <PaginationItem key="ellipsis-start">
+          <PaginationItem key="ellipsis-start" className="hidden sm:block">
             <PaginationEllipsis />
           </PaginationItem>
         );
@@ -136,17 +163,17 @@ export default function AllNewsPageClient({
       );
     }
 
-    // Last page
+    // Last page - hide on mobile (sm:hidden)
     if (endPage < totalPages) {
       if (endPage < totalPages - 1) {
         items.push(
-          <PaginationItem key="ellipsis-end">
+          <PaginationItem key="ellipsis-end" className="hidden sm:block">
             <PaginationEllipsis />
           </PaginationItem>
         );
       }
       items.push(
-        <PaginationItem key={totalPages}>
+        <PaginationItem key={totalPages} className="hidden sm:block">
           <PaginationLink
             onClick={() => handlePageChange(totalPages)}
             isActive={currentPage === totalPages}
@@ -162,11 +189,11 @@ export default function AllNewsPageClient({
       <PaginationItem key="next">
         <PaginationNext
           onClick={() => handlePageChange(currentPage + 1)}
-          className={
+          className={cn(
             currentPage === totalPages
               ? "pointer-events-none opacity-50"
               : "cursor-pointer"
-          }
+          )}
         />
       </PaginationItem>
     );
@@ -192,9 +219,18 @@ export default function AllNewsPageClient({
     );
   }
 
+  const tagChanged = selectedTag !== initialTag;
+
   return (
-    <div className="mx-auto p-4 flex flex-col gap-6">
-      {isLoading && currentPage !== initialPage ? (
+    <div className="mx-auto p-4 flex flex-col gap-6 max-w-full">
+      <TagSelector
+        tags={allTags}
+        selectedTag={selectedTag}
+        onTagToggle={handleTagToggle}
+        onReset={handleResetFilter}
+      />
+
+      {isLoading && (currentPage !== initialPage || tagChanged) ? (
         <div className="flex items-center justify-center min-h-[400px]">
           <p className="text-muted-foreground">Loading articles...</p>
         </div>
@@ -205,10 +241,14 @@ export default function AllNewsPageClient({
           ))}
 
           {totalPages > 1 && (
-            <div className="mt-8 flex justify-center">
-              <Pagination>
-                <PaginationContent>{renderPaginationItems()}</PaginationContent>
-              </Pagination>
+            <div className="mt-8 w-full overflow-x-auto">
+              <div className="flex justify-center min-w-max mx-auto">
+                <Pagination>
+                  <PaginationContent>
+                    {renderPaginationItems()}
+                  </PaginationContent>
+                </Pagination>
+              </div>
             </div>
           )}
         </>

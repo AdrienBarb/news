@@ -1,12 +1,12 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/better-auth/auth";
 import { getAllArticles } from "@/lib/services/articles/getAllArticles";
-import { getUserInteractions } from "@/lib/services/interactions/getUserInteractions";
+import { getTags } from "@/lib/services/tags/getTags";
 import AllNewsPageClient from "@/components/AllNewsPageClient";
 import { redirect } from "next/navigation";
 
 interface PageProps {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; tag?: string }>;
 }
 
 export default async function AllNewsPage({ searchParams }: PageProps) {
@@ -21,20 +21,23 @@ export default async function AllNewsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = parseInt(params.page || "1", 10);
   const pageSize = 10;
+  const tag = params.tag || undefined;
 
   const validPage = page >= 1 ? page : 1;
 
-  const { articles, totalPages, total } = await getAllArticles(
-    validPage,
-    pageSize
-  );
+  const [articles, tags] = await Promise.all([
+    getAllArticles(validPage, pageSize, tag),
+    getTags(),
+  ]);
 
   return (
     <AllNewsPageClient
-      initialArticles={articles}
+      initialArticles={articles.articles}
       initialPage={validPage}
-      initialTotalPages={totalPages}
-      initialTotal={total}
+      initialTotalPages={articles.totalPages}
+      initialTotal={articles.total}
+      initialTag={tag || null}
+      allTags={tags}
     />
   );
 }

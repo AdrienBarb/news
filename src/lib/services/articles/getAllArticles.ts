@@ -13,12 +13,24 @@ export interface GetAllArticlesResult {
 
 export async function getAllArticles(
   page: number = 1,
-  pageSize: number = DEFAULT_PAGE_SIZE
+  pageSize: number = DEFAULT_PAGE_SIZE,
+  tagFilter?: string
 ): Promise<GetAllArticlesResult> {
   const skip = (page - 1) * pageSize;
 
+  const whereClause = tagFilter
+    ? {
+        tags: {
+          some: {
+            name: tagFilter,
+          },
+        },
+      }
+    : {};
+
   const [articles, total] = await Promise.all([
     prisma.article.findMany({
+      where: whereClause,
       skip,
       take: pageSize,
       include: {
@@ -28,7 +40,9 @@ export async function getAllArticles(
         publishedAt: "desc",
       },
     }),
-    prisma.article.count(),
+    prisma.article.count({
+      where: whereClause,
+    }),
   ]);
 
   const totalPages = Math.ceil(total / pageSize);

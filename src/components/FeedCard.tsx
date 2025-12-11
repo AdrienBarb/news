@@ -1,7 +1,8 @@
 "use client";
 
 import type { Article, Tag } from "@prisma/client";
-import { Heart, Bookmark, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import Link from "next/link";
 
 type ArticleWithTags = Article & { tags: Tag[] };
 
@@ -14,14 +15,9 @@ export default function FeedCard({ article }: FeedCardProps) {
     <div className="w-full rounded-lg bg-gray-50 border border-transparent hover:border-gray-200 transition-colors overflow-hidden flex flex-col">
       <div className="flex flex-col flex-1 p-4">
         <div className="flex items-center justify-between gap-4 mb-2">
-          <div className="flex flex-col gap-2 flex-1">
-            {article.tags && article.tags.length > 0 && (
-              <span className="px-3 py-1 w-fit rounded-full bg-foreground text-white text-xs font-semibold">
-                {article.tags[0].name}
-              </span>
-            )}
-          </div>
-
+          <h2 className="text-2xl font-bold text-gray-900 font-playfair-display mb-4">
+            {article.headline}
+          </h2>
           <div className="flex gap-2 shrink-0">
             <a
               href={article.link}
@@ -41,13 +37,23 @@ export default function FeedCard({ article }: FeedCardProps) {
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold text-gray-900 font-playfair-display mb-4">
-          {article.headline}
-        </h2>
-
-        <p className="text-base text-gray-700 leading-relaxed">
+        <p className="text-base text-gray-700 leading-relaxed mb-4">
           {article.summary}
         </p>
+
+        <div className="flex gap-2 flex-wrap">
+          {article.tags &&
+            article.tags.length > 0 &&
+            article.tags.map((tag) => (
+              <Link
+                href={`/all-news?tag=${encodeURIComponent(tag.name)}&page=1`}
+                key={tag.id}
+                className="px-3 py-1 w-fit rounded-full bg-foreground text-white text-xs font-semibold hover:opacity-80 transition-opacity"
+              >
+                {tag.name}
+              </Link>
+            ))}
+        </div>
       </div>
     </div>
   );
