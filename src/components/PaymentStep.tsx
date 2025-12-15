@@ -5,6 +5,7 @@ import { useClientPostHogEvent } from "@/lib/tracking/useClientPostHogEvent";
 import { Check } from "lucide-react";
 import { PlanType } from "@prisma/client";
 import { useRouter } from "next/navigation";
+import { TRACKING_EVENTS } from "@/lib/constants/tracking";
 
 export default function PaymentStep() {
   const { sendEvent } = useClientPostHogEvent();
@@ -14,7 +15,7 @@ export default function PaymentStep() {
     if (!plan) return;
 
     sendEvent({
-      eventName: "onboarding_trial_started",
+      eventName: TRACKING_EVENTS.ONBOARDING_TRIAL_STARTED,
       properties: {
         plan: plan,
       },

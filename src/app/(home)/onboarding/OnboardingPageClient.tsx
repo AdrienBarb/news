@@ -15,6 +15,7 @@ import useApi from "@/lib/hooks/useApi";
 import { cn } from "@/lib/utils";
 import { useClientPostHogEvent } from "@/lib/tracking/useClientPostHogEvent";
 import PaymentStep from "@/components/PaymentStep";
+import { TRACKING_EVENTS } from "@/lib/constants/tracking";
 
 const TOTAL_STEPS = 3;
 
@@ -50,7 +51,7 @@ export default function OnboardingPageClient({
   tags,
 }: OnboardingPageClientProps) {
   const { usePost } = useApi();
-  const { sendEvent } = useClientPostHogEvent();
+  const { sendEvent, sendEventOnce } = useClientPostHogEvent();
   const [step, setStep] = useQueryState("step", {
     defaultValue: "1",
     parse: (value) => value || "1",
@@ -71,6 +72,12 @@ export default function OnboardingPageClient({
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
   });
+
+  useEffect(() => {
+    sendEventOnce({
+      eventName: TRACKING_EVENTS.ONBOARDING_STARTED,
+    });
+  }, []);
 
   useEffect(() => {
     const storedTags = localStorage.getItem(STORAGE_KEYS.tags);
@@ -113,22 +120,16 @@ export default function OnboardingPageClient({
     );
   };
 
-  const handleStepContinue = () => {
-    if (currentStep === 1) {
-      if (selectedTags.length === 0) {
-        toast.error("Please select at least one tag");
-        return;
-      }
-      sendEvent({
-        eventName: "onboarding_step_completed",
-        properties: {
-          step: currentStep,
-          step_name: "tag_selection",
-          selected_tags_count: selectedTags.length,
-          selected_tags: selectedTags,
-        },
-      });
+  const handleTagsSelection = () => {
+    if (selectedTags.length === 0) {
+      toast.error("Please select at least one tag");
+      return;
     }
+
+    sendEvent({
+      eventName: TRACKING_EVENTS.ONBOARDING_TAGS_SELECTED,
+    });
+
     handleNext();
   };
 
@@ -172,13 +173,7 @@ export default function OnboardingPageClient({
       }
 
       sendEvent({
-        eventName: "onboarding_account_created",
-        properties: {
-          step: 2,
-          step_name: "account_creation",
-          email: data.email,
-          selected_tags_count: tagIds.length,
-        },
+        eventName: TRACKING_EVENTS.ONBOARDING_ACCOUNT_CREATED,
       });
 
       saveOnboarding({
@@ -251,7 +246,7 @@ export default function OnboardingPageClient({
 
             <div className="pt-4 mt-auto">
               <Button
-                onClick={handleStepContinue}
+                onClick={handleTagsSelection}
                 size="lg"
                 className={CONTINUE_BUTTON_CLASSES}
               >
