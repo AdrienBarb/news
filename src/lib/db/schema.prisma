@@ -18,6 +18,7 @@ model User {
   motivation      String?
   depthPreference String?
   dailyTime       String?
+  timezone        String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @default(now()) @updatedAt
 

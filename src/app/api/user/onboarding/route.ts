@@ -7,6 +7,7 @@ import { z } from "zod";
 
 const saveOnboardingSchema = z.object({
   tagIds: z.array(z.uuid()).optional(),
+  timezone: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -27,6 +28,21 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const validatedBody = saveOnboardingSchema.parse(body);
 
+    // Update user timezone if provided
+    const updateData: { timezone?: string } = {};
+    if (validatedBody.timezone) {
+      updateData.timezone = validatedBody.timezone;
+    }
+
+    // Update user with timezone if provided
+    if (Object.keys(updateData).length > 0) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: updateData,
+      });
+    }
+
+    // Save tag preferences if provided
     if (validatedBody.tagIds && validatedBody.tagIds.length > 0) {
       await Promise.all(
         validatedBody.tagIds.map((tagId) =>

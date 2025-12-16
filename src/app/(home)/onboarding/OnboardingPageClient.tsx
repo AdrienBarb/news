@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { useClientPostHogEvent } from "@/lib/tracking/useClientPostHogEvent";
 import PaymentStep from "@/components/PaymentStep";
 import { TRACKING_EVENTS } from "@/lib/constants/tracking";
+import { getBrowserTimezone } from "@/lib/utils/timezone";
 
 const TOTAL_STEPS = 3;
 
@@ -61,6 +62,7 @@ export default function OnboardingPageClient({
   const currentStep = parseInt(step, 10) || 1;
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [timezone, setTimezone] = useState<string>("");
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -77,6 +79,16 @@ export default function OnboardingPageClient({
     sendEventOnce({
       eventName: TRACKING_EVENTS.ONBOARDING_STARTED,
     });
+  }, []);
+
+  // Detect browser timezone on mount
+  useEffect(() => {
+    const browserTimezone = getBrowserTimezone();
+    console.log(
+      "🚀 ~ OnboardingPageClient ~ browserTimezone:",
+      browserTimezone
+    );
+    setTimezone(browserTimezone);
   }, []);
 
   useEffect(() => {
@@ -178,6 +190,7 @@ export default function OnboardingPageClient({
 
       saveOnboarding({
         tagIds: tagIds.length > 0 ? tagIds : undefined,
+        timezone: timezone || undefined,
       });
     } catch (error) {
       toast.error(
