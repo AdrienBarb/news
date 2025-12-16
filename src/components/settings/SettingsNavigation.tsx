@@ -1,7 +1,10 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { type SettingsSection, type SettingsMenuItem } from "./types";
+import {
+  type SettingsSection,
+  type SettingsMenuItem,
+} from "@/lib/types/settings";
 
 interface SettingsNavigationProps {
   items: SettingsMenuItem[];

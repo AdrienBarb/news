@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import useApi from "@/lib/hooks/useApi";
 import { useSession } from "@/lib/better-auth/auth-client";
 import toast from "react-hot-toast";
-import { type Tag } from "./types";
+import { Tag } from "@prisma/client";
 
 export function PreferenceContent() {
   const { useGet, usePost } = useApi();

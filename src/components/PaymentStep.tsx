@@ -30,8 +30,7 @@ export default function PaymentStep() {
     "Personalized feed based on your interests",
     "Noise-free experience — no clickbait, no endless scroll",
     "Save articles to read later",
-    "Weekly recap so you never miss the big moves",
-    "Search by company, topic or technology",
+    "Email newsletter so you never miss the big moves",
   ];
 
   return (
