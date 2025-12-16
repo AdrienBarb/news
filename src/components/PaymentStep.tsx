@@ -39,22 +39,22 @@ export default function PaymentStep() {
       <div className="bg-white rounded-lg border border-gray-200 p-8 shadow-sm">
         <div className="text-center space-y-2 mb-4">
           <h1 className="text-3xl font-bold text-black">
-            Start your 7-day free trial
+            Start your 14-day free trial
           </h1>
           <p className="text-gray-600">
-            Get full access to your daily tech brief for 7 days. Choose how you
+            Get full access to your daily tech brief for 14 days. Choose how you
             want to continue afterward with a simple one-time payment, no
             subscription.
           </p>
           <p className="text-xs text-gray-500">
-            You&apos;ll only pay if you decide to continue after your 7-day
+            You&apos;ll only pay if you decide to continue after your 14-day
             trial.
           </p>
         </div>
 
         <div className="text-center mb-8">
           <span className="inline-flex items-center rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 border border-green-100">
-            7-day free trial on every plan
+            14-day free trial on every plan
           </span>
         </div>
 
@@ -91,14 +91,14 @@ export default function PaymentStep() {
                 </div>
               </div>
               <p className="text-gray-600 text-xs mb-6">
-                After your 7-day free trial, unlock 12 months of full access
+                After your 14-day free trial, unlock 12 months of full access
                 with a single 55€ payment. No subscription, no auto-renew.
               </p>
               <Button
                 onClick={() => handleActivateTrial(PlanType.YEAR)}
                 className="w-full font-semibold uppercase mt-auto"
               >
-                START 7-DAY TRIAL
+                START 14-DAY TRIAL
               </Button>
             </div>
 
@@ -116,7 +116,7 @@ export default function PaymentStep() {
                 </div>
               </div>
               <p className="text-gray-600 text-xs mb-6">
-                Lock in lifetime access after your 7-day free trial for a
+                Lock in lifetime access after your 14-day free trial for a
                 one-time 95€ payment instead of 149€. No subscription, no
                 recurring fees.
               </p>
@@ -124,7 +124,7 @@ export default function PaymentStep() {
                 onClick={() => handleActivateTrial(PlanType.LIFETIME)}
                 className="w-full font-semibold uppercase mt-auto"
               >
-                START 7-DAY TRIAL
+                START 14-DAY TRIAL
               </Button>
             </div>
           </div>

@@ -1,10 +1,10 @@
 import { PlanType } from "@prisma/client";
 import { differenceInDays } from "date-fns";
 
-const TRIAL_DURATION_DAYS = 7;
+const TRIAL_DURATION_DAYS = 14;
 
 /**
- * Check if the user's trial period is still active (7 days from account creation)
+ * Check if the user's trial period is still active (14 days from account creation)
  */
 function isTrialActive(createdAt: Date | null | undefined): boolean {
   if (!createdAt) return false;
