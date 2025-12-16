@@ -9,20 +9,22 @@ generator client {
 }
 
 model User {
-  id              String   @id
-  name            String
-  email           String
-  emailVerified   Boolean  @default(false)
-  image           String?
-  techLevel       String?
-  motivation      String?
-  depthPreference String?
-  dailyTime       String?
-  timezone        String?
-  newsletterDay   String   @default("Friday")
-  newsletterTime  String   @default("09:00")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @default(now()) @updatedAt
+  id                  String    @id
+  name                String
+  email               String
+  emailVerified       Boolean   @default(false)
+  image               String?
+  techLevel           String?
+  motivation          String?
+  depthPreference     String?
+  dailyTime           String?
+  timezone            String?
+  newsletterDay       String    @default("Friday")
+  newsletterTime      String    @default("09:00")
+  nextNewsletterAtUtc DateTime?
+  lastNewsletterAtUtc DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @default(now()) @updatedAt
 
   planType        PlanType  @default(NONE)
   accessExpiresAt DateTime?
@@ -32,6 +34,7 @@ model User {
   userTagPreferences      UserTagPreference[]
   userArticleInteractions UserArticleInteraction[]
   dailyFeedItems          DailyFeedItem[]
+  newsletterSendLogs      NewsletterSendLog[]
 
   @@unique([email])
   @@map("user")
@@ -155,6 +158,18 @@ model DailyFeedItem {
 
   @@unique([userId, feedDate, articleId])
   @@index([userId, feedDate])
+}
+
+model NewsletterSendLog {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  scheduledForUtc DateTime
+  sentAtUtc       DateTime @default(now())
+
+  @@unique([userId, scheduledForUtc])
+  @@index([scheduledForUtc])
 }
 
 enum InteractionType {

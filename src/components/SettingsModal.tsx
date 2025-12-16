@@ -8,14 +8,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Settings, Mail, Globe } from "lucide-react";
-import {
-  SettingsNavigation,
-  GeneralContent,
-  PreferenceContent,
-  EmailContent,
-  type SettingsSection,
-  type SettingsMenuItem,
-} from "./settings";
+import { GeneralContent } from "@/components/settings/GeneralContent";
+import { PreferenceContent } from "@/components/settings/PreferenceContent";
+import { EmailContent } from "@/components/settings/EmailContent";
+import { SettingsSection } from "@/lib/types/settings";
+import { SettingsMenuItem } from "@/lib/types/settings";
+import { SettingsNavigation } from "./settings/SettingsNavigation";
 
 const settingsMenuItems: SettingsMenuItem[] = [
   {

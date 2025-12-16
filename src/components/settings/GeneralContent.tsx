@@ -11,7 +11,7 @@ import {
 import useApi from "@/lib/hooks/useApi";
 import { useSession } from "@/lib/better-auth/auth-client";
 import toast from "react-hot-toast";
-import { TIMEZONES } from "./constants";
+import { TIMEZONES } from "@/lib/constants/settings";
 
 export function GeneralContent() {
   const { useGet, usePut } = useApi();

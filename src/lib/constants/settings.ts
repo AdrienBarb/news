@@ -45,3 +45,6 @@ export const TIMES = [
   "19:00",
   "20:00",
 ] as const;
+
+export const DEFAULT_NEWSLETTER_DAY = "Friday";
+export const DEFAULT_NEWSLETTER_TIME = "09:00";

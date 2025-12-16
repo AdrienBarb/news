@@ -4,9 +4,10 @@ import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/better-auth/auth";
 import { z } from "zod";
-
+import { computeNextNewsletterAtUtc } from "@/lib/utils/date/computeNextNewsletterAtUtc";
+import { WEEKDAYS } from "@/lib/constants/settings";
 const updateNewsletterSettingsSchema = z.object({
-  newsletterDay: z.string().min(1, "Newsletter day is required"),
+  newsletterDay: z.enum([...WEEKDAYS]),
   newsletterTime: z.string().min(1, "Newsletter time is required"),
 });
 
@@ -57,6 +58,12 @@ export async function PUT(req: NextRequest) {
     }
 
     const userId = session.user.id;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        timezone: true,
+      },
+    });
     const body = await req.json();
     const validatedBody = updateNewsletterSettingsSchema.parse(body);
 
@@ -65,6 +72,11 @@ export async function PUT(req: NextRequest) {
       data: {
         newsletterDay: validatedBody.newsletterDay,
         newsletterTime: validatedBody.newsletterTime,
+        nextNewsletterAtUtc: computeNextNewsletterAtUtc({
+          newsletterDay: validatedBody.newsletterDay,
+          newsletterTime: validatedBody.newsletterTime,
+          timezone: user?.timezone,
+        }),
       },
     });
 

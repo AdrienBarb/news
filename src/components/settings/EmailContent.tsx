@@ -11,7 +11,7 @@ import {
 import useApi from "@/lib/hooks/useApi";
 import { useSession } from "@/lib/better-auth/auth-client";
 import toast from "react-hot-toast";
-import { WEEKDAYS, TIMES } from "./constants";
+import { WEEKDAYS, TIMES } from "@/lib/constants/settings";
 
 export function EmailContent() {
   const { useGet, usePut } = useApi();
