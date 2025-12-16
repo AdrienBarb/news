@@ -1,6 +1,6 @@
 import { type LucideIcon } from "lucide-react";
 
-export type SettingsSection = "general" | "preference" | "email";
+export type SettingsSection = "general" | "preference" | "newsletter";
 
 export interface SettingsMenuItem {
   id: SettingsSection;

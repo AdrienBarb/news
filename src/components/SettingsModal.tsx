@@ -29,8 +29,8 @@ const settingsMenuItems: SettingsMenuItem[] = [
     icon: Settings,
   },
   {
-    id: "email",
-    label: "Email",
+    id: "newsletter",
+    label: "Newsletter",
     icon: Mail,
   },
 ];
@@ -59,7 +59,7 @@ export default function SettingsModal({
         return <GeneralContent />;
       case "preference":
         return <PreferenceContent />;
-      case "email":
+      case "newsletter":
         return <EmailContent />;
       default:
         return null;

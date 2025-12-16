@@ -19,6 +19,8 @@ model User {
   depthPreference String?
   dailyTime       String?
   timezone        String?
+  newsletterDay   String   @default("Friday")
+  newsletterTime  String   @default("09:00")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @default(now()) @updatedAt
 
