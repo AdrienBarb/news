@@ -13,7 +13,7 @@ export default function SourcesSection() {
   return (
     <section className="relative py-48 overflow-hidden bg-white">
       {/* Animated Background Icons */}
-      <div className="absolute inset-0 overflow-hidden opacity-30">
+      <div className="absolute inset-0 overflow-hidden opacity-10">
         {/* Left Side Logos */}
         <div className="absolute top-[15%] left-[5%] animate-float">
           <div className="flex items-center gap-3 bg-gradient-to-br from-[#0ea5e9] to-[#06b6d4] rounded-full px-8 py-4 shadow-lg">

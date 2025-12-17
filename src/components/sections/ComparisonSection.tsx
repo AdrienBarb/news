@@ -62,12 +62,12 @@ export default function ComparisonSection() {
           <div className="space-y-4">
             {comparisons.map((item, index) => (
               <div key={index} className="grid grid-cols-2 gap-4 items-center">
-                <div className="bg-card rounded-2xl p-6 border border-border flex items-center justify-center gap-4 h-full">
+                <div className="bg-card rounded-2xl p-2 border border-border flex items-center justify-center gap-4 h-full">
                   <p className="text-muted-foreground leading-relaxed text-center">
                     {item.other}
                   </p>
                 </div>
-                <div className="bg-gradient-to-br from-background to-primary/5 rounded-2xl p-6 border-2 border-primary/20 flex items-center justify-center gap-4 h-full shadow-sm">
+                <div className="bg-gradient-to-br from-background to-primary/5 rounded-2xl p-2 border-2 border-primary/20 flex items-center justify-center gap-4 h-full shadow-sm">
                   <p className="text-foreground leading-relaxed text-center">
                     {item.us}
                   </p>

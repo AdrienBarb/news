@@ -33,12 +33,6 @@ export default function Navbar() {
               >
                 Sign In
               </Button>
-              <Button
-                asChild
-                className="bg-foreground text-background hover:bg-foreground/90"
-              >
-                <Link href="/onboarding">Get Started</Link>
-              </Button>
             </div>
           )}
         </nav>

@@ -21,9 +21,9 @@ export default function FeedCard({ article }: FeedCardProps) {
   };
 
   return (
-    <article className="relative bg-card overflow-hidden flex flex-row rounded-xl shadow-sm border border-border">
-      {/* Image Container - Left Side */}
-      <div className="relative w-72 shrink-0 overflow-hidden rounded-l-xl">
+    <article className="relative bg-card overflow-hidden flex flex-col md:flex-row rounded-xl shadow-sm border border-border">
+      {/* Image Container - Top on mobile, Left on desktop */}
+      <div className="relative w-full md:w-72 h-48 md:h-auto shrink-0 overflow-hidden rounded-t-xl md:rounded-l-xl md:rounded-tr-none">
         {article.imageUrl ? (
           <img
             src={article.imageUrl}
