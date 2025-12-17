@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Archivo, Playfair_Display } from "next/font/google";
+import { Aleo, Archivo } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import GlobalErrorHandler from "@/components/GlobalErrorHandler";
 import { QueryProviders } from "@/components/providers/QueryProviders";
@@ -10,28 +10,16 @@ import "./globals.css";
 import { genPageMetadata } from "@/lib/seo/genPageMetadata";
 import { siteMetadata } from "@/data/siteMetadata";
 
-const inter = Inter({
-  variable: "--font-inter",
+const aleo = Aleo({
+  variable: "--font-aleo",
   subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-});
-
-const selecta = Inter({
-  variable: "--font-selecta",
-  subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800"],
 });
 
 const archivo = Archivo({
   variable: "--font-archivo",
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-});
-
-const playfairDisplay = Playfair_Display({
-  variable: "--font-playfair-display",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
 export const metadata: Metadata = genPageMetadata({
@@ -47,9 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${inter.variable} ${selecta.variable} ${archivo.variable} ${playfairDisplay.variable} antialiased`}
-      >
+      <body className={`${aleo.variable} ${archivo.variable} antialiased`}>
         <NuqsAdapter>
           <QueryProviders>
             <PostHogProvider>

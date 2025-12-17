@@ -1,112 +1,99 @@
-"use client";
-
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 
 const faqs = [
   {
-    question: "What exactly do I get every day?",
+    question: "Is this just another tech news aggregator?",
     answer:
-      "You receive 10 curated tech stories—the most important news, launches, breakthroughs, and insights from across the industry. No noise, no filler, just the signal.",
+      "No. This dashboard isn't built to collect or display as much information as possible. It's built to apply judgment, decide what actually matters, explain why it matters, and intentionally leave out everything else.",
   },
   {
-    question: "How do you choose the 10 stories?",
+    question: "How is this different from Google News, Twitter, or Reddit?",
     answer:
-      "We scan hundreds of trusted sources, filter out the noise, and surface only the stories that actually matter. Everything is human-curated, not algorithmically bloated.",
+      "Those platforms are designed to keep you engaged by constantly showing what's new or popular. This dashboard is designed to give you a clear, finite view of what truly mattered, without feeds, trends, or urgency.",
   },
   {
-    question: "How long does it take to read?",
+    question: "How does the AI decide what's important?",
     answer:
-      "About 3 minutes. That's the entire point — a quick, sharp briefing you can finish before your coffee is ready.",
+      "The AI reviews tech publications, social conversations, newsletters, videos, and podcasts, then filters them based on impact, relevance, and signal rather than popularity or novelty. The goal is not coverage, but clarity.",
   },
   {
-    question: "Can I personalize the topics I care about?",
+    question: "How often is the dashboard updated?",
     answer:
-      "Yes. Choose your interests — AI, startups, engineering, product, design, VC, and more — and your daily feed adapts automatically.",
+      "It's updated continuously, but without any pressure to keep checking. You can log in whenever you want and trust that anything important will be there.",
   },
   {
-    question: "Is this a news app or a newsletter?",
+    question: "Can I customize what I see?",
     answer:
-      "Neither. This is a curated daily briefing. It's built to save you time, not give you another inbox to manage or another feed to scroll.",
+      "Yes. You can tailor the dashboard to your interests and create your own personalized brief or newsletter, with customization used to reduce noise rather than increase engagement.",
   },
   {
-    question: "Do I need to check the app at a specific time?",
+    question: "Do I need to read everything every day?",
     answer:
-      "No. Your briefing updates automatically every morning. Open it whenever works for you — the content is ready.",
+      "No. The dashboard is intentionally designed so you can scan it in a few minutes, feel informed enough, and move on with your day.",
   },
   {
-    question: "Is it free?",
+    question: "Can I listen instead of reading?",
     answer:
-      "During the early access phase, yes. Later, we'll introduce a simple premium plan for deeper insights and pro features.",
+      "Yes. Every story can be listened to using AI voice, so you can stay informed while commuting, walking, or doing something else.",
   },
   {
-    question: "Why only 10 stories?",
+    question: "Is this meant to replace all my other tech sources?",
     answer:
-      "Because more isn't better. You don't need 100 articles a day — you need the right 10. That's how you stay informed without overwhelm.",
+      "Not necessarily. Many people keep their favorite sources and use this dashboard as their primary filter to understand what actually mattered.",
   },
   {
-    question: "Who is this for?",
+    question: "Who is this built for?",
     answer:
-      "Founders, builders, developers, operators, investors, and anyone who needs to stay sharp in tech without spending hours reading.",
+      "It's built for people who care about tech but don't want to live inside it, including founders, builders, developers, and curious professionals who value clarity over completeness.",
   },
   {
-    question: "What makes this better than reading news yourself?",
+    question: "Will this increase my screen time?",
     answer:
-      "You could scan 20+ websites daily… or let us do it and get the distilled essentials in minutes. Think of it as your tech intelligence partner.",
+      "No. If it does, the product has failed. The dashboard is built to reduce usage while increasing confidence.",
   },
 ];
 
 export default function FAQSection() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-
-  const toggleFAQ = (index: number) => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
-
   return (
-    <section className="container mx-auto px-4 py-20 md:py-32">
-      <div className="mx-auto max-w-4xl">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4">Frequently Asked Questions</h2>
+    <section className="relative py-24 bg-background">
+      <div className="container mx-auto px-4">
+        <div className="max-w-4xl mx-auto text-center mb-16">
+          <h2 className="text-4xl lg:text-5xl xl:text-6xl text-foreground mb-4">
+            FAQ
+          </h2>
         </div>
 
-        <div className="space-y-4">
-          {faqs.map((faq, index) => {
-            const isOpen = openIndex === index;
-            return (
-              <div
+        <div className="max-w-3xl mx-auto">
+          <Accordion type="single" collapsible className="space-y-4">
+            {faqs.map((faq, index) => (
+              <AccordionItem
                 key={index}
-                className="border rounded-lg bg-background overflow-hidden"
+                value={`item-${index}`}
+                className="bg-card rounded-2xl border-2 border-border/50 px-6 overflow-hidden hover:border-primary/30 transition-colors"
               >
-                <button
-                  onClick={() => toggleFAQ(index)}
-                  className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-accent/50 transition-colors"
-                  type="button"
-                >
-                  <span className="font-semibold text-lg pr-4">
+                <AccordionTrigger className="hover:no-underline py-6">
+                  <span className="text-lg text-foreground text-left pr-4">
                     {faq.question}
                   </span>
-                  <ChevronDown
-                    className={cn(
-                      "h-5 w-5 shrink-0 text-muted-foreground transition-transform",
-                      isOpen && "transform rotate-180"
-                    )}
-                  />
-                </button>
-                {isOpen && (
-                  <div className="px-6 pb-4">
-                    <p className="text-muted-foreground leading-relaxed">
-                      {faq.answer}
-                    </p>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                </AccordionTrigger>
+                <AccordionContent className="pb-6">
+                  <p className="text-muted-foreground leading-relaxed">
+                    {faq.answer}
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
+
+        <div className="absolute top-20 left-10 w-32 h-32 bg-primary rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
+        <div className="absolute bottom-20 right-10 w-32 h-32 bg-secondary rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000"></div>
       </div>
     </section>
   );
 }
-
