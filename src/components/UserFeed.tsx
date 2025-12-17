@@ -19,10 +19,16 @@ export default function UserFeed({ articles }: UserFeedProps) {
   }
 
   return (
-    <div className="mx-auto p-4 flex flex-col gap-6">
-      {articles.map((article) => (
-        <FeedCard key={article.id} article={article} />
-      ))}
+    <div className="bg-card rounded-2xl shadow-lg  p-6">
+      <div className="mb-6">
+        <h2 className="text-3xl font-bold text-foreground">Articles</h2>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        {articles.map((article) => (
+          <FeedCard key={article.id} article={article} />
+        ))}
+      </div>
     </div>
   );
 }
