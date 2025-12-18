@@ -13,6 +13,13 @@ export interface SchedulePostParams {
   accountId: number;
 }
 
+export interface PublishNowPostParams {
+  workspaceId: number;
+  text: string;
+  videoUrl: string;
+  accountId: number;
+}
+
 export async function schedulePost(params: SchedulePostParams) {
   const response = await fetch(POSTSYNCER_API_URL, {
     method: "POST",
@@ -33,6 +40,40 @@ export async function schedulePost(params: SchedulePostParams) {
         time: params.time,
         timezone: params.timezone,
       },
+      accounts: [
+        {
+          id: params.accountId,
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `PostSyncer API error: ${response.status} ${response.statusText} - ${errorText}`
+    );
+  }
+
+  return await response.json();
+}
+
+export async function publishNowPost(params: PublishNowPostParams) {
+  const response = await fetch(POSTSYNCER_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.POST_SYNCER_API_KEY}`,
+    },
+    body: JSON.stringify({
+      workspace_id: params.workspaceId,
+      content: [
+        {
+          text: params.text,
+          media: [params.videoUrl],
+        },
+      ],
+      schedule_type: "publish_now",
       accounts: [
         {
           id: params.accountId,
