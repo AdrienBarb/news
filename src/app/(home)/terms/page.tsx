@@ -191,12 +191,15 @@ export default function TermsPage() {
         <section>
           <h2 className="text-2xl font-semibold mb-4">11. Contact Us</h2>
           <p className="text-muted-foreground">
-            If you have questions about these Terms, you can reach us at:{" "}
+            If you have questions about these Terms, you can reach us on
+            Telegram:{" "}
             <a
-              href={`mailto:${config.contact.email}`}
+              href={config.contact.telegramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              {config.contact.email}
+              {config.contact.telegram}
             </a>
           </p>
         </section>

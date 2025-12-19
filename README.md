@@ -300,7 +300,8 @@ npm run db:generate
   },
   "contact": {
     "email": "hello@thehackerbrief.com",
-    "supportEmail": "support@thehackerbrief.com"
+    "telegram": "@adrienbrb",
+    "telegramUrl": "https://t.me/adrienbrb"
   }
 }
 ```
@@ -454,7 +455,7 @@ The `config.json` file contains:
 
 - **Project Info**: Name, description, tagline, URLs, logos
 - **SEO**: Title, description, keywords, Open Graph settings
-- **Contact**: Email addresses
+- **Contact**: Email and Telegram contact information
 - **Social**: Social media links
 
 ### Using the Config

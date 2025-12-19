@@ -18,7 +18,7 @@ export default function PrivacyPage() {
   return (
     <div className="container mx-auto px-4 py-16 max-w-4xl">
       <h1 className="text-4xl font-bold mb-8">Privacy Policy</h1>
-      
+
       <div className="prose prose-sm max-w-none space-y-6">
         <p className="text-sm text-muted-foreground mb-8">
           Last updated: {currentDate}
@@ -26,7 +26,9 @@ export default function PrivacyPage() {
 
         <section>
           <p className="text-muted-foreground mb-4">
-            This Privacy Policy explains how {config.project.name} (&quot;we&quot;, &quot;our&quot;, &quot;the Service&quot;) collects, uses, and protects your personal information.
+            This Privacy Policy explains how {config.project.name}{" "}
+            (&quot;we&quot;, &quot;our&quot;, &quot;the Service&quot;) collects,
+            uses, and protects your personal information.
           </p>
           <p className="text-muted-foreground">
             By using our website or app, you agree to this Policy.
@@ -34,9 +36,13 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">1. Information We Collect</h2>
-          
-          <h3 className="text-xl font-semibold mb-3 mt-6">1.1 Information You Provide</h3>
+          <h2 className="text-2xl font-semibold mb-4">
+            1. Information We Collect
+          </h2>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">
+            1.1 Information You Provide
+          </h3>
           <p className="text-muted-foreground mb-2">We may collect:</p>
           <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
             <li>Email address</li>
@@ -45,8 +51,12 @@ export default function PrivacyPage() {
             <li>Account information</li>
           </ul>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">1.2 Information Collected Automatically</h3>
-          <p className="text-muted-foreground mb-2">When you use the Service, we may collect:</p>
+          <h3 className="text-xl font-semibold mb-3 mt-6">
+            1.2 Information Collected Automatically
+          </h3>
+          <p className="text-muted-foreground mb-2">
+            When you use the Service, we may collect:
+          </p>
           <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
             <li>Device information (browser type, OS)</li>
             <li>Usage data (pages viewed, time spent, interactions)</li>
@@ -55,20 +65,27 @@ export default function PrivacyPage() {
           </ul>
 
           <h3 className="text-xl font-semibold mb-3 mt-6">1.3 Optional Data</h3>
-          <p className="text-muted-foreground mb-2">If you choose to share it, we may collect:</p>
+          <p className="text-muted-foreground mb-2">
+            If you choose to share it, we may collect:
+          </p>
           <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
             <li>Your feedback or messages</li>
             <li>Survey answers</li>
             <li>Onboarding information</li>
           </ul>
           <p className="text-muted-foreground mt-4">
-            We do not collect sensitive personal data (health, political, biometric, etc.).
+            We do not collect sensitive personal data (health, political,
+            biometric, etc.).
           </p>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">2. How We Use Your Information</h2>
-          <p className="text-muted-foreground mb-2">We use your information to:</p>
+          <h2 className="text-2xl font-semibold mb-4">
+            2. How We Use Your Information
+          </h2>
+          <p className="text-muted-foreground mb-2">
+            We use your information to:
+          </p>
           <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
             <li>Provide and improve the Service</li>
             <li>Personalize your news feed</li>
@@ -96,7 +113,9 @@ export default function PrivacyPage() {
 
         <section>
           <h2 className="text-2xl font-semibold mb-4">4. Cookies & Tracking</h2>
-          <p className="text-muted-foreground mb-2">We may use cookies or similar tools to:</p>
+          <p className="text-muted-foreground mb-2">
+            We may use cookies or similar tools to:
+          </p>
           <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
             <li>Remember your preferences</li>
             <li>Measure usage and performance</li>
@@ -108,7 +127,9 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">5. Third-Party Services</h2>
+          <h2 className="text-2xl font-semibold mb-4">
+            5. Third-Party Services
+          </h2>
           <p className="text-muted-foreground mb-2">
             We may use trusted third parties to operate the Service, such as:
           </p>
@@ -119,26 +140,35 @@ export default function PrivacyPage() {
             <li>Payment providers (if applicable)</li>
           </ul>
           <p className="text-muted-foreground mt-4">
-            These providers may process personal data strictly to perform their service.
+            These providers may process personal data strictly to perform their
+            service.
           </p>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">6. Data Storage & Security</h2>
+          <h2 className="text-2xl font-semibold mb-4">
+            6. Data Storage & Security
+          </h2>
           <p className="text-muted-foreground mb-4">
-            We take reasonable technical and organizational measures to protect your data.
+            We take reasonable technical and organizational measures to protect
+            your data.
           </p>
           <p className="text-muted-foreground mb-4">
             Your data may be stored on secure servers inside or outside the EU.
           </p>
           <p className="text-muted-foreground">
-            We cannot guarantee 100% security, but we work hard to protect your information.
+            We cannot guarantee 100% security, but we work hard to protect your
+            information.
           </p>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">7. How Long We Keep Your Data</h2>
-          <p className="text-muted-foreground mb-2">We keep data only for as long as needed:</p>
+          <h2 className="text-2xl font-semibold mb-4">
+            7. How Long We Keep Your Data
+          </h2>
+          <p className="text-muted-foreground mb-2">
+            We keep data only for as long as needed:
+          </p>
           <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
             <li>Account data → until you delete your account</li>
             <li>Usage logs → short period for security and analytics</li>
@@ -163,46 +193,58 @@ export default function PrivacyPage() {
             <li>Withdraw consent at any time</li>
           </ul>
           <p className="text-muted-foreground mt-4">
-            To exercise these rights, email us at{" "}
+            To exercise these rights, contact us on Telegram:{" "}
             <a
-              href={`mailto:${config.contact.email}`}
+              href={config.contact.telegramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              {config.contact.email}
+              {config.contact.telegram}
             </a>
             .
           </p>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">9. Children&apos;s Privacy</h2>
+          <h2 className="text-2xl font-semibold mb-4">
+            9. Children&apos;s Privacy
+          </h2>
           <p className="text-muted-foreground mb-4">
-            We do not knowingly collect data from children under 13 (or under your local legal age).
+            We do not knowingly collect data from children under 13 (or under
+            your local legal age).
           </p>
           <p className="text-muted-foreground">
-            If you think a child has used the Service, contact us and we will remove the data.
+            If you think a child has used the Service, contact us and we will
+            remove the data.
           </p>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">10. Changes to This Policy</h2>
+          <h2 className="text-2xl font-semibold mb-4">
+            10. Changes to This Policy
+          </h2>
           <p className="text-muted-foreground mb-4">
             We may update this Privacy Policy from time to time.
           </p>
           <p className="text-muted-foreground">
-            If changes are significant, we will notify you through the app or email.
+            If changes are significant, we will notify you through the app or
+            email.
           </p>
         </section>
 
         <section>
           <h2 className="text-2xl font-semibold mb-4">11. Contact Us</h2>
           <p className="text-muted-foreground">
-            If you have questions about this Privacy Policy, you can reach us at:{" "}
+            If you have questions about this Privacy Policy, you can reach us on
+            Telegram:{" "}
             <a
-              href={`mailto:${config.contact.email}`}
+              href={config.contact.telegramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              {config.contact.email}
+              {config.contact.telegram}
             </a>
           </p>
         </section>
@@ -210,4 +252,3 @@ export default function PrivacyPage() {
     </div>
   );
 }
-

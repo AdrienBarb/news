@@ -1,5 +1,6 @@
 import Link from "next/link";
 import BrandLogo from "./BrandLogo";
+import config from "@/lib/config";
 
 export default function Footer() {
   return (
@@ -13,6 +14,17 @@ export default function Footer() {
             <p className="text-background/60 leading-relaxed mb-6">
               Stay informed about tech — without spending your day on it.
             </p>
+          </div>
+          <div>
+            <h3 className="text-background font-semibold mb-4">Support</h3>
+            <a
+              href={config.contact.telegramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-background/60 hover:text-secondary text-sm transition-colors block"
+            >
+              {config.contact.telegram}
+            </a>
           </div>
         </div>
 
