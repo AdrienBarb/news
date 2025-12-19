@@ -2,14 +2,12 @@ import { inngest } from "./client";
 import { prisma } from "@/lib/db/prisma";
 import { generateTweetForArticle } from "@/lib/openai/generateTweet";
 import { schedulePost } from "@/lib/postsyncer/client";
-
-// Configuration - can be moved to env vars if needed
-const POSTSYNCER_WORKSPACE_ID = 21425;
-const POSTSYNCER_ACCOUNT_ID = 3775;
-const POSTSYNCER_TIMEZONE = "Europe/Paris";
-
-// Schedule times for the 5 tweets throughout the day
-const SCHEDULE_TIMES = ["08:00", "10:00", "12:00", "14:00", "16:00"];
+import {
+  TWEET_SCHEDULE_TIMES,
+  POSTSYNCER_WORKSPACE_ID,
+  POSTSYNCER_TIMEZONE,
+  POSTSYNCER_TWEET_ACCOUNT_ID,
+} from "@/lib/constants/postSyncer";
 
 export const tweetPostAutomation = inngest.createFunction(
   { id: "tweet-post-automation" },
@@ -69,7 +67,8 @@ export const tweetPostAutomation = inngest.createFunction(
     const scheduledPosts = await Promise.all(
       tweets.map((tweet, index) =>
         step.run(`schedule-post-${tweet.articleId}`, async () => {
-          const scheduleTime = SCHEDULE_TIMES[index] || SCHEDULE_TIMES[0];
+          const scheduleTime =
+            TWEET_SCHEDULE_TIMES[index] || TWEET_SCHEDULE_TIMES[0];
 
           try {
             const result = await schedulePost({
@@ -78,7 +77,7 @@ export const tweetPostAutomation = inngest.createFunction(
               date: dateString,
               time: scheduleTime,
               timezone: POSTSYNCER_TIMEZONE,
-              accountId: POSTSYNCER_ACCOUNT_ID,
+              accountId: POSTSYNCER_TWEET_ACCOUNT_ID,
             });
 
             return {

@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { errorHandler } from "@/lib/errors/errorHandler";
 import { prisma } from "@/lib/db/prisma";
-import { publishNowPost } from "@/lib/postsyncer/client";
-
-// Configuration - can be moved to env vars if needed
-const POSTSYNCER_WORKSPACE_ID = 21425;
-const POSTSYNCER_TIKTOK_ACCOUNT_ID = 3776;
+import { schedulePost } from "@/lib/postsyncer/client";
+import {
+  POSTSYNCER_WORKSPACE_ID,
+  POSTSYNCER_TIKTOK_ACCOUNT_ID,
+  POSTSYNCER_TIMEZONE,
+  POSTSYNCER_INSTAGRAM_ACCOUNT_ID,
+} from "@/lib/constants/postSyncer";
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,6 +32,14 @@ export async function POST(req: NextRequest) {
     // Find the TikTok post by pid
     const tiktokPost = await prisma.tiktokPost.findUnique({
       where: { pid },
+      select: {
+        id: true,
+        pid: true,
+        postText: true,
+        videoUrl: true,
+        scheduledDate: true,
+        scheduledTime: true,
+      },
     });
 
     if (!tiktokPost) {
@@ -49,16 +59,44 @@ export async function POST(req: NextRequest) {
       data: { videoUrl },
     });
 
-    // Schedule the post via PostSyncer (publish immediately)
+    // Schedule the post via PostSyncer using the saved scheduled date and time
+    if (!tiktokPost.scheduledDate || !tiktokPost.scheduledTime) {
+      console.error(
+        `❌ TikTok post ${pid} missing scheduledDate or scheduledTime`
+      );
+      return NextResponse.json(
+        {
+          success: false,
+          error: "TikTok post missing scheduled date or time",
+        },
+        { status: 400 }
+      );
+    }
+
     try {
-      await publishNowPost({
+      await schedulePost({
         workspaceId: POSTSYNCER_WORKSPACE_ID,
         text: tiktokPost.postText,
-        videoUrl: videoUrl,
+        date: tiktokPost.scheduledDate,
+        time: tiktokPost.scheduledTime,
+        timezone: POSTSYNCER_TIMEZONE,
         accountId: POSTSYNCER_TIKTOK_ACCOUNT_ID,
+        videoUrl: videoUrl,
       });
 
-      console.log(`✅ TikTok post scheduled for pid: ${pid}`);
+      await schedulePost({
+        workspaceId: POSTSYNCER_WORKSPACE_ID,
+        text: tiktokPost.postText,
+        date: tiktokPost.scheduledDate,
+        time: tiktokPost.scheduledTime,
+        timezone: POSTSYNCER_TIMEZONE,
+        accountId: POSTSYNCER_INSTAGRAM_ACCOUNT_ID,
+        videoUrl: videoUrl,
+      });
+
+      console.log(
+        `✅ TikTok post scheduled for pid: ${pid} at ${tiktokPost.scheduledDate} ${tiktokPost.scheduledTime}`
+      );
     } catch (error) {
       console.error(`❌ Error scheduling TikTok post for pid ${pid}:`, error);
       // Don't fail the webhook if scheduling fails - we can retry later

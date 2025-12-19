@@ -174,14 +174,16 @@ model NewsletterSendLog {
 }
 
 model TiktokPost {
-  id        String   @id @default(cuid())
-  articleId String
-  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  pid       String   @unique
-  postText  String
-  videoUrl  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  articleId     String
+  article       Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  pid           String   @unique
+  postText      String
+  videoUrl      String?
+  scheduledDate String? // Format: "YYYY-MM-DD"
+  scheduledTime String? // Format: "HH:MM"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([pid])
   @@index([articleId])
