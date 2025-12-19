@@ -7,19 +7,20 @@ import {
   POSTSYNCER_WORKSPACE_ID,
   POSTSYNCER_TIMEZONE,
   POSTSYNCER_TWEET_ACCOUNT_ID,
+  POSTSYNCER_THREADS_ACCOUNT_ID,
 } from "@/lib/constants/postSyncer";
 
 export const tweetPostAutomation = inngest.createFunction(
   { id: "tweet-post-automation" },
   { cron: "0 6 * * *" }, // Every day at 6:00 AM
   async ({ step }) => {
-    // Fetch top 5 articles by relevance score
+    // Fetch top 10 articles by relevance score
     const articles = await step.run("fetch-top-articles", async () => {
       return prisma.article.findMany({
         orderBy: {
           relevanceScore: "desc",
         },
-        take: 5,
+        take: 10,
         select: {
           id: true,
           headline: true,
@@ -40,7 +41,7 @@ export const tweetPostAutomation = inngest.createFunction(
 
     // Generate tweets for each article
     const tweets = await Promise.all(
-      articles.map((article, index) =>
+      articles.map((article) =>
         step.run(`generate-tweet-${article.id}`, async () => {
           const tweetText = await generateTweetForArticle({
             headline: article.headline || "",
@@ -71,7 +72,7 @@ export const tweetPostAutomation = inngest.createFunction(
             TWEET_SCHEDULE_TIMES[index] || TWEET_SCHEDULE_TIMES[0];
 
           try {
-            const result = await schedulePost({
+            const tweetResult = await schedulePost({
               workspaceId: POSTSYNCER_WORKSPACE_ID,
               text: tweet.tweetText,
               date: dateString,
@@ -80,12 +81,22 @@ export const tweetPostAutomation = inngest.createFunction(
               accountId: POSTSYNCER_TWEET_ACCOUNT_ID,
             });
 
+            const threadsResult = await schedulePost({
+              workspaceId: POSTSYNCER_WORKSPACE_ID,
+              text: tweet.tweetText,
+              date: dateString,
+              time: scheduleTime,
+              timezone: POSTSYNCER_TIMEZONE,
+              accountId: POSTSYNCER_THREADS_ACCOUNT_ID,
+            });
+
             return {
               articleId: tweet.articleId,
               tweetText: tweet.tweetText,
               scheduledTime: scheduleTime,
               status: "scheduled",
-              postSyncerResult: result,
+              postSyncerTweetResult: tweetResult,
+              postSyncerThreadsResult: threadsResult,
             };
           } catch (error) {
             return {

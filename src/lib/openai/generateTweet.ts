@@ -9,31 +9,43 @@ export async function generateTweetForArticle(input: {
 }) {
   const { headline, summary } = input;
 
-  const READ_MORE_LINK = " read more on: https://www.thehackerbrief.com";
-  const MAX_TWEET_LENGTH = 250;
-  const MAX_CONTENT_LENGTH = MAX_TWEET_LENGTH - READ_MORE_LINK.length;
+  const MAX_TWEET_LENGTH = 250; // Twitter/X character limit
 
   const prompt = `
-You are a social media expert creating engaging tweets for tech news.
+You are creating professional tech news tweets for a serious tech news publication.
 
-Create a compelling tweet based on this article:
-
+Article:
 Headline: ${headline}
 Summary: ${summary}
 
-Requirements:
-- Maximum ${MAX_CONTENT_LENGTH} characters for the main tweet content (before the "read more" link)
-- End the tweet with: "${READ_MORE_LINK}"
-- Total tweet length must be exactly ${MAX_TWEET_LENGTH} characters or less
-- Do NOT include the original article link
-- Engaging and attention-grabbing
-- Make it shareable and interesting
-- Use emojis sparingly (1-2 max) if appropriate
-- Write in a conversational, engaging tone
-- Focus on the most interesting/valuable aspect of the news
-- Format: [Tweet text]${READ_MORE_LINK}
+CRITICAL REQUIREMENTS - FOLLOW EXACTLY:
+1. Format MUST be: [CATEGORY]: [text]
+2. Category must be one of: AI NEWS, SOFTWARE, TECH NEWS, SECURITY, STARTUP NEWS, BIG TECH, HARDWARE, or similar appropriate category based on the article content
+3. Determine the category based on the article content:
+   - AI/ML content → "AI NEWS"
+   - Software/apps/platforms → "SOFTWARE"
+   - Security/cybersecurity → "SECURITY"
+   - Startups/venture capital → "STARTUP NEWS"
+   - Major tech companies (Apple, Google, Microsoft, etc.) → "BIG TECH"
+   - Hardware/devices → "HARDWARE"
+   - General tech news → "TECH NEWS"
+4. Write clean, simple, professional text
+5. ABSOLUTELY NO EMOJIS - not even one emoji character
+6. ABSOLUTELY NO LINKS - no URLs, no "read more", no "learn more", no website mentions
+7. ABSOLUTELY NO CALLS TO ACTION - no "check out", no "read more", no "visit", no "click here"
+8. Maximum ${MAX_TWEET_LENGTH} characters total (including the [CATEGORY]: part)
+9. Be direct and informative
+10. Focus on the key news point
+11. Professional tone, no casual language
+12. Return ONLY the tweet text, nothing else
 
-Return ONLY the complete tweet text including the "read more" link as a plain string, no JSON, no quotes, just the tweet content.
+Example formats (these are perfect examples):
+- [AI NEWS]: OpenAI releases new GPT model with improved reasoning capabilities
+- [SOFTWARE]: Google Chrome introduces new privacy features for user data protection
+- [TECH NEWS]: Apple announces new iPhone with enhanced camera system
+- [SECURITY]: Major data breach exposes millions of user credentials
+
+Return ONLY the tweet text in the exact format [CATEGORY]: [text]. Do not include quotes, do not include any explanation, do not include any additional text. Just the tweet itself.
 `;
 
   const completion = await openai.chat.completions.create({
@@ -42,37 +54,18 @@ Return ONLY the complete tweet text including the "read more" link as a plain st
       {
         role: "system",
         content:
-          "You are a social media expert. Return only the tweet text, no additional formatting or explanation. The tweet must be exactly 200 characters or less including the 'read more' link.",
+          "You are a professional tech news writer. You MUST return ONLY the tweet text in the format [CATEGORY]: [text]. ABSOLUTELY NO emojis, NO links, NO URLs, NO call-to-actions, NO quotes around the text, NO additional formatting, NO explanations. Just the raw tweet text. Maximum 280 characters. The format must start with [CATEGORY]: followed by a space and then the text.",
       },
       {
         role: "user",
         content: prompt,
       },
     ],
-    temperature: 0.8,
-    max_tokens: 100,
+    temperature: 0.5, // Lower temperature for more consistent, rule-following output
+    max_tokens: 150,
   });
 
-  let tweetText = completion.choices[0].message.content?.trim() || "";
-
-  // Safety check: Ensure tweet doesn't exceed 200 characters
-  if (tweetText.length > MAX_TWEET_LENGTH) {
-    // If tweet doesn't end with the read more link, add it
-    if (!tweetText.endsWith(READ_MORE_LINK)) {
-      tweetText =
-        tweetText.slice(0, MAX_CONTENT_LENGTH).trim() + READ_MORE_LINK;
-    } else {
-      // If it already has the link but is too long, truncate the content part
-      const contentPart = tweetText.slice(0, -READ_MORE_LINK.length);
-      tweetText =
-        contentPart.slice(0, MAX_CONTENT_LENGTH).trim() + READ_MORE_LINK;
-    }
-  }
-
-  // Final safety check: ensure it's exactly 200 characters or less
-  if (tweetText.length > MAX_TWEET_LENGTH) {
-    tweetText = tweetText.slice(0, MAX_TWEET_LENGTH);
-  }
+  const tweetText = completion.choices[0].message.content?.trim() || "";
 
   return tweetText;
 }
