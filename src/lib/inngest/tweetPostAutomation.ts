@@ -12,7 +12,7 @@ import {
 
 export const tweetPostAutomation = inngest.createFunction(
   { id: "tweet-post-automation" },
-  { cron: "0 6 * * *" }, // Every day at 6:00 AM
+  { cron: "0 2 * * *" }, // Every day at 2:00 AM
   async ({ step }) => {
     // Fetch top 10 articles by relevance score
     const articles = await step.run("fetch-top-articles", async () => {
@@ -61,6 +61,7 @@ export const tweetPostAutomation = inngest.createFunction(
     );
 
     // Get today's date in YYYY-MM-DD format
+    // Since we run at 00:30 AM, we schedule tweets for today starting at 01:00
     const today = new Date();
     const dateString = today.toISOString().split("T")[0];
 

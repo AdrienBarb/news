@@ -2,7 +2,6 @@ export const POSTSYNCER_API_URL = "https://postsyncer.com/api/v1/posts";
 
 export const TIKTOK_SCHEDULE_TIMES = ["09:00", "19:00"];
 export const TWEET_SCHEDULE_TIMES = [
-  "00:00", // Midnight - Asia-Pacific early morning
   "03:00", // Early morning - Asia-Pacific
   "06:00", // Morning - Asia-Pacific / Europe early
   "09:00", // Morning - Europe / Americas early
