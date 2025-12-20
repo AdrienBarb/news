@@ -14,13 +14,13 @@ export const tweetPostAutomation = inngest.createFunction(
   { id: "tweet-post-automation" },
   { cron: "0 2 * * *" }, // Every day at 2:00 AM
   async ({ step }) => {
-    // Fetch top 10 articles by relevance score
+    // Fetch top 9 articles by relevance score
     const articles = await step.run("fetch-top-articles", async () => {
       return prisma.article.findMany({
         orderBy: {
           relevanceScore: "desc",
         },
-        take: 10,
+        take: 9,
         select: {
           id: true,
           headline: true,
@@ -61,7 +61,7 @@ export const tweetPostAutomation = inngest.createFunction(
     );
 
     // Get today's date in YYYY-MM-DD format
-    // Since we run at 00:30 AM, we schedule tweets for today starting at 01:00
+    // Since we run at 2:00 AM, we schedule tweets for today starting at 3:00
     const today = new Date();
     const dateString = today.toISOString().split("T")[0];
 
