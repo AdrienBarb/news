@@ -36,16 +36,16 @@ const data = {
     avatar: "/avatars/shadcn.jpg",
   },
   navMain: [
-    {
-      title: "Your Feed",
-      url: "/news",
-      icon: House,
-    },
-    {
-      title: "All Articles",
-      url: "/all-news",
-      icon: NewspaperIcon,
-    },
+    // {
+    //   title: "Your Feed",
+    //   url: "/news",
+    //   icon: House,
+    // },
+    // {
+    //   title: "All Articles",
+    //   url: "/all-news",
+    //   icon: NewspaperIcon,
+    // },
     // {
     //   title: "Saved",
     //   url: "/bookmarks",

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Star, Target } from "lucide-react";
+import { Sparkles, Star } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -84,7 +84,7 @@ export default function HeroSection({
               <div className="flex -space-x-2">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 border-2 border-background flex items-center justify-center overflow-hidden">
                   <Image
-                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop"
+                    src="/peoples/people-1.jpg"
                     alt="User"
                     width={40}
                     height={40}
@@ -93,7 +93,7 @@ export default function HeroSection({
                 </div>
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-foreground to-foreground/60 border-2 border-background flex items-center justify-center overflow-hidden">
                   <Image
-                    src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop"
+                    src="/peoples/people-2.jpg"
                     alt="User"
                     width={40}
                     height={40}
@@ -102,7 +102,7 @@ export default function HeroSection({
                 </div>
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-secondary/60 border-2 border-background flex items-center justify-center overflow-hidden">
                   <Image
-                    src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop"
+                    src="/peoples/people-3.jpg"
                     alt="User"
                     width={40}
                     height={40}
@@ -111,7 +111,7 @@ export default function HeroSection({
                 </div>
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary border-2 border-background flex items-center justify-center overflow-hidden">
                   <Image
-                    src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop"
+                    src="/peoples/people-4.jpg"
                     alt="User"
                     width={40}
                     height={40}
@@ -120,7 +120,7 @@ export default function HeroSection({
                 </div>
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-foreground to-primary border-2 border-background flex items-center justify-center overflow-hidden">
                   <Image
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop"
+                    src="/peoples/people-5.jpg"
                     alt="User"
                     width={40}
                     height={40}

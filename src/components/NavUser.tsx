@@ -81,11 +81,11 @@ export function NavUser({
             align="end"
             sideOffset={4}
           >
-            <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+            {/* <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
               <Settings />
               Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            </DropdownMenuItem> */}
+            {/* <DropdownMenuSeparator /> */}
             <DropdownMenuItem onClick={handleSignOut}>
               <LogOutIcon />
               Log out

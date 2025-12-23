@@ -19,6 +19,7 @@ import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import ResetPasswordModal from "./ResetPasswordModal";
+import { APP_ROUTER } from "@/lib/constants/appRouter";
 
 const signInSchema = z.object({
   email: z.email("Please enter a valid email address"),
@@ -53,7 +54,7 @@ export default function SignInModal({ open, onOpenChange }: SignInModalProps) {
         email: data.email,
         password: data.password,
         rememberMe: true,
-        callbackURL: "/news",
+        callbackURL: APP_ROUTER.DASHBOARD,
       });
 
       if (result.error) {
@@ -161,7 +162,7 @@ export default function SignInModal({ open, onOpenChange }: SignInModalProps) {
           <div className="text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
             <Link
-              href="/onboarding"
+              href="/signup"
               className="text-primary hover:underline font-medium"
               onClick={() => onOpenChange(false)}
             >

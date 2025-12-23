@@ -1,3 +1,5 @@
+import { APP_ROUTER } from "@/lib/constants/appRouter";
+
 export function getStartedUrl(isAuthenticated: boolean): string {
-  return isAuthenticated ? "/news" : "/onboarding";
+  return isAuthenticated ? APP_ROUTER.DASHBOARD : APP_ROUTER.SIGNUP;
 }
