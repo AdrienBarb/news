@@ -12,7 +12,7 @@ export default function BrandLogo() {
           className="aspect-square"
         />
       </div>
-      <span className="font-semibold font-aleo text-xl">TheHackerBrief</span>
+      <span className="font-semibold font-aleo text-xl">PREDIQTE</span>
     </div>
   );
 }

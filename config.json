@@ -1,15 +1,15 @@
 {
   "project": {
-    "name": "The Hacker Brief",
-    "shortName": "thehackerbrief",
+    "name": "PREDIQTE",
+    "shortName": "prediqte",
     "description": "Market intelligence for early product decisions. Validate real demand and uncover user pain before you build.",
     "tagline": "Validate Demand Before You Build.",
-    "url": "https://thehackerbrief.com",
+    "url": "https://prediqte.com",
     "logo": "/logo.png",
     "favicon": "/favicon.ico"
   },
   "seo": {
-    "title": "The Hacker Brief — Validate SaaS Demand Before You Build",
+    "title": "PREDIQTE — Validate SaaS Demand Before You Build",
     "description": "Validate SaaS ideas before you build. We analyze real market signals to uncover user pain, unmet demand, and competitor weaknesses — without guessing.",
     "keywords": [
       "market intelligence",
@@ -28,7 +28,7 @@
     "twitterHandle": "@thehackerbrief"
   },
   "contact": {
-    "email": "hello@thehackerbrief.com",
+    "email": "hello@prediqte.com",
     "telegram": "@adrienbrb",
     "telegramUrl": "https://t.me/adrienbrb"
   },
