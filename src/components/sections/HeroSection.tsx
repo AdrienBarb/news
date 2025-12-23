@@ -140,7 +140,7 @@ export default function HeroSection({
 
               {/* Text */}
               <p className="text-foreground">
-                <span className="font-semibold">5000+</span>{" "}
+                <span className="font-semibold">500+</span>{" "}
                 <span className="text-foreground/70">
                   SaaS founders finding proven problems
                 </span>
