@@ -47,7 +47,8 @@ export default function PrivacyPage() {
           <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
             <li>Email address</li>
             <li>Name or nickname</li>
-            <li>Preferences (e.g., tags you choose)</li>
+            <li>Search queries and domains you analyze</li>
+            <li>Preferences and saved insights</li>
             <li>Account information</li>
           </ul>
 
@@ -73,7 +74,23 @@ export default function PrivacyPage() {
             <li>Survey answers</li>
             <li>Onboarding information</li>
           </ul>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">
+            1.4 Public Web Signals We Analyze
+          </h3>
+          <p className="text-muted-foreground mb-2">
+            As part of our market intelligence service, we analyze publicly
+            available information from:
+          </p>
+          <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
+            <li>Public discussions, forums, and social media platforms</li>
+            <li>Public reviews and feedback</li>
+            <li>Public comparisons and market conversations</li>
+            <li>Publicly accessible web content</li>
+          </ul>
           <p className="text-muted-foreground mt-4">
+            This analysis is performed on publicly available data only. We do not
+            access private accounts, private messages, or non-public information.
             We do not collect sensitive personal data (health, political,
             biometric, etc.).
           </p>
@@ -88,7 +105,8 @@ export default function PrivacyPage() {
           </p>
           <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
             <li>Provide and improve the Service</li>
-            <li>Personalize your news feed</li>
+            <li>Generate market intelligence and insights for your queries</li>
+            <li>Personalize your experience and saved insights</li>
             <li>Send relevant notifications or updates</li>
             <li>Prevent abuse, fraud, or misuse</li>
             <li>Understand usage patterns for analytics</li>

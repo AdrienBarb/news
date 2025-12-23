@@ -8,9 +8,9 @@ import { postTikTokAutomation } from "@/lib/inngest/postTikTokWeekday";
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
-    createArticle,
-    sendNewsletter,
-    tweetPostAutomation,
-    postTikTokAutomation,
+    // createArticle,
+    // sendNewsletter,
+    // tweetPostAutomation,
+    // postTikTokAutomation,
   ],
 });

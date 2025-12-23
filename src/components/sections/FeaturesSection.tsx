@@ -1,75 +1,86 @@
-import Link from "next/link";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
+import { Search, TrendingDown, BarChart3 } from "lucide-react";
 
 const features = [
   {
-    title: "Stay informed effortlessly",
-    description:
-      "Whether you're commuting, getting ready, or between meetings, you get a clean, concise, easy-to-digest briefing every morning. One scroll, and you're up to date.",
-    image: "/stay-informed.gif",
+    icon: Search,
+    title: "Demand & Pain Detection",
+    description: "Surface the problems people actively struggle with.",
+    color: "primary",
   },
   {
-    title: "Personalized to your interests",
+    icon: TrendingDown,
+    title: "Competitive Weakness Analysis",
     description:
-      "You choose the topics that matter to you — AI, startups, product, engineering, VC, and more. Your daily briefing adapts to your taste, your industry, and your goals.",
-    image: "/personalized.gif",
+      "See where existing solutions fail users — and why they churn.",
+    color: "secondary",
   },
   {
-    title: "Build a habit of staying sharp",
+    icon: BarChart3,
+    title: "Market Signal Scoring",
     description:
-      "Staying ahead shouldn't feel like work. With a 3-minute daily rhythm and a simple streak system, you stay consistent, focused, and mentally one step ahead.",
-    image: "/build-habbit.gif",
+      "Understand which pains are real, rising, and worth building for.",
+    color: "primary",
   },
 ];
 
-interface FeaturesSectionProps {
-  getStartedUrl: string;
-}
-
-export default function FeaturesSection({
-  getStartedUrl,
-}: FeaturesSectionProps) {
+export default function FeaturesSection() {
   return (
-    <section className="container mx-auto px-4 py-20 md:py-32">
-      <div className="mx-auto max-w-6xl">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4">
-            Understand the tech world in minutes
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Skip the chaos. Your feed is distilled into the 10 tech stories that
-            actually matter — no noise, no endless scrolling, just pure signal.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="p-6 rounded-lg border bg-background hover:shadow-lg transition-shadow"
-            >
-              <div className="mb-8 flex justify-center">
-                <Image
-                  src={feature.image}
-                  alt={feature.title}
-                  width={160}
-                  height={160}
-                  className="rounded-lg"
-                />
-              </div>
-              <h3 className="text-xl font-semibold mb-3 text-center">
-                {feature.title}
-              </h3>
-              <p className="text-muted-foreground leading-relaxed text-center">
-                {feature.description}
-              </p>
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-center">
-          <Button size="lg" className="font-bold" asChild>
-            <Link href={getStartedUrl}>Get Started</Link>
-          </Button>
+    <section className="py-32 bg-background">
+      <div className="container mx-auto px-4">
+        <div className="max-w-5xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-20">
+            <h2 className="text-4xl lg:text-5xl xl:text-6xl text-foreground mb-6 leading-tight">
+              A complete market intelligence engine — without the noise.
+            </h2>
+            <p className="text-xl lg:text-2xl text-foreground/70">
+              We turn public web signals into clear market truth.
+            </p>
+          </div>
+
+          {/* Feature Grid */}
+          <div className="grid md:grid-cols-3 gap-8 mb-20">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+              const isPrimary = feature.color === "primary";
+              return (
+                <div key={index} className="text-center group">
+                  {/* Icon */}
+                  <div className="mb-6 inline-flex items-center justify-center">
+                    <div
+                      className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${
+                        isPrimary ? "bg-primary/20" : "bg-secondary/20"
+                      }`}
+                    >
+                      <Icon
+                        className={`w-8 h-8 ${
+                          isPrimary ? "text-primary" : "text-secondary"
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="space-y-3">
+                    <h3 className="text-xl lg:text-2xl text-foreground">
+                      {feature.title}
+                    </h3>
+                    <p className="text-foreground/70 leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Authority Line */}
+          <div className="text-center pt-12 border-t border-foreground/10">
+            <p className="text-lg text-foreground/60 max-w-3xl mx-auto">
+              Powered by a proprietary AI model built specifically for market
+              signal detection — not generic summaries.
+            </p>
+          </div>
         </div>
       </div>
     </section>

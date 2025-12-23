@@ -12,7 +12,7 @@ export default function Footer() {
               <BrandLogo />
             </div>
             <p className="text-background/60 leading-relaxed mb-6">
-              Stay informed about tech — without spending your day on it.
+              Validate demand before you build.
             </p>
           </div>
           <div>

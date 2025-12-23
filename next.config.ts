@@ -5,6 +5,14 @@ const nextConfig: NextConfig = {
   // jsdom is pulled in by @mozilla/readability but we use linkedom instead
   // serverExternalPackages works with both webpack and Turbopack (Next.js 16 uses Turbopack by default)
   serverExternalPackages: ["jsdom"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

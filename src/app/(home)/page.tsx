@@ -1,9 +1,10 @@
 import { headers } from "next/headers";
 import HeroSection from "@/components/sections/HeroSection";
+import PainSection from "@/components/sections/PainSection";
+import FeaturesSection from "@/components/sections/FeaturesSection";
 import FAQSection from "@/components/sections/FAQSection";
 import { auth } from "@/lib/better-auth/auth";
 import { getStartedUrl } from "@/lib/utils/getStartedUrl";
-import SourcesSection from "@/components/sections/SourcesSection";
 import ComparisonSection from "@/components/sections/ComparisonSection";
 
 export default async function Home() {
@@ -15,7 +16,8 @@ export default async function Home() {
   return (
     <div className="flex flex-col">
       <HeroSection getStartedUrl={getStartedUrlValue} />
-      <SourcesSection />
+      <PainSection />
+      <FeaturesSection />
       <ComparisonSection />
       <FAQSection />
     </div>

@@ -7,54 +7,44 @@ import {
 
 const faqs = [
   {
-    question: "Is this just another tech news aggregator?",
+    question: "What exactly does this platform analyze?",
     answer:
-      "No. This dashboard isn't built to collect or display as much information as possible. It's built to apply judgment, decide what actually matters, explain why it matters, and intentionally leave out everything else.",
+      "We analyze public web signals at scale: discussions, reviews, comparisons, feedback, and market conversations across multiple platforms. The goal is not data collection — it's demand detection.",
   },
   {
-    question: "How is this different from Google News, Twitter, or Reddit?",
+    question: "How is this different from market research or surveys?",
     answer:
-      "Those platforms are designed to keep you engaged by constantly showing what's new or popular. This dashboard is designed to give you a clear, finite view of what truly mattered, without feeds, trends, or urgency.",
+      "Surveys tell you what people say when asked. We analyze what people say unprompted, in real situations, at scale. That's where real demand shows up.",
   },
   {
-    question: "How does the AI decide what's important?",
+    question: "Is this just AI summaries?",
     answer:
-      "The AI reviews tech publications, social conversations, newsletters, videos, and podcasts, then filters them based on impact, relevance, and signal rather than popularity or novelty. The goal is not coverage, but clarity.",
+      "No. We use a proprietary AI model built specifically for market signal detection, not generic summarization. Every insight is based on recurring patterns, not isolated opinions.",
   },
   {
-    question: "How often is the dashboard updated?",
+    question: "Can I trust the insights?",
     answer:
-      "It's updated continuously, but without any pressure to keep checking. You can log in whenever you want and trust that anything important will be there.",
-  },
-  {
-    question: "Can I customize what I see?",
-    answer:
-      "Yes. You can tailor the dashboard to your interests and create your own personalized brief or newsletter, with customization used to reduce noise rather than increase engagement.",
-  },
-  {
-    question: "Do I need to read everything every day?",
-    answer:
-      "No. The dashboard is intentionally designed so you can scan it in a few minutes, feel informed enough, and move on with your day.",
-  },
-  {
-    question: "Can I listen instead of reading?",
-    answer:
-      "Yes. Every story can be listened to using AI voice, so you can stay informed while commuting, walking, or doing something else.",
-  },
-  {
-    question: "Is this meant to replace all my other tech sources?",
-    answer:
-      "Not necessarily. Many people keep their favorite sources and use this dashboard as their primary filter to understand what actually mattered.",
+      "Yes. All insights are grounded in real, verifiable public signals and backed by concrete examples. No black box. No fabricated conclusions.",
   },
   {
     question: "Who is this built for?",
     answer:
-      "It's built for people who care about tech but don't want to live inside it, including founders, builders, developers, and curious professionals who value clarity over completeness.",
+      "Micro-SaaS and early B2B SaaS founders who want to validate demand before building, avoid crowded or weak markets, and understand where competitors fail. If you make early product decisions, this is for you.",
   },
   {
-    question: "Will this increase my screen time?",
+    question: "Is this a lead generation or growth tool?",
     answer:
-      "No. If it does, the product has failed. The dashboard is built to reduce usage while increasing confidence.",
+      "No. We don't help you spam people. We help you choose the right problem, market, and angle — before growth even matters.",
+  },
+  {
+    question: "When is this most useful?",
+    answer:
+      "Before you start building, pivot, invest months of development, or commit to a market. The earlier the decision, the higher the value.",
+  },
+  {
+    question: "How is this different from tools like Similarweb?",
+    answer:
+      "Tools like Similarweb show what already happened. We focus on why demand exists — and where it's forming. Different layer. Earlier moment.",
   },
 ];
 

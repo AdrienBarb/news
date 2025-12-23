@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Star, Target } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function HeroSection({
   getStartedUrl,
@@ -10,40 +11,146 @@ export default function HeroSection({
 }) {
   return (
     <div className="relative overflow-hidden min-h-screen flex flex-col">
+      {/* Hero Content - Centered */}
       <div className="flex-1 flex items-center justify-center">
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-6xl mx-auto text-center space-y-12">
+            {/* Badge */}
             <div className="flex justify-center">
               <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/30">
                 <Sparkles className="w-3 h-3 mr-1" />
-                AI-Powered News Curation
+                AI-Powered Market Intelligence
               </Badge>
             </div>
 
+            {/* Headlines */}
             <div className="space-y-6">
               <h1 className="text-5xl lg:text-6xl xl:text-7xl leading-tight text-foreground">
-                Stay informed about tech — without spending your day on it.
+                Stop building products nobody wants.
               </h1>
 
-              <p className="text-xl lg:text-2xl text-foreground/70 leading-relaxed max-w-3xl mx-auto">
-                An AI-curated dashboard that shows only the tech news that
-                actually matters
+              <p className="text-xl lg:text-2xl text-foreground/70 leading-relaxed max-w-4xl mx-auto">
+                We analyze real user complaints across the web to validate
+                demand and expose weak competitors — before you build.
               </p>
             </div>
 
+            {/* Search Input Group */}
             <div className="flex justify-center pt-4">
-              <Button
-                asChild
-                size="lg"
-                className="text-lg px-12 py-6 bg-secondary text-secondary-foreground hover:bg-secondary/90"
-              >
-                <Link href={getStartedUrl}>Start Free Trial</Link>
-              </Button>
+              <div className="relative w-full max-w-2xl">
+                <div className="flex items-center gap-3 bg-foreground/5 backdrop-blur-sm rounded-full p-2 border-2 border-foreground/10 hover:border-primary/30 transition-all shadow-lg">
+                  {/* Search Icon */}
+                  <div className="pl-4">
+                    <svg
+                      className="w-6 h-6 text-foreground/50"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </div>
+
+                  {/* Input */}
+                  <input
+                    type="text"
+                    placeholder="Enter a domain"
+                    className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-foreground/40 text-lg px-2"
+                  />
+
+                  {/* Button */}
+                  <Button
+                    asChild
+                    size="lg"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 py-6 text-lg flex items-center gap-2 shadow-xl"
+                  >
+                    <Link href={getStartedUrl}>
+                      Get insights
+                      <Sparkles className="w-5 h-5" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Social Proof / Reassurance */}
+            <div className="flex items-center justify-center gap-3 pt-8">
+              {/* Avatar Group */}
+              <div className="flex -space-x-2">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 border-2 border-background flex items-center justify-center overflow-hidden">
+                  <Image
+                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop"
+                    alt="User"
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-foreground to-foreground/60 border-2 border-background flex items-center justify-center overflow-hidden">
+                  <Image
+                    src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop"
+                    alt="User"
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-secondary/60 border-2 border-background flex items-center justify-center overflow-hidden">
+                  <Image
+                    src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop"
+                    alt="User"
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary border-2 border-background flex items-center justify-center overflow-hidden">
+                  <Image
+                    src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop"
+                    alt="User"
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-foreground to-primary border-2 border-background flex items-center justify-center overflow-hidden">
+                  <Image
+                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop"
+                    alt="User"
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+
+              {/* Stars */}
+              <div className="flex gap-0.5">
+                <Star className="w-5 h-5 fill-foreground text-foreground" />
+                <Star className="w-5 h-5 fill-foreground text-foreground" />
+                <Star className="w-5 h-5 fill-foreground text-foreground" />
+                <Star className="w-5 h-5 fill-foreground text-foreground" />
+                <Star className="w-5 h-5 fill-foreground text-foreground" />
+              </div>
+
+              {/* Text */}
+              <p className="text-foreground">
+                <span className="font-semibold">5000+</span>{" "}
+                <span className="text-foreground/70">
+                  SaaS founders finding proven problems
+                </span>
+              </p>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 -z-10"></div>
     </div>
   );
