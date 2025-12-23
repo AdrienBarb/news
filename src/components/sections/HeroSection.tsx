@@ -1,7 +1,6 @@
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles } from "lucide-react";
-import Link from "next/link";
+import HeroGetInsightsButton from "./HeroGetInsightsButton";
 
 export default function HeroSection({
   getStartedUrl,
@@ -66,16 +65,7 @@ export default function HeroSection({
                   </div>
 
                   {/* Button */}
-                  <Button
-                    asChild
-                    size="lg"
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl md:rounded-full px-6 md:px-8 py-4 md:py-6 text-base md:text-lg flex items-center justify-center gap-2 shadow-xl w-full md:w-auto"
-                  >
-                    <Link href={getStartedUrl}>
-                      Get insights
-                      <Sparkles className="w-5 h-5" />
-                    </Link>
-                  </Button>
+                  <HeroGetInsightsButton getStartedUrl={getStartedUrl} />
                 </div>
               </div>
             </div>

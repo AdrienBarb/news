@@ -14,6 +14,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useClientPostHogEvent } from "@/lib/tracking/useClientPostHogEvent";
 import { TRACKING_EVENTS } from "@/lib/constants/tracking";
 import { APP_ROUTER } from "@/lib/constants/appRouter";
+import SignInModal from "@/components/SignInModal";
 
 const signUpSchema = z.object({
   email: z.email("Please enter a valid email address"),
@@ -33,6 +34,7 @@ export default function SignUpPageClient() {
   const { sendEvent } = useClientPostHogEvent();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
 
   const {
     register,
@@ -56,7 +58,7 @@ export default function SignUpPageClient() {
       }
 
       sendEvent({
-        eventName: TRACKING_EVENTS.ONBOARDING_ACCOUNT_CREATED,
+        eventName: TRACKING_EVENTS.ACCOUNT_CREATED,
       });
 
       toast.success("Account created successfully!");
@@ -146,11 +148,20 @@ export default function SignUpPageClient() {
 
         <div className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <a href="/" className="text-primary hover:underline">
+          <button
+            type="button"
+            onClick={() => setIsSignInModalOpen(true)}
+            className="text-primary hover:underline"
+          >
             Sign in
-          </a>
+          </button>
         </div>
       </div>
+
+      <SignInModal
+        open={isSignInModalOpen}
+        onOpenChange={setIsSignInModalOpen}
+      />
     </div>
   );
 }
