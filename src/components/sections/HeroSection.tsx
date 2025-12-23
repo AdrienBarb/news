@@ -78,9 +78,7 @@ export default function HeroSection({
               </div>
             </div>
 
-            {/* Social Proof / Reassurance */}
-            <div className="flex items-center justify-center gap-3 pt-8">
-              {/* Avatar Group */}
+            {/* <div className="flex items-center justify-center gap-3 pt-8">
               <div className="flex -space-x-2">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 border-2 border-background flex items-center justify-center overflow-hidden">
                   <Image
@@ -129,7 +127,6 @@ export default function HeroSection({
                 </div>
               </div>
 
-              {/* Stars */}
               <div className="flex gap-0.5">
                 <Star className="w-5 h-5 fill-foreground text-foreground" />
                 <Star className="w-5 h-5 fill-foreground text-foreground" />
@@ -138,14 +135,13 @@ export default function HeroSection({
                 <Star className="w-5 h-5 fill-foreground text-foreground" />
               </div>
 
-              {/* Text */}
               <p className="text-foreground">
                 <span className="font-semibold">500+</span>{" "}
                 <span className="text-foreground/70">
                   SaaS founders finding proven problems
                 </span>
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
