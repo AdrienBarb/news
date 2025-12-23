@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Star } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 
 export default function HeroSection({
   getStartedUrl,
@@ -38,36 +37,39 @@ export default function HeroSection({
             {/* Search Input Group */}
             <div className="flex justify-center pt-4">
               <div className="relative w-full max-w-2xl">
-                <div className="flex items-center gap-3 bg-foreground/5 backdrop-blur-sm rounded-full p-2 border-2 border-foreground/10 hover:border-primary/30 transition-all shadow-lg">
-                  {/* Search Icon */}
-                  <div className="pl-4">
-                    <svg
-                      className="w-6 h-6 text-foreground/50"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  </div>
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 bg-foreground/5 backdrop-blur-sm rounded-2xl md:rounded-full p-2 border-2 border-foreground/10 hover:border-primary/30 transition-all shadow-lg">
+                  {/* Search Icon and Input Container */}
+                  <div className="flex items-center gap-3 flex-1">
+                    {/* Search Icon */}
+                    <div className="pl-2 md:pl-4">
+                      <svg
+                        className="w-6 h-6 text-foreground/50"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                      </svg>
+                    </div>
 
-                  {/* Input */}
-                  <input
-                    type="text"
-                    placeholder="Enter a domain"
-                    className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-foreground/40 text-lg px-2"
-                  />
+                    {/* Input */}
+                    <input
+                      type="text"
+                      placeholder="Enter a domain"
+                      className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-foreground/40 text-base md:text-lg px-2 py-3 md:py-0"
+                    />
+                  </div>
 
                   {/* Button */}
                   <Button
                     asChild
                     size="lg"
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 py-6 text-lg flex items-center gap-2 shadow-xl"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl md:rounded-full px-6 md:px-8 py-4 md:py-6 text-base md:text-lg flex items-center justify-center gap-2 shadow-xl w-full md:w-auto"
                   >
                     <Link href={getStartedUrl}>
                       Get insights
