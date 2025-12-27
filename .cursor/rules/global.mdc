@@ -1,0 +1,481 @@
+---
+alwaysApply: true
+---
+
+# Global Code Standards
+
+## Project Context
+
+This is a **Next.js 16** application with **TypeScript**, **React 19**, and **Prisma** for a market intelligence platform. The app analyzes public conversations to provide SaaS founders with market insights.
+
+## Core Principles
+
+1. **Type Safety First**: Always use TypeScript types. Avoid `any` unless absolutely necessary.
+2. **Component Composition**: Prefer small, focused components over large monolithic ones.
+3. **Server Components Default**: Use Server Components by default, Client Components only when needed.
+4. **Error Handling**: Always handle errors gracefully with proper user feedback.
+5. **Performance**: Optimize for performance - use React Query for data fetching, lazy loading when appropriate.
+6. **Code Reusability**: Extract reusable logic into utilities, hooks, and services. Don't repeat code.
+7. **Readability**: Split complex code into smaller, well-named functions/components. Code should be self-documenting.
+
+## TypeScript Standards
+
+- **Always define types**: Use interfaces for object shapes, types for unions/intersections
+- **Strict null checks**: Handle `null` and `undefined` explicitly
+- **No `any` types**: Use `unknown` if type is truly unknown, then narrow it
+- **Use type inference**: Let TypeScript infer types when obvious, but be explicit for public APIs
+- **Generic types**: Use generics for reusable functions/components
+
+```typescript
+interface User {
+  id: string;
+  email: string;
+  name: string | null;
+}
+
+const user: any = { id: 1, email: "test" };
+```
+
+## React/Next.js Patterns
+
+### Component Structure
+
+- **Default export for page components**: `export default function Page() {}`
+- **Named exports for reusable components**: `export function Component() {}`
+- **Client Components**: Add `"use client"` directive only when needed (interactivity, hooks, browser APIs)
+- **Server Components**: Default - no directive needed
+- **Split large components**: Break down components into smaller, focused pieces
+
+```typescript
+export default function Page() {
+  return <div>Content</div>;
+}
+
+"use client";
+export function InteractiveButton() {
+  const [state, setState] = useState();
+  return <button onClick={() => setState()}>Click</button>;
+}
+```
+
+### Hooks & State Management
+
+- **useApi hook**: Always use `useApi` hook for client-side API calls (see use-api.mdc rules)
+- **React Query**: Use for server state via `useApi` hook methods (`useGet`, `usePost`, `usePut`, `useInfinite`)
+- **Zustand**: Use for client-side global state
+- **useState**: Use for local component state
+- **Custom hooks**: Extract reusable logic into hooks in `src/lib/hooks/`
+
+```typescript
+import useApi from "@/lib/hooks/useApi";
+
+export function useMarket(marketId: string) {
+  const { useGet } = useApi();
+  return useGet(`/api/markets/${marketId}`);
+}
+
+export const useMarketStore = create((set) => ({
+  selectedMarket: null,
+  setSelectedMarket: (market) => set({ selectedMarket: market }),
+}));
+```
+
+## File & Folder Organization
+
+### Naming Conventions
+
+- **Components**: PascalCase (`UserProfile.tsx`, `MarketCard.tsx`)
+- **Utilities**: camelCase (`formatDate.ts`, `validateEmail.ts`)
+- **Hooks**: camelCase with `use` prefix (`useMarket.ts`, `useApi.ts`)
+- **Types**: PascalCase (`User.ts`, `Market.ts`) or inline in files
+- **Constants**: UPPER_SNAKE_CASE (`API_BASE_URL`, `MAX_RETRIES`)
+- **Services**: camelCase (`marketService.ts`, `signalService.ts`)
+
+### File Structure
+
+- **No index files**: Never create `index.ts` or `index.tsx` files for re-exporting. Always import directly from source files.
+
+```
+src/
+├── app/              # Next.js App Router pages
+│   └── api/          # API route handlers (see api.mdc rules)
+├── components/       # React components
+│   ├── ui/          # shadcn/ui components
+│   └── ...          # Feature components
+├── lib/              # Utilities, hooks, services
+│   ├── api/         # API client (axios instance)
+│   ├── db/          # Prisma client
+│   ├── hooks/       # Custom hooks (including useApi)
+│   ├── services/    # Business logic services (reusable)
+│   └── utils/       # Utility functions (reusable)
+└── types/           # TypeScript type definitions
+```
+
+## API Integration (Client-Side)
+
+### Always Use useApi Hook
+
+- **Never use axios directly**: Always use `useApi` hook methods
+- **Type-safe calls**: All API calls go through `useApi` for consistent error handling
+- **Automatic caching**: React Query handles caching via `useApi`
+- **Loading/error states**: Always handle loading and error states
+
+```typescript
+import useApi from "@/lib/hooks/useApi";
+
+function MarketList() {
+  const { useGet } = useApi();
+  const { data, isLoading, error } = useGet("/api/markets");
+
+  if (isLoading) return <Loading />;
+  if (error) return <Error message={error.message} />;
+  return <MarketCards markets={data} />;
+}
+```
+
+### useApi Methods
+
+- **useGet**: For fetching data
+- **usePost**: For creating data
+- **usePut**: For updating data
+- **useInfinite**: For infinite scroll/pagination
+
+```typescript
+const { usePost } = useApi();
+const { mutate: createMarket, isPending } = usePost("/api/markets", {
+  onSuccess: (data) => {
+    queryClient.invalidateQueries({ queryKey: ["markets"] });
+  },
+});
+```
+
+## API Routes (Server-Side)
+
+### Route Structure
+
+- **Service layer**: Extract database logic to `src/lib/services/`
+- **Validation**: Use Zod schemas in `src/lib/schemas/`
+- **Error handling**: Use centralized `errorHandler` from `@/lib/errors/errorHandler`
+- **Error messages**: Use `errorMessages` from `@/lib/constants/errorMessage`
+- **Authentication**: Use `strictlyAuth` HOC for protected routes
+
+```typescript
+import { errorMessages } from "@/lib/constants/errorMessage";
+import { errorHandler } from "@/lib/errors/errorHandler";
+import { strictlyAuth } from "@/lib/better-auth/strictlyAuth";
+import { NextResponse, NextRequest } from "next/server";
+import { createMarket } from "@/lib/services/markets/createMarket";
+import { createMarketSchema } from "@/lib/schemas/markets/createMarketSchema";
+
+export const POST = strictlyAuth(async (req: NextRequest) => {
+  try {
+    const { auth } = req;
+    const userId = auth?.user.id;
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: errorMessages.MISSING_FIELDS },
+        { status: 400 }
+      );
+    }
+
+    const body = await req.json();
+    const validatedData = createMarketSchema.parse(body);
+
+    const result = await createMarket({ userId, data: validatedData });
+
+    return NextResponse.json(result, { status: 201 });
+  } catch (error) {
+    return errorHandler(error);
+  }
+});
+```
+
+### Service Layer Pattern
+
+- **Reusable functions**: Services should be reusable across different routes
+- **Single responsibility**: Each service function does one thing
+- **Type safety**: Type all parameters and return values
+
+```typescript
+import { prisma } from "@/lib/db/prisma";
+
+export async function createMarket({
+  userId,
+  data,
+}: {
+  userId: string;
+  data: { name: string; description?: string };
+}) {
+  return await prisma.market.create({
+    data: {
+      userId,
+      ...data,
+    },
+  });
+}
+```
+
+## Database (Prisma)
+
+- **Type safety**: Use Prisma Client types (`Prisma.User`, `Prisma.Market`)
+- **Transactions**: Use transactions for multi-step operations
+- **Error handling**: Handle Prisma errors appropriately
+- **Queries**: Use `select` to fetch only needed fields
+- **Reusable queries**: Extract common queries into service functions
+
+```typescript
+const user = await prisma.user.findUnique({
+  where: { id: userId },
+  select: { id: true, email: true, name: true },
+});
+
+await prisma.$transaction(async (tx) => {
+  await tx.market.create({ data: marketData });
+  await tx.signal.create({ data: signalData });
+});
+```
+
+## Error Handling
+
+- **Always handle errors**: Use try-catch blocks
+- **User-friendly messages**: Don't expose technical errors to users
+- **Logging**: Log errors for debugging (server-side)
+- **Error boundaries**: Use React Error Boundaries for component errors
+- **Centralized handling**: Use `errorHandler` for API routes, handle client-side errors gracefully
+
+```typescript
+try {
+  const result = await riskyOperation();
+  return result;
+} catch (error) {
+  console.error("Operation failed:", error);
+  throw new Error("Failed to complete operation");
+}
+```
+
+## Component Patterns
+
+### Props
+
+- **Type props**: Always type component props
+- **Destructure props**: Destructure props at the top
+- **Default props**: Use default parameters, not defaultProps
+- **Split large props**: If a component has many props, consider splitting into smaller components
+
+```typescript
+interface ButtonProps {
+  label: string;
+  onClick: () => void;
+  variant?: "primary" | "secondary";
+}
+
+export function Button({ label, onClick, variant = "primary" }: ButtonProps) {
+  return <button onClick={onClick} className={variant}>{label}</button>;
+}
+```
+
+### Styling
+
+- **Tailwind CSS**: Use Tailwind utility classes
+- **shadcn/ui**: Use shadcn/ui components from `@/components/ui/`
+- **Responsive**: Always consider mobile-first responsive design
+- **Dark mode**: Use theme-aware classes (`text-foreground`, `bg-background`)
+
+```typescript
+<div className="bg-background text-foreground p-4 rounded-lg border border-border">
+  <h2 className="text-xl font-semibold">Title</h2>
+</div>
+```
+
+## Code Reusability & Readability
+
+### Extract Reusable Code
+
+- **Utilities**: Extract common logic to `src/lib/utils/`
+- **Hooks**: Extract reusable stateful logic to `src/lib/hooks/`
+- **Services**: Extract business logic to `src/lib/services/`
+- **Constants**: Extract magic numbers/strings to `src/lib/constants/`
+- **Types**: Extract shared types to `src/types/` or inline in files
+
+```typescript
+// ✅ Good - Reusable utility
+export function formatDate(date: Date): string {
+  return format(date, "MMM dd, yyyy");
+}
+
+// ✅ Good - Reusable hook
+export function useMarket(marketId: string) {
+  const { useGet } = useApi();
+  return useGet(`/api/markets/${marketId}`);
+}
+
+// ❌ Bad - Duplicated logic
+function Component1() {
+  const date = format(new Date(), "MMM dd, yyyy");
+}
+
+function Component2() {
+  const date = format(new Date(), "MMM dd, yyyy");
+}
+```
+
+### Split Complex Code
+
+- **Large functions**: Break into smaller, focused functions
+- **Large components**: Split into smaller sub-components
+- **Complex logic**: Extract to separate functions with descriptive names
+- **Long files**: Split into multiple files when a file exceeds ~300 lines
+
+```typescript
+// ✅ Good - Split into smaller functions
+function calculateMarketScore(signals: Signal[]) {
+  const frequency = calculateFrequency(signals);
+  const recency = calculateRecency(signals);
+  return combineScores(frequency, recency);
+}
+
+function calculateFrequency(signals: Signal[]): number {
+  return signals.length;
+}
+
+function calculateRecency(signals: Signal[]): number {
+  const now = Date.now();
+  return signals.reduce((sum, s) => sum + (now - s.createdAt.getTime()), 0);
+}
+
+function combineScores(frequency: number, recency: number): number {
+  return frequency * 0.7 + recency * 0.3;
+}
+```
+
+## Comments & Documentation
+
+- **Comment complex logic only**: Don't comment obvious code
+- **Explain "why", not "what"**: Comments should explain reasoning, not restate code
+- **Self-documenting code**: Use descriptive names instead of comments when possible
+- **Complex algorithms**: Comment complex algorithms or business logic
+- **TODOs**: Use TODO comments for future improvements
+
+```typescript
+// ✅ Good - Complex logic needs explanation
+// Calculate weighted score using exponential decay to prioritize recent signals
+// Formula: score = frequency * e^(-decay_rate * days_old)
+function calculateWeightedScore(signals: Signal[], decayRate: number): number {
+  const now = Date.now();
+  return signals.reduce((score, signal) => {
+    const daysOld = (now - signal.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+    return score + Math.exp(-decayRate * daysOld);
+  }, 0);
+}
+
+// ❌ Bad - Obvious code doesn't need comments
+// Set the user name
+const userName = user.name;
+
+// ✅ Good - Self-documenting code instead of comment
+const userName = user.name;
+```
+
+## Performance Best Practices
+
+- **Code splitting**: Use dynamic imports for large components
+- **Image optimization**: Use Next.js `Image` component
+- **Memoization**: Use `useMemo` and `useCallback` sparingly (only when needed)
+- **React Query**: Leverage caching and stale-while-revalidate via `useApi`
+
+```typescript
+const HeavyComponent = dynamic(() => import("./HeavyComponent"), {
+  loading: () => <Skeleton />,
+});
+
+const { data } = useGet("/api/markets", {}, {
+  staleTime: 5 * 60 * 1000,
+});
+```
+
+## Security
+
+- **Input validation**: Always validate user input (Zod schemas)
+- **Authentication**: Use `strictlyAuth` HOC for protected API routes
+- **Environment variables**: Never expose secrets client-side
+- **SQL injection**: Use Prisma (parameterized queries)
+- **XSS**: Sanitize user-generated content
+
+```typescript
+import { auth } from "@/lib/better-auth/auth";
+
+export async function GET() {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+}
+```
+
+## Code Quality
+
+- **ESLint**: Follow ESLint rules, fix warnings
+- **Formatting**: Use consistent formatting (Prettier if configured)
+- **DRY**: Don't repeat yourself - extract reusable code
+- **Single Responsibility**: Each function/component should do one thing
+- **Readability**: Prioritize readable code over clever code
+
+## Import Organization
+
+- **Group imports**: External → Internal → Types
+- **Absolute imports**: Use `@/` alias for internal imports
+- **Never use index files**: Do NOT create index.ts/index.tsx files for re-exporting. Always import directly from the source file.
+
+```typescript
+// ✅ Good - Direct imports from source files
+import { NextRequest } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/db/prisma";
+import { validateMarket } from "@/lib/utils/validation";
+import type { Market } from "@/types/market";
+
+// ❌ Bad - Never use index files for re-exports
+// Don't create src/lib/utils/index.ts that re-exports other files
+// Don't import from "@/lib/utils" expecting barrel exports
+```
+
+## Common Patterns
+
+### Form Handling
+
+- **React Hook Form**: Use for form state management
+- **Zod validation**: Use with `@hookform/resolvers/zod`
+- **Error display**: Show validation errors clearly
+
+```typescript
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const schema = z.object({
+  email: z.string().email(),
+});
+
+export function Form() {
+  const form = useForm({
+    resolver: zodResolver(schema),
+  });
+}
+```
+
+### Data Fetching
+
+- **Server Components**: Fetch data directly in Server Components
+- **Client Components**: Use `useApi` hook methods (`useGet`, `usePost`, etc.)
+- **Loading states**: Always show loading states
+- **Error states**: Always handle error states
+
+## When in Doubt
+
+1. **Check existing code**: Look at similar patterns in the codebase
+2. **Follow conventions**: Stick to established patterns
+3. **Extract reusable code**: If you're repeating code, extract it
+4. **Split complex code**: If something is hard to read, split it
+5. **Prioritize clarity**: Readable code > clever code
+6. **Type safety**: When unsure, add types

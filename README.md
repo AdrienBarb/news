@@ -1,17 +1,18 @@
-# 3 Minute Brief
+# Market Signals Over Guesswork
 
-A tech news application that curates and summarizes the most important tech stories every day. The app fetches tech news articles, uses OpenAI to generate concise summaries, and delivers 10 curated articles daily to users.
+A continuous market intelligence application for SaaS founders. The app analyzes unprompted, public conversations across the web to understand how a market behaves in reality, transforming fragmented public conversations into structured, evolving market intelligence.
 
 ## 📰 About
 
-**3 Minute Brief** is your daily tech briefing that helps you stay informed without the overwhelm. Every day, the app:
+**Market Signals Over Guesswork** helps SaaS founders make strategic decisions grounded in real market behavior rather than intuition, isolated feedback, or delayed metrics. The app provides ongoing situational awareness by:
 
-- Fetches the latest tech news articles from various sources
-- Uses OpenAI to analyze and summarize each article
-- Curates the 10 most important stories
-- Delivers them to users in a clean, digestible format
+- Analyzing public conversations to identify what users complain about
+- Detecting unmet expectations and rising demands
+- Understanding how tools are compared and why users switch
+- Tracking how market signals evolve over time
+- Providing evidence-backed insights with frequency, recency, and consistency metrics
 
-**Tech Moves Fast. Stay Ahead in 3 Minutes a Day.**
+**Make strategic decisions with confidence, not guesswork.**
 
 ## 🚀 Tech Stack
 
@@ -41,9 +42,9 @@ A tech news application that curates and summarizes the most important tech stor
 
 ### AI & Processing
 
-- **OpenAI** - Article summarization and analysis
-- **Inngest** - Background job processing for article fetching and processing
-- **@mozilla/readability** - Article content extraction
+- **OpenAI** - Conversation analysis and signal extraction
+- **Inngest** - Background job processing for conversation monitoring and analysis
+- **@mozilla/readability** - Content extraction from web sources
 - **jsdom** - HTML parsing and content extraction
 
 ### State Management
@@ -76,13 +77,17 @@ A tech news application that curates and summarizes the most important tech stor
 
 ## 📦 Features
 
-- ✅ **Daily Tech News Curation** - Automatically fetches and processes tech news articles
-- ✅ **AI-Powered Summaries** - Uses OpenAI to generate concise, informative summaries
-- ✅ **10 Articles Daily** - Curated selection of the most important tech stories
-- ✅ **User Personalization** - Tag-based preferences for customized feeds
+- ✅ **Continuous Market Monitoring** - Automatically analyzes public conversations relevant to your market
+- ✅ **Signal Detection** - Identifies recurring patterns across independent conversations
+- ✅ **AI-Powered Analysis** - Uses OpenAI to extract insights from conversations
+- ✅ **Evidence-Backed Insights** - Shows frequency, recency, and consistency of signals
+- ✅ **Historical Comparison** - Tracks how signals evolve over time
+- ✅ **Market Setup** - Create market contexts from products or competitor websites
+- ✅ **Pain Point Detection** - Identifies user frustrations and unmet needs
+- ✅ **Comparison Analysis** - Understands how tools are compared and switching behavior
 - ✅ **Authentication** - Magic link authentication with Better-auth
 - ✅ **Database** - Prisma + PostgreSQL (Supabase) for data persistence
-- ✅ **Background Processing** - Inngest for reliable article processing workflows
+- ✅ **Background Processing** - Inngest for reliable conversation processing workflows
 - ✅ **Email Notifications** - Resend + React Email for beautiful email templates
 - ✅ **Global Error Handling** - Comprehensive error management
 - ✅ **API Client** - React Query hooks for efficient data fetching
@@ -157,7 +162,7 @@ BETTER_AUTH_URL="http://localhost:3000"
 NEXT_PUBLIC_BASE_URL="http://localhost:3000"
 ```
 
-#### OpenAI (Required for Article Summarization)
+#### OpenAI (Required for Conversation Analysis)
 
 1. Sign up for an account at [OpenAI](https://platform.openai.com)
 2. Get your API key from the API keys section
@@ -231,7 +236,7 @@ This will:
 
 ### Step 5: Set Up Database Schema
 
-The application includes a Prisma schema with models for users, articles, tags, and interactions. Since the migrations folder is empty (by design), you need to create your initial migration or push the schema directly.
+The application includes a Prisma schema with models for users, markets, conversations, signals, and insights. Since the migrations folder is empty (by design), you need to create your initial migration or push the schema directly.
 
 **Option A: Create Migration (Recommended for Production)**
 
@@ -270,10 +275,12 @@ This is faster and useful for rapid prototyping, but doesn't create migration fi
 - `session` - User sessions
 - `account` - Authentication accounts
 - `verification` - Email verification tokens
-- `article` - Tech news articles
-- `tag` - Article tags/categories
-- `userTagPreference` - User tag preferences
-- `interaction` - User interactions with articles
+- `market` - Market contexts and definitions
+- `source` - Public platforms where conversations occur
+- `conversation` - Public discussion items (posts, comments, reviews)
+- `signal` - Aggregated patterns derived from conversations
+- `insight` - Structured interpretations of signals
+- `report` - Time-based snapshots of market state
 
 ### Step 6: Generate Prisma Client (if needed)
 
@@ -292,16 +299,16 @@ npm run db:generate
 ```json
 {
   "project": {
-    "name": "3 Minute Brief",
-    "shortName": "3minBrief",
-    "description": "Your daily 3-minute tech briefing",
-    "tagline": "Tech Moves Fast. Stay Ahead in 3 Minutes a Day.",
-    "url": "https://thehackerbrief.com"
+    "name": "Market Signals Over Guesswork",
+    "shortName": "MarketSignals",
+    "description": "Continuous market intelligence for SaaS founders",
+    "tagline": "Make strategic decisions with confidence, not guesswork.",
+    "url": "https://yourdomain.com"
   },
   "contact": {
-    "email": "hello@thehackerbrief.com",
-    "telegram": "@adrienbrb",
-    "telegramUrl": "https://t.me/adrienbrb"
+    "email": "hello@yourdomain.com",
+    "telegram": "@yourhandle",
+    "telegramUrl": "https://t.me/yourhandle"
   }
 }
 ```
@@ -336,13 +343,13 @@ This will start the Inngest dev server at http://localhost:8288 where you can mo
    - Click "Sign In" in the navbar
    - Try signing in with a magic link (email will be sent via Resend)
 
-2. **Check Article Feed:**
-   - Navigate to `/news` to see the article feed
-   - Articles should be displayed with summaries
+2. **Check Market Dashboard:**
+   - Navigate to `/dashboard` to see your market intelligence dashboard
+   - Create a market context to start monitoring
 
 3. **Check Database:**
    - Open Supabase Studio at http://127.0.0.1:54328
-   - Verify tables are created (user, session, account, article, tag, etc.)
+   - Verify tables are created (user, session, account, market, conversation, signal, etc.)
 
 ### Troubleshooting
 
@@ -384,8 +391,8 @@ This will start the Inngest dev server at http://localhost:8288 where you can mo
 
 ### Next Steps
 
-- Configure RSS feeds or news sources for article fetching
-- Set up Inngest functions for daily article processing
+- Configure conversation sources for market monitoring
+- Set up Inngest functions for continuous conversation analysis
 - Customize `config.json` with your branding
 - Update landing page content in `src/components/sections/`
 - Set up production database (Supabase Cloud or your own PostgreSQL)
@@ -407,7 +414,7 @@ BETTER_AUTH_SECRET="your-secret-key-here"  # Generate with: openssl rand -base64
 BETTER_AUTH_URL="http://localhost:3000"
 NEXT_PUBLIC_BASE_URL="http://localhost:3000"
 
-# OpenAI (Required for article summarization)
+# OpenAI (Required for conversation analysis)
 OPENAI_API_KEY="sk-your-api-key-here"
 
 # Inngest (Background job processing)
@@ -484,12 +491,12 @@ function MyComponent() {
 ```json
 {
   "project": {
-    "name": "3 Minute Brief",
-    "tagline": "Tech Moves Fast. Stay Ahead in 3 Minutes a Day.",
-    "url": "https://thehackerbrief.com"
+    "name": "Market Signals Over Guesswork",
+    "tagline": "Make strategic decisions with confidence, not guesswork.",
+    "url": "https://yourdomain.com"
   },
   "contact": {
-    "email": "hello@thehackerbrief.com"
+    "email": "hello@yourdomain.com"
   }
 }
 ```
@@ -515,10 +522,12 @@ src/
 │   │   ├── auth/          # Better-auth endpoints
 │   │   ├── inngest/       # Inngest webhook handler
 │   │   ├── interactions/  # User interaction endpoints
-│   │   ├── tags/          # Tag endpoints
+│   │   ├── markets/       # Market endpoints
+│   │   ├── signals/       # Signal endpoints
+│   │   ├── conversations/ # Conversation endpoints
 │   │   ├── user/          # User endpoints
-│   │   └── webhooks/      # Webhook handlers (RSS, etc.)
-│   ├── news/              # News feed page
+│   │   └── webhooks/      # Webhook handlers
+│   ├── dashboard/         # Market intelligence dashboard
 │   ├── onboarding/        # User onboarding flow
 │   ├── globals.css        # Global styles + Tailwind
 │   └── layout.tsx         # Root layout
@@ -526,10 +535,9 @@ src/
 │   ├── ui/               # shadcn/ui components
 │   ├── providers/        # Context providers
 │   ├── sections/         # Landing page sections
-│   ├── setup/            # Setup/onboarding components
 │   ├── tracking/         # Analytics components
-│   ├── FeedCard.tsx      # Article feed card component
-│   ├── UserFeed.tsx      # User feed component
+│   ├── MarketCard.tsx    # Market context card component
+│   ├── SignalCard.tsx    # Signal display component
 │   └── ...
 ├── lib/                  # Library code
 │   ├── api/             # API client (Axios)
@@ -538,10 +546,13 @@ src/
 │   ├── emails/          # Email templates
 │   ├── hooks/           # Custom React hooks
 │   ├── inngest/         # Inngest functions
-│   ├── openai/          # OpenAI client & article analysis
+│   ├── openai/          # OpenAI client & conversation analysis
 │   ├── resend/          # Email client
 │   ├── schemas/         # Zod schemas
 │   ├── services/        # Business logic services
+│   │   ├── markets/     # Market service
+│   │   ├── signals/     # Signal detection service
+│   │   └── conversations/ # Conversation analysis service
 │   ├── stores/          # Zustand stores
 │   ├── tracking/        # PostHog client
 │   └── utils/           # Utility functions
@@ -578,12 +589,12 @@ function MyComponent() {
   const { useGet, usePost, usePut } = useApi();
 
   // GET request
-  const { data, isLoading, error } = useGet("/api/articles", { page: 1 });
+  const { data, isLoading, error } = useGet("/api/markets", { page: 1 });
 
   // POST request
-  const createInteraction = usePost("/api/interactions", {
+  const createMarket = usePost("/api/markets", {
     onSuccess: () => {
-      console.log("Interaction created!");
+      console.log("Market created!");
     },
   });
 
@@ -591,8 +602,8 @@ function MyComponent() {
     <div>
       {isLoading && <p>Loading...</p>}
       {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
-      <button onClick={() => createInteraction.mutate({ articleId: "123" })}>
-        Create Interaction
+      <button onClick={() => createMarket.mutate({ name: "SaaS Tools" })}>
+        Create Market
       </button>
     </div>
   );
@@ -632,13 +643,13 @@ await resendClient.emails.send({
 });
 ```
 
-### Using OpenAI for Article Analysis
+### Using OpenAI for Conversation Analysis
 
 ```typescript
-import { analyzeArticleLLM } from "@/lib/openai/analyzeArticleLLM";
+import { analyzeConversationLLM } from "@/lib/openai/analyzeConversationLLM";
 
-const articleContent = "Full article text here...";
-const summary = await analyzeArticleLLM(articleContent);
+const conversationContent = "Full conversation text here...";
+const signals = await analyzeConversationLLM(conversationContent);
 ```
 
 ### Using shadcn/ui Components
@@ -696,10 +707,12 @@ postHogClient.capture({
 The schema includes:
 
 - User authentication models (User, Session, Account, Verification)
-- Article models for storing tech news articles
-- Tag models for categorizing articles
-- UserTagPreference for personalized feeds
-- Interaction models for tracking user engagement
+- Market models for defining market contexts
+- Source models for tracking conversation sources
+- Conversation models for storing public discussions
+- Signal models for aggregated patterns
+- Insight models for structured interpretations
+- Report models for time-based market snapshots
 
 ### Database Migrations
 
