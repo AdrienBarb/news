@@ -7,10 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Settings, Mail, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 import { GeneralContent } from "@/components/settings/GeneralContent";
-import { PreferenceContent } from "@/components/settings/PreferenceContent";
-import { EmailContent } from "@/components/settings/EmailContent";
 import { SettingsSection } from "@/lib/types/settings";
 import { SettingsMenuItem } from "@/lib/types/settings";
 import { SettingsNavigation } from "./settings/SettingsNavigation";
@@ -20,16 +18,6 @@ const settingsMenuItems: SettingsMenuItem[] = [
     id: "general",
     label: "General",
     icon: Globe,
-  },
-  {
-    id: "preference",
-    label: "Preference",
-    icon: Settings,
-  },
-  {
-    id: "newsletter",
-    label: "Newsletter",
-    icon: Mail,
   },
 ];
 
@@ -55,10 +43,6 @@ export default function SettingsModal({
     switch (activeSection) {
       case "general":
         return <GeneralContent />;
-      case "preference":
-        return <PreferenceContent />;
-      case "newsletter":
-        return <EmailContent />;
       default:
         return null;
     }

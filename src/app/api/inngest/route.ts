@@ -1,16 +1,37 @@
 import { serve } from "inngest/next";
 import { inngest } from "@/lib/inngest/client";
-import { createArticle } from "@/lib/inngest/createArticle";
-import { sendNewsletter } from "@/lib/inngest/sendNewsletter";
-import { tweetPostAutomation } from "@/lib/inngest/tweetPostAutomation";
-import { postTikTokAutomation } from "@/lib/inngest/postTikTokWeekday";
+
+// Market Signals functions
+import { deriveMarketContextJob } from "@/lib/inngest/deriveMarketContext";
+import {
+  fetchConversationsJob,
+  scheduledFetchConversationsJob,
+} from "@/lib/inngest/fetchConversations";
+import { processConversationJob } from "@/lib/inngest/processConversation";
+import {
+  clusterSignalsJob,
+  scheduledClusterSignalsJob,
+} from "@/lib/inngest/clusterSignals";
+import {
+  generateReportJob,
+  scheduledGenerateReportJob,
+} from "@/lib/inngest/generateReport";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
-    // createArticle,
-    // sendNewsletter,
-    // tweetPostAutomation,
-    // postTikTokAutomation,
+    // Market context derivation
+    deriveMarketContextJob,
+    // Conversation fetching
+    fetchConversationsJob,
+    scheduledFetchConversationsJob,
+    // Conversation processing
+    processConversationJob,
+    // Signal clustering
+    clusterSignalsJob,
+    scheduledClusterSignalsJob,
+    // Report generation
+    generateReportJob,
+    scheduledGenerateReportJob,
   ],
 });

@@ -5,36 +5,25 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 model User {
-  id                  String    @id
-  name                String
-  email               String
-  emailVerified       Boolean   @default(false)
-  image               String?
-  techLevel           String?
-  motivation          String?
-  depthPreference     String?
-  dailyTime           String?
-  timezone            String?
-  newsletterDay       String    @default("Friday")
-  newsletterTime      String    @default("09:00")
-  nextNewsletterAtUtc DateTime?
-  lastNewsletterAtUtc DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @default(now()) @updatedAt
+  id            String   @id
+  name          String
+  email         String
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
 
   planType        PlanType  @default(NONE)
   accessExpiresAt DateTime?
 
-  sessions                Session[]
-  accounts                Account[]
-  userTagPreferences      UserTagPreference[]
-  userArticleInteractions UserArticleInteraction[]
-  dailyFeedItems          DailyFeedItem[]
-  newsletterSendLogs      NewsletterSendLog[]
+  sessions Session[]
+  accounts Account[]
+  markets  Market[]
 
   @@unique([email])
   @@map("user")
@@ -85,120 +74,215 @@ model Verification {
   @@map("verification")
 }
 
-model Article {
-  id             String   @id @default(cuid())
-  link           String
-  source         String?
-  summary        String
-  digest         String?
-  imageUrl       String?
-  headline       String?
-  guid           String?  @unique
-  relevanceScore Int
-  tags           Tag[]
-  publishedAt    DateTime
+// ============================================================================
+// Market Signals Domain Models
+// ============================================================================
 
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  userArticleInteractions UserArticleInteraction[]
-  dailyFeedItems          DailyFeedItem[]
-  tiktokPosts             TiktokPost[]
-}
+model Market {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  websiteUrl  String
+  name        String
+  category    String?
+  contextJson Json? // ICP hints, key phrases, competitor names
+  status      MarketStatus @default(pending)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
-model Tag {
-  id                 String              @id @default(uuid())
-  name               String              @unique
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  userTagPreferences UserTagPreference[]
-  articles           Article[]
-}
+  sensors       MarketSensor[]
+  conversations Conversation[]
+  signals       Signal[]
+  reports       Report[]
 
-model UserTagPreference {
-  id        String   @id @default(uuid())
-  userId    String
-  tagId     String
-  score     Float
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id])
-  tag  Tag  @relation(fields: [tagId], references: [id])
-
-  @@unique([userId, tagId])
-}
-
-model UserArticleInteraction {
-  id              String          @id @default(uuid())
-  userId          String
-  articleId       String
-  interactionType InteractionType
-  dwellTimeMs     Int?
-  createdAt       DateTime        @default(now())
-
-  user    User    @relation(fields: [userId], references: [id])
-  article Article @relation(fields: [articleId], references: [id])
-
-  @@unique([userId, articleId, interactionType])
   @@index([userId])
-  @@index([articleId])
-  @@index([userId, interactionType])
+  @@index([status])
+  @@map("market")
 }
 
-model DailyFeedItem {
-  id        String   @id @default(uuid())
-  userId    String
-  articleId String
-  feedDate  DateTime
-  position  Int
+model MarketSensor {
+  id            String       @id @default(cuid())
+  marketId      String
+  market        Market       @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  source        SourceType
+  queryText     String
+  isActive      Boolean      @default(true)
+  lastFetchedAt DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
-  createdAt DateTime @default(now())
-
-  user    User    @relation(fields: [userId], references: [id])
-  article Article @relation(fields: [articleId], references: [id])
-
-  @@unique([userId, feedDate, articleId])
-  @@index([userId, feedDate])
+  @@index([marketId])
+  @@index([source, isActive])
+  @@map("market_sensor")
 }
 
-model NewsletterSendLog {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Conversation {
+  id               String            @id @default(cuid())
+  marketId         String
+  market           Market            @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  source           SourceType
+  externalId       String // e.g., "t3_abc123" for Reddit, "hn_12345" for HN
+  url              String
+  title            String?
+  rawContent       String
+  sanitizedContent String?
+  author           String?
+  publishedAt      DateTime?
+  fetchedAt        DateTime          @default(now())
+  processingStatus ProcessingStatus  @default(pending)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
-  scheduledForUtc DateTime
-  sentAtUtc       DateTime @default(now())
+  painStatements PainStatement[]
 
-  @@unique([userId, scheduledForUtc])
-  @@index([scheduledForUtc])
+  @@unique([source, externalId])
+  @@index([marketId])
+  @@index([processingStatus])
+  @@index([publishedAt])
+  @@map("conversation")
 }
 
-model TiktokPost {
-  id            String   @id @default(cuid())
-  articleId     String
-  article       Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  pid           String   @unique
-  postText      String
-  videoUrl      String?
-  scheduledDate String? // Format: "YYYY-MM-DD"
-  scheduledTime String? // Format: "HH:MM"
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+model PainStatement {
+  id              String       @id @default(cuid())
+  conversationId  String
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  statement       String // The extracted pain statement text
+  painType        PainType
+  toolsMentioned  String[] // Array of tool/product names mentioned
+  switchingIntent Boolean      @default(false)
+  confidence      Float // 0.0 to 1.0
+  embedding       Float[] // Vector embedding for clustering
+  signalId        String? // Assigned after clustering
+  signal          Signal?      @relation(fields: [signalId], references: [id], onDelete: SetNull)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
-  @@index([pid])
-  @@index([articleId])
-  @@map("tiktok_post")
+  evidence SignalEvidence[]
+
+  @@index([conversationId])
+  @@index([signalId])
+  @@index([painType])
+  @@index([createdAt])
+  @@map("pain_statement")
 }
 
-enum InteractionType {
-  skip_fast
-  view
-  view_long
-  like
-  bookmark
-  share
-  hide_topic
-  more_like_this
+model Signal {
+  id            String    @id @default(cuid())
+  marketId      String
+  market        Market    @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  painType      PainType
+  frequency     Int       @default(0) // Count of associated pain statements
+  avgConfidence Float     @default(0)
+  centroid      Float[] // Average embedding for similarity matching
+  firstSeenAt   DateTime  @default(now())
+  lastSeenAt    DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  painStatements PainStatement[]
+  evidence       SignalEvidence[]
+  reportSignals  ReportSignal[]
+
+  @@index([marketId])
+  @@index([painType])
+  @@index([frequency])
+  @@index([lastSeenAt])
+  @@map("signal")
+}
+
+model SignalEvidence {
+  id              String        @id @default(cuid())
+  signalId        String
+  signal          Signal        @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  painStatementId String
+  painStatement   PainStatement @relation(fields: [painStatementId], references: [id], onDelete: Cascade)
+  quote           String // Short quote from the conversation
+  sourceUrl       String
+  createdAt       DateTime      @default(now())
+
+  @@unique([signalId, painStatementId])
+  @@index([signalId])
+  @@map("signal_evidence")
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  marketId    String
+  market      Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  periodStart DateTime
+  periodEnd   DateTime
+  summaryJson Json? // AI-generated executive summary
+  generatedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reportSignals ReportSignal[]
+
+  @@unique([marketId, periodStart, periodEnd])
+  @@index([marketId])
+  @@index([periodEnd])
+  @@map("report")
+}
+
+model ReportSignal {
+  id                String      @id @default(cuid())
+  reportId          String
+  report            Report      @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  signalId          String
+  signal            Signal      @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  trend             SignalTrend
+  currentFrequency  Int
+  previousFrequency Int
+  createdAt         DateTime    @default(now())
+
+  @@unique([reportId, signalId])
+  @@index([reportId])
+  @@map("report_signal")
+}
+
+// ============================================================================
+// Enums
+// ============================================================================
+
+enum MarketStatus {
+  pending
+  analyzing
+  active
+  error
+}
+
+enum SourceType {
+  reddit
+  hackernews
+}
+
+enum ProcessingStatus {
+  pending
+  processing
+  processed
+  error
+}
+
+enum PainType {
+  frustration // "X is so annoying/frustrating"
+  limitation // "X doesn't support Y"
+  unmet_expectation // "I expected X to do Y"
+  comparison // "X vs Y" or "switching from X to Y"
+  switching_intent // "thinking of switching to Y"
+  feature_request // "I wish X had Y"
+  pricing // "X is too expensive"
+  support // "X support is terrible"
+  performance // "X is slow/buggy"
+  other
+}
+
+enum SignalTrend {
+  new // First seen in this period
+  rising // Frequency increased > 30%
+  stable // Frequency within +/- 30%
+  fading // Frequency decreased > 30%
 }
 
 enum PlanType {

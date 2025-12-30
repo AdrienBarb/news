@@ -71,7 +71,7 @@ import useApi from "@/lib/hooks/useApi";
 
 export function useMarket(marketId: string) {
   const { useGet } = useApi();
-  return useGet(`/api/markets/${marketId}`);
+  return useGet(`/markets/${marketId}`);
 }
 
 export const useMarketStore = create((set) => ({
