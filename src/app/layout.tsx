@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Aleo, Archivo } from "next/font/google";
+import { Rethink_Sans, Geist } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import GlobalErrorHandler from "@/components/GlobalErrorHandler";
 import { QueryProviders } from "@/components/providers/QueryProviders";
@@ -10,14 +10,14 @@ import "./globals.css";
 import { genPageMetadata } from "@/lib/seo/genPageMetadata";
 import { siteMetadata } from "@/data/siteMetadata";
 
-const aleo = Aleo({
-  variable: "--font-aleo",
+const rethinkSans = Rethink_Sans({
+  variable: "--font-rethink-sans",
   subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
-const archivo = Archivo({
-  variable: "--font-archivo",
+const geist = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
 });
@@ -35,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${aleo.variable} ${archivo.variable} antialiased`}>
+      <body className={`${rethinkSans.variable} ${geist.variable} antialiased`}>
         <NuqsAdapter>
           <QueryProviders>
             <PostHogProvider>

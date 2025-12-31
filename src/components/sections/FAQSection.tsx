@@ -7,44 +7,42 @@ import {
 
 const faqs = [
   {
-    question: "What exactly does this platform analyze?",
+    question: "What kind of SaaS is Prediqte for?",
     answer:
-      "We analyze public web signals at scale: discussions, reviews, comparisons, feedback, and market conversations across multiple platforms. The goal is not data collection — it's demand detection.",
+      "Prediqte is built for B2B SaaS products where users openly discuss tools, problems, and alternatives.",
   },
   {
-    question: "How is this different from market research or surveys?",
+    question: "Is Prediqte for idea validation?",
     answer:
-      "Surveys tell you what people say when asked. We analyze what people say unprompted, in real situations, at scale. That's where real demand shows up.",
+      "No. Prediqte is designed for ongoing market understanding, not one-time research or idea validation.",
   },
   {
-    question: "Is this just AI summaries?",
+    question: "Do I see raw conversations or data?",
     answer:
-      "No. We use a proprietary AI model built specifically for market signal detection, not generic summarization. Every insight is based on recurring patterns, not isolated opinions.",
+      "No. Prediqte only shows structured insights, not raw posts or individual conversations.",
   },
   {
-    question: "Can I trust the insights?",
+    question: "How is this different from analytics or surveys?",
     answer:
-      "Yes. All insights are grounded in real, verifiable public signals and backed by concrete examples. No black box. No fabricated conclusions.",
+      "Analytics show what already happened. Surveys ask direct questions. Prediqte shows what users say naturally, before problems show up in metrics.",
   },
   {
-    question: "Who is this built for?",
-    answer:
-      "Micro-SaaS and early B2B SaaS founders who want to validate demand before building, avoid crowded or weak markets, and understand where competitors fail. If you make early product decisions, this is for you.",
+    question: "How often are insights updated?",
+    answer: "Insights are updated continuously as new conversations appear.",
   },
   {
-    question: "Is this a lead generation or growth tool?",
+    question: "Is this competitive intelligence?",
     answer:
-      "No. We don't help you spam people. We help you choose the right problem, market, and angle — before growth even matters.",
+      "Partially. Prediqte helps you understand why users compare tools and where competitors fall short, from the user's point of view.",
   },
   {
-    question: "When is this most useful?",
-    answer:
-      "Before you start building, pivot, invest months of development, or commit to a market. The earlier the decision, the higher the value.",
+    question: "Can I cancel anytime?",
+    answer: "Yes. The Founder plan can be cancelled at any time.",
   },
   {
-    question: "How is this different from tools like Similarweb?",
+    question: "Is my data safe?",
     answer:
-      "Tools like Similarweb show what already happened. We focus on why demand exists — and where it's forming. Different layer. Earlier moment.",
+      "Prediqte only analyzes publicly available conversations and focuses on aggregated patterns, not individuals.",
   },
 ];
 

@@ -31,7 +31,7 @@ export default function Footer() {
         <div className="pt-8 border-t border-background/10">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-background/60 text-sm">
-              © {new Date().getFullYear()} TheHackerBrief. All rights reserved.
+              © {new Date().getFullYear()} Prediqte. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
               <Link

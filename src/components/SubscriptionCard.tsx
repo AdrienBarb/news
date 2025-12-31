@@ -51,7 +51,7 @@ export default function SubscriptionCard() {
                 <h2 className="text-3xl font-bold text-primary font-playfair-display">
                   Subscribe to use the app
                 </h2>
-                <p className="text-base font-bold font-archivo text-muted-foreground">
+                <p className="text-base font-bold text-muted-foreground">
                   Get access to personalized tech news and start your free trial
                   today.
                 </p>

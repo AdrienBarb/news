@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import SignInModal from "@/components/SignInModal";
 import { useUser } from "@/lib/hooks/useUser";
 import BrandLogo from "./BrandLogo";
+import { APP_ROUTER } from "@/lib/constants/appRouter";
 
 export default function Navbar() {
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
@@ -22,7 +23,7 @@ export default function Navbar() {
 
           {user ? (
             <Button asChild className="cursor-pointer">
-              <Link href="/news">Launch app</Link>
+              <Link href={APP_ROUTER.DASHBOARD}>Launch app</Link>
             </Button>
           ) : (
             <div className="flex items-center gap-4">
