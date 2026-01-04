@@ -1,17 +1,14 @@
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { SUBSCRIPTION } from "@/lib/constants/subscription";
 
-export default function PricingSection() {
-  const features = [
-    "Continuous market insights",
-    "Repeated user pain & unmet expectations",
-    "User comparison & switching signals",
-    "Emerging opportunities & trends",
-    "Market-wide view (not just your product)",
-    "Regular insight updates",
-  ];
-
+export default function PricingSection({
+  getStartedUrl,
+}: {
+  getStartedUrl: string;
+}) {
   return (
     <section className="py-24 px-6 bg-background">
       <div className="max-w-7xl mx-auto">
@@ -34,13 +31,17 @@ export default function PricingSection() {
           <div className="bg-gradient-to-br from-card to-muted/50 rounded-3xl p-10 shadow-lg border-2 border-foreground/10">
             {/* Plan Name */}
             <div className="mb-8">
-              <h3 className="text-2xl text-foreground">Founder plan</h3>
+              <h3 className="text-2xl text-foreground">
+                {SUBSCRIPTION.PLAN_NAME}
+              </h3>
             </div>
 
             {/* Price */}
             <div className="mb-6">
               <div className="flex items-baseline gap-2">
-                <span className="text-6xl text-foreground">$45</span>
+                <span className="text-6xl text-foreground">
+                  ${SUBSCRIPTION.PRICE_MONTHLY}
+                </span>
                 <span className="text-2xl text-foreground/60">/ month</span>
               </div>
             </div>
@@ -52,12 +53,12 @@ export default function PricingSection() {
 
             {/* CTA Button */}
             <Button className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground h-14 text-lg rounded-full mb-10">
-              Get Started for free
+              <Link href={getStartedUrl}>Get Started for free</Link>
             </Button>
 
             {/* Features List */}
             <div className="space-y-4 mb-8">
-              {features.map((feature, index) => (
+              {SUBSCRIPTION.FEATURES.map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <div className="flex-shrink-0 mt-0.5">
                     <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">

@@ -11,7 +11,7 @@ export default async function SignUpPage() {
 
   // If user is already authenticated, redirect to dashboard
   if (session?.user) {
-    redirect(APP_ROUTER.DASHBOARD);
+    redirect(APP_ROUTER.MARKETS);
   }
 
   return <SignUpPageClient />;

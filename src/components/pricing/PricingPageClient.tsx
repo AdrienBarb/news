@@ -42,9 +42,6 @@ export default function PricingPageClient() {
             <h1 className="text-4xl lg:text-5xl text-foreground mb-4">
               Try Prediqte free for {SUBSCRIPTION.TRIAL_DAYS} days
             </h1>
-            <p className="text-xl text-foreground/60">
-              No credit card required. Cancel anytime.
-            </p>
           </div>
 
           {/* Pricing Card */}

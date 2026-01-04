@@ -26,7 +26,7 @@ export default async function PricingPage() {
 
   // If already subscribed, redirect to dashboard
   if (isSubscriptionActive(user?.isSubscribed)) {
-    redirect(APP_ROUTER.DASHBOARD);
+    redirect(APP_ROUTER.MARKETS);
   }
 
   return <PricingPageClient />;

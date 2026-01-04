@@ -3,12 +3,10 @@ import HeroSection from "@/components/sections/HeroSection";
 import WhatPrediqteDoesSection from "@/components/sections/WhatPrediqteDoesSection";
 import HowItWorksSection from "@/components/sections/HowItWorksSection";
 import TestimonialsSection from "@/components/sections/TestimonialsSection";
-import FeaturesSection from "@/components/sections/FeaturesSection";
 import FAQSection from "@/components/sections/FAQSection";
 import PricingSection from "@/components/sections/PricingSection";
 import { auth } from "@/lib/better-auth/auth";
 import { getStartedUrl } from "@/lib/utils/getStartedUrl";
-import ComparisonSection from "@/components/sections/ComparisonSection";
 
 export default async function Home() {
   const session = await auth.api.getSession({
@@ -22,7 +20,7 @@ export default async function Home() {
       <WhatPrediqteDoesSection />
       <HowItWorksSection />
       <TestimonialsSection />
-      <PricingSection />
+      <PricingSection getStartedUrl={getStartedUrlValue} />
       <FAQSection />
     </div>
   );

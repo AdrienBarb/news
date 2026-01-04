@@ -23,7 +23,7 @@ export default function Navbar() {
 
           {user ? (
             <Button asChild className="cursor-pointer">
-              <Link href={APP_ROUTER.DASHBOARD}>Launch app</Link>
+              <Link href={APP_ROUTER.MARKETS}>Launch app</Link>
             </Button>
           ) : (
             <div className="flex items-center gap-4">
