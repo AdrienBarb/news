@@ -52,9 +52,7 @@ function hitToConversation(hit: HNAlgoliaHit): HNConversation | null {
   }
 
   // Determine the title
-  const title = isStory
-    ? hit.title || null
-    : hit.story_title || null;
+  const title = isStory ? hit.title || null : hit.story_title || null;
 
   return {
     externalId: isComment ? `hn_comment_${hit.objectID}` : `hn_${hit.objectID}`,
@@ -132,12 +130,16 @@ export async function searchHNConversations(
   return conversations;
 }
 
+/** Time window options for HN search */
+export type HNTimeWindow = "day" | "week" | "month" | "fetch_interval";
+
+/** Fetch interval in hours - should be slightly more than cron interval (6h) for overlap */
+const FETCH_INTERVAL_HOURS = 8;
+
 /**
  * Calculate the start date for a given time window
  */
-export function getStartDateForTimeWindow(
-  window: "day" | "week" | "month"
-): Date {
+export function getStartDateForTimeWindow(window: HNTimeWindow): Date {
   const now = new Date();
 
   switch (window) {
@@ -147,6 +149,7 @@ export function getStartDateForTimeWindow(
       return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     case "month":
       return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    case "fetch_interval":
+      return new Date(now.getTime() - FETCH_INTERVAL_HOURS * 60 * 60 * 1000);
   }
 }
-

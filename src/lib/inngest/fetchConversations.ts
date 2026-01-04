@@ -1,7 +1,10 @@
 import { inngest } from "./client";
 import { prisma } from "@/lib/db/prisma";
 import { searchRedditConversations } from "@/lib/connectors/reddit/search";
-import { searchHNConversations, getStartDateForTimeWindow } from "@/lib/connectors/hn/search";
+import {
+  searchHNConversations,
+  getStartDateForTimeWindow,
+} from "@/lib/connectors/hn/search";
 import { sanitizeContent } from "@/lib/utils/textSanitizer";
 import type { SourceType } from "@prisma/client";
 
@@ -17,15 +20,24 @@ interface ConversationInput {
   publishedAt: Date | null;
 }
 
+interface FetchOptions {
+  /** If true, fetch full history (week). If false, fetch only since last interval (8h) */
+  isInitialFetch: boolean;
+}
+
 /**
  * Fetch conversations for a specific market sensor
  */
 async function fetchForSensor(
   sensor: { id: string; source: SourceType; queryText: string },
-  marketId: string
+  marketId: string,
+  options: FetchOptions
 ): Promise<ConversationInput[]> {
   const conversations: ConversationInput[] = [];
-  const startDate = getStartDateForTimeWindow("week");
+
+  // For initial fetch, get full week of history. For incremental, only get last 8 hours.
+  const hnTimeWindow = options.isInitialFetch ? "week" : "fetch_interval";
+  const startDate = getStartDateForTimeWindow(hnTimeWindow);
 
   try {
     if (sensor.source === "reddit") {
@@ -63,7 +75,7 @@ async function fetchForSensor(
         startDate,
         includeStories: true,
         includeComments: true,
-        maxPages: 2,
+        maxPages: options.isInitialFetch ? 5 : 2, // More pages for initial fetch
       });
 
       for (const result of results) {
@@ -136,6 +148,18 @@ export const fetchConversationsJob = inngest.createFunction(
       };
     }
 
+    // Check if this is an initial fetch (no existing HN conversations for this market)
+    const existingHNCount = await step.run("check-existing-hn", async () => {
+      return prisma.conversation.count({
+        where: {
+          marketId,
+          source: "hackernews",
+        },
+      });
+    });
+
+    const isInitialFetch = existingHNCount === 0;
+
     // Fetch conversations for each sensor
     let totalFetched = 0;
     let totalNew = 0;
@@ -143,7 +167,7 @@ export const fetchConversationsJob = inngest.createFunction(
     for (const sensor of market.sensors) {
       const conversations = await step.run(
         `fetch-sensor-${sensor.id}`,
-        async () => fetchForSensor(sensor, marketId)
+        async () => fetchForSensor(sensor, marketId, { isInitialFetch })
       );
 
       totalFetched += conversations.length;

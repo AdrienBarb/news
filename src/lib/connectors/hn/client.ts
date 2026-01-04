@@ -51,7 +51,9 @@ export async function searchHN(
     params.append("numericFilters", numericFilters);
   }
 
-  const url = `${HN_ALGOLIA_API}/search?${params.toString()}`;
+  // Use search_by_date for chronological results (newest first)
+  // This ensures we capture ALL new content, not just popular/relevant content
+  const url = `${HN_ALGOLIA_API}/search_by_date?${params.toString()}`;
 
   const response = await fetch(url, {
     headers: {
