@@ -1,7 +1,5 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/better-auth/auth";
-import { prisma } from "@/lib/db/prisma";
-import { isSubscriptionActive } from "@/lib/utils/subscription";
 import SubscriptionModal from "@/components/SubscriptionModal";
 import { redirect } from "next/navigation";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -17,27 +15,8 @@ export default async function DashboardLayout({
     headers: await headers(),
   });
 
-  let subscriptionActive = false;
-
   if (!session?.user) {
     redirect("/");
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      planType: true,
-      accessExpiresAt: true,
-      createdAt: true,
-    },
-  });
-
-  if (user) {
-    subscriptionActive = isSubscriptionActive(
-      user.planType,
-      user.accessExpiresAt,
-      user.createdAt
-    );
   }
 
   return (
@@ -60,7 +39,7 @@ export default async function DashboardLayout({
           </main>
         </SidebarInset>
       </SidebarProvider>
-      {session?.user && !subscriptionActive && <SubscriptionModal />}
+      <SubscriptionModal />
     </>
   );
 }

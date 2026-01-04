@@ -54,7 +54,7 @@
     "inngest": "^3.46.0",
     "linkedom": "^0.18.12",
     "lucide-react": "^0.553.0",
-    "next": "16.0.7",
+    "next": "16.1.1",
     "next-sanity": "^11.6.5",
     "next-themes": "^0.4.6",
     "nuqs": "^2.8.1",
@@ -83,9 +83,10 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.0.7",
+    "eslint-config-next": "16.1.1",
     "react-email": "^5.0.1",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

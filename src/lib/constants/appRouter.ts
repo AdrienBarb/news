@@ -3,4 +3,5 @@ export const APP_ROUTER = {
   SIGNUP: "/signup",
   DASHBOARD: "/dashboard",
   SIGNIN: "/signin",
+  PRICING: "/pricing",
 };

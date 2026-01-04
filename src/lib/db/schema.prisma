@@ -18,8 +18,11 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @default(now()) @updatedAt
 
-  planType        PlanType  @default(NONE)
-  accessExpiresAt DateTime?
+  // Subscription fields
+  isSubscribed         Boolean @default(false)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  stripePriceId        String?
 
   sessions Session[]
   accounts Account[]
@@ -101,15 +104,15 @@ model Market {
 }
 
 model MarketSensor {
-  id            String       @id @default(cuid())
+  id            String     @id @default(cuid())
   marketId      String
-  market        Market       @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  market        Market     @relation(fields: [marketId], references: [id], onDelete: Cascade)
   source        SourceType
   queryText     String
-  isActive      Boolean      @default(true)
+  isActive      Boolean    @default(true)
   lastFetchedAt DateTime?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
   @@index([marketId])
   @@index([source, isActive])
@@ -117,9 +120,9 @@ model MarketSensor {
 }
 
 model Conversation {
-  id               String            @id @default(cuid())
+  id               String           @id @default(cuid())
   marketId         String
-  market           Market            @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  market           Market           @relation(fields: [marketId], references: [id], onDelete: Cascade)
   source           SourceType
   externalId       String // e.g., "t3_abc123" for Reddit, "hn_12345" for HN
   url              String
@@ -128,10 +131,10 @@ model Conversation {
   sanitizedContent String?
   author           String?
   publishedAt      DateTime?
-  fetchedAt        DateTime          @default(now())
-  processingStatus ProcessingStatus  @default(pending)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  fetchedAt        DateTime         @default(now())
+  processingStatus ProcessingStatus @default(pending)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   painStatements PainStatement[]
 
@@ -167,19 +170,19 @@ model PainStatement {
 }
 
 model Signal {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   marketId      String
-  market        Market    @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  market        Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
   title         String
   description   String?
   painType      PainType
-  frequency     Int       @default(0) // Count of associated pain statements
-  avgConfidence Float     @default(0)
+  frequency     Int      @default(0) // Count of associated pain statements
+  avgConfidence Float    @default(0)
   centroid      Float[] // Average embedding for similarity matching
-  firstSeenAt   DateTime  @default(now())
-  lastSeenAt    DateTime  @default(now())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  firstSeenAt   DateTime @default(now())
+  lastSeenAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   painStatements PainStatement[]
   evidence       SignalEvidence[]
@@ -283,10 +286,4 @@ enum SignalTrend {
   rising // Frequency increased > 30%
   stable // Frequency within +/- 30%
   fading // Frequency decreased > 30%
-}
-
-enum PlanType {
-  NONE
-  YEAR
-  LIFETIME
 }

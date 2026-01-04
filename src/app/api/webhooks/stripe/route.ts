@@ -1,9 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { addYears } from "date-fns";
 import { prisma } from "@/lib/db/prisma";
 import { stripe } from "@/lib/stripe/client";
-import { PlanType } from "@prisma/client";
+
+async function getCustomerEmail(
+  customerId: string | Stripe.Customer | Stripe.DeletedCustomer
+): Promise<string | null> {
+  const id = typeof customerId === "string" ? customerId : customerId.id;
+  const customer = await stripe.customers.retrieve(id);
+
+  if (customer.deleted) {
+    return null;
+  }
+
+  return customer.email;
+}
+
+async function getUserByCustomerEmail(
+  customerId: string | Stripe.Customer | Stripe.DeletedCustomer
+) {
+  const email = await getCustomerEmail(customerId);
+
+  if (!email) {
+    console.error("⚠️ Could not retrieve customer email from Stripe");
+    return null;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+
+  if (!user) {
+    console.error(`⚠️ No user found with email: ${email}`);
+    return null;
+  }
+
+  return user;
+}
 
 export async function POST(req: NextRequest) {
   const sig = req.headers.get("stripe-signature");
@@ -28,35 +62,115 @@ export async function POST(req: NextRequest) {
     return new NextResponse(`Webhook Error: ${message}`, { status: 400 });
   }
 
+  console.log("🚀 Stripe webhook event:", event.type);
   console.log("🚀 ~ POST ~ event:", event);
 
   try {
     switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const userId = session.metadata?.userId;
-        const plan = session.metadata?.plan;
+      // Handle subscription created or updated
+      case "customer.subscription.created":
+      case "customer.subscription.updated": {
+        const subscription = event.data.object as Stripe.Subscription;
+        console.log("🚀 ~ POST ~ subscription:", subscription);
+        const user = await getUserByCustomerEmail(subscription.customer);
 
-        if (!userId || !plan) {
-          console.error("⚠️ Missing userId or plan in session metadata", {
-            userId,
-            plan,
-          });
+        if (!user) {
+          break;
+        }
+
+        // Subscription is active if status is "active" or "trialing"
+        const isActive =
+          subscription.status === "active" ||
+          subscription.status === "trialing";
+
+        const stripeCustomerId =
+          typeof subscription.customer === "string"
+            ? subscription.customer
+            : subscription.customer.id;
+
+        // Get the price ID from the first subscription item
+        const stripePriceId = subscription.items.data[0]?.price.id ?? null;
+        console.log("🚀 ~ POST ~ subscription.items:", subscription.items);
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            isSubscribed: isActive,
+            stripeSubscriptionId: subscription.id,
+            stripeCustomerId,
+            stripePriceId,
+          },
+        });
+
+        console.log(
+          `✅ User ${user.id} subscription updated: isSubscribed=${isActive}`
+        );
+        break;
+      }
+
+      // Handle subscription cancelled or expired
+      case "customer.subscription.deleted": {
+        const subscription = event.data.object as Stripe.Subscription;
+        const user = await getUserByCustomerEmail(subscription.customer);
+
+        if (!user) {
           break;
         }
 
         await prisma.user.update({
-          where: { id: userId },
+          where: { id: user.id },
           data: {
-            planType: plan as PlanType,
-            accessExpiresAt:
-              plan === PlanType.YEAR ? addYears(new Date(), 1) : null,
+            isSubscribed: false,
+            stripeSubscriptionId: null,
           },
         });
+
+        console.log(`✅ User ${user.id} subscription cancelled`);
+        break;
+      }
+
+      // Handle subscription paused
+      case "customer.subscription.paused": {
+        const subscription = event.data.object as Stripe.Subscription;
+        const user = await getUserByCustomerEmail(subscription.customer);
+
+        if (!user) {
+          break;
+        }
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            isSubscribed: false,
+          },
+        });
+
+        console.log(`✅ User ${user.id} subscription paused`);
+        break;
+      }
+
+      // Handle subscription resumed
+      case "customer.subscription.resumed": {
+        const subscription = event.data.object as Stripe.Subscription;
+        const user = await getUserByCustomerEmail(subscription.customer);
+
+        if (!user) {
+          break;
+        }
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            isSubscribed: true,
+          },
+        });
+
+        console.log(`✅ User ${user.id} subscription resumed`);
         break;
       }
 
       default:
+        // Unhandled event type
         break;
     }
 

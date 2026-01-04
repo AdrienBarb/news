@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { LogOutIcon, MoreVerticalIcon, Settings } from "lucide-react";
+import { CreditCard, LogOutIcon, MoreVerticalIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/sidebar";
 import { signOut } from "@/lib/better-auth/auth-client";
 import SettingsModal from "@/components/SettingsModal";
+import useApi from "@/lib/hooks/useApi";
+import { useUser } from "@/lib/hooks/useUser";
 
 export function NavUser({
   user,
@@ -33,6 +35,28 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const router = useRouter();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { usePost } = useApi();
+  const { user: currentUser } = useUser();
+
+  const { mutate: openBillingPortal, isPending: isOpeningPortal } = usePost(
+    "/billing-portal",
+    {
+      onSuccess: (data: { url: string }) => {
+        if (data.url) {
+          window.location.href = data.url;
+        }
+      },
+      onError: () => {
+        toast.error("Failed to open billing portal");
+      },
+    }
+  );
+
+  const handleManageSubscription = () => {
+    openBillingPortal({
+      returnUrl: window.location.href,
+    });
+  };
 
   const handleSignOut = async () => {
     await signOut({
@@ -81,11 +105,18 @@ export function NavUser({
             align="end"
             sideOffset={4}
           >
-            {/* <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
-              <Settings />
-              Settings
-            </DropdownMenuItem> */}
-            {/* <DropdownMenuSeparator /> */}
+            {currentUser?.stripeCustomerId && (
+              <>
+                <DropdownMenuItem
+                  onClick={handleManageSubscription}
+                  disabled={isOpeningPortal}
+                >
+                  <CreditCard />
+                  {isOpeningPortal ? "Opening..." : "Manage Subscription"}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem onClick={handleSignOut}>
               <LogOutIcon />
               Log out
