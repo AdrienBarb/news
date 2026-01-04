@@ -25,6 +25,7 @@ CREATE TABLE "user" (
     "isSubscribed" BOOLEAN NOT NULL DEFAULT false,
     "stripeCustomerId" TEXT,
     "stripeSubscriptionId" TEXT,
+    "stripePriceId" TEXT,
 
     CONSTRAINT "user_pkey" PRIMARY KEY ("id")
 );
