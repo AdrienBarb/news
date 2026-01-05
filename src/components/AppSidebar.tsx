@@ -100,8 +100,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <DialogTitle>Market Limit Reached</DialogTitle>
             </div>
             <DialogDescription className="pt-2">
-              You can only have one active market at a time. Please archive or
-              delete your existing market before creating a new one.
+              You can only have one active market at a time. Please delete your
+              existing market before creating a new one.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

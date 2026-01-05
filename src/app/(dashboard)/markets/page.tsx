@@ -4,7 +4,7 @@ import { MarketCard } from "@/components/markets/MarketCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import useApi from "@/lib/hooks/useApi";
-import { TrendingUpIcon } from "lucide-react";
+import { TrendingUpIcon, PlusCircleIcon } from "lucide-react";
 import Link from "next/link";
 
 interface Market {
@@ -12,7 +12,7 @@ interface Market {
   name: string;
   websiteUrl: string;
   category: string | null;
-  status: "pending" | "analyzing" | "active" | "error";
+  status: "pending" | "analyzing" | "active" | "paused" | "archived" | "error";
   signalCount: number;
   conversationCount: number;
   createdAt: string;

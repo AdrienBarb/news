@@ -102,6 +102,22 @@ export async function POST(req: NextRequest) {
           },
         });
 
+        // If subscription became active, resume any paused markets
+        if (isActive) {
+          await prisma.market.updateMany({
+            where: {
+              userId: user.id,
+              status: "paused",
+            },
+            data: {
+              status: "active",
+            },
+          });
+          console.log(
+            `✅ User ${user.id} subscription active, markets resumed`
+          );
+        }
+
         console.log(
           `✅ User ${user.id} subscription updated: isSubscribed=${isActive}`
         );
@@ -117,6 +133,7 @@ export async function POST(req: NextRequest) {
           break;
         }
 
+        // Update user subscription status
         await prisma.user.update({
           where: { id: user.id },
           data: {
@@ -125,7 +142,20 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        console.log(`✅ User ${user.id} subscription cancelled`);
+        // Pause all active markets for this user
+        await prisma.market.updateMany({
+          where: {
+            userId: user.id,
+            status: "active",
+          },
+          data: {
+            status: "paused",
+          },
+        });
+
+        console.log(
+          `✅ User ${user.id} subscription cancelled, markets paused`
+        );
         break;
       }
 
@@ -138,6 +168,7 @@ export async function POST(req: NextRequest) {
           break;
         }
 
+        // Update user subscription status
         await prisma.user.update({
           where: { id: user.id },
           data: {
@@ -145,7 +176,18 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        console.log(`✅ User ${user.id} subscription paused`);
+        // Pause all active markets for this user
+        await prisma.market.updateMany({
+          where: {
+            userId: user.id,
+            status: "active",
+          },
+          data: {
+            status: "paused",
+          },
+        });
+
+        console.log(`✅ User ${user.id} subscription paused, markets paused`);
         break;
       }
 
@@ -158,6 +200,7 @@ export async function POST(req: NextRequest) {
           break;
         }
 
+        // Update user subscription status
         await prisma.user.update({
           where: { id: user.id },
           data: {
@@ -165,7 +208,20 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        console.log(`✅ User ${user.id} subscription resumed`);
+        // Resume all paused markets for this user
+        await prisma.market.updateMany({
+          where: {
+            userId: user.id,
+            status: "paused",
+          },
+          data: {
+            status: "active",
+          },
+        });
+
+        console.log(
+          `✅ User ${user.id} subscription resumed, markets reactivated`
+        );
         break;
       }
 

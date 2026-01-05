@@ -5,6 +5,7 @@ export interface MarketWithLatestReport extends Market {
   latestReport: Report | null;
   signalCount: number;
   conversationCount: number;
+  painStatementCount: number;
 }
 
 /**
@@ -58,10 +59,7 @@ export async function getMarketById(
         take: 1,
         include: {
           reportSignals: {
-            orderBy: [
-              { trend: "asc" },
-              { currentFrequency: "desc" },
-            ],
+            orderBy: [{ trend: "asc" }, { currentFrequency: "desc" }],
             include: {
               signal: {
                 select: {
@@ -88,11 +86,21 @@ export async function getMarketById(
     return null;
   }
 
+  // Count pain statements through conversations
+  const painStatementCount = await prisma.painStatement.count({
+    where: {
+      conversation: {
+        marketId,
+      },
+    },
+  });
+
   return {
     ...market,
     latestReport: market.reports[0] || null,
     signalCount: market._count.signals,
     conversationCount: market._count.conversations,
+    painStatementCount,
     reports: undefined,
     _count: undefined,
   } as MarketWithLatestReport;
@@ -109,47 +117,6 @@ export async function deleteMarket(
     where: {
       id: marketId,
       userId,
-    },
-  });
-
-  return result.count > 0;
-}
-
-/**
- * Archive a market (soft delete - stops processing but keeps data)
- */
-export async function archiveMarket(
-  marketId: string,
-  userId: string
-): Promise<boolean> {
-  const result = await prisma.market.updateMany({
-    where: {
-      id: marketId,
-      userId,
-    },
-    data: {
-      status: "archived",
-    },
-  });
-
-  return result.count > 0;
-}
-
-/**
- * Restore an archived market back to active
- */
-export async function restoreMarket(
-  marketId: string,
-  userId: string
-): Promise<boolean> {
-  const result = await prisma.market.updateMany({
-    where: {
-      id: marketId,
-      userId,
-      status: "archived",
-    },
-    data: {
-      status: "active",
     },
   });
 

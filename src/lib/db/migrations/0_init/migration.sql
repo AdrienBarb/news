@@ -1,5 +1,23 @@
+-- CreateExtension
+CREATE EXTENSION IF NOT EXISTS "pg_graphql";
+
+-- CreateExtension
+CREATE EXTENSION IF NOT EXISTS "pg_net";
+
+-- CreateExtension
+CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
+
+-- CreateExtension
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- CreateExtension
+CREATE EXTENSION IF NOT EXISTS "supabase_vault";
+
+-- CreateExtension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- CreateEnum
-CREATE TYPE "MarketStatus" AS ENUM ('pending', 'analyzing', 'active', 'error');
+CREATE TYPE "MarketStatus" AS ENUM ('pending', 'analyzing', 'active', 'paused', 'archived', 'error');
 
 -- CreateEnum
 CREATE TYPE "SourceType" AS ENUM ('reddit', 'hackernews');

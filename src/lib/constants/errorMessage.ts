@@ -11,5 +11,5 @@ export const errorMessages = {
   SIGNAL_NOT_FOUND: "Signal not found",
   REPORT_NOT_FOUND: "Report not found",
   MARKET_LIMIT_REACHED:
-    "You can only have one active market at a time. Please archive or delete your existing market first.",
+    "You can only have one active market at a time. Please delete your existing market first.",
 };

@@ -1,7 +1,8 @@
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [pg_graphql, pg_net, pg_stat_statements, pgcrypto, supabase_vault, uuid_ossp(map: "uuid-ossp")]
 }
 
 generator client {
@@ -253,6 +254,7 @@ enum MarketStatus {
   pending
   analyzing
   active
+  paused
   archived
   error
 }

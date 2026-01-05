@@ -14,7 +14,8 @@ const statusConfig: Record<
   pending: { label: "Pending", variant: "secondary" },
   analyzing: { label: "Analyzing", variant: "outline" },
   active: { label: "Active", variant: "default" },
-  archived: { label: "Archived", variant: "secondary" },
+  paused: { label: "Paused", variant: "secondary" },
+  archived: { label: "Archived", variant: "outline" },
   error: { label: "Error", variant: "destructive" },
 };
 
