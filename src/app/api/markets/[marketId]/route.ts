@@ -7,6 +7,7 @@ import {
   deleteMarket,
   archiveMarket,
   restoreMarket,
+  hasActiveMarket,
 } from "@/lib/services/markets/getMarkets";
 
 interface RouteParams {
@@ -71,6 +72,17 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
         { error: errorMessages.MISSING_FIELDS },
         { status: 400 }
       );
+    }
+
+    // Check if user already has an active market when trying to restore
+    if (action === "restore") {
+      const userHasActiveMarket = await hasActiveMarket(session.user.id);
+      if (userHasActiveMarket) {
+        return NextResponse.json(
+          { error: errorMessages.MARKET_LIMIT_REACHED },
+          { status: 403 }
+        );
+      }
     }
 
     const success =

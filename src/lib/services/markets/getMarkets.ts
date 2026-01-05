@@ -156,3 +156,19 @@ export async function restoreMarket(
   return result.count > 0;
 }
 
+/**
+ * Check if user has an active market (pending, analyzing, or active)
+ */
+export async function hasActiveMarket(userId: string): Promise<boolean> {
+  const count = await prisma.market.count({
+    where: {
+      userId,
+      status: {
+        in: ["pending", "analyzing", "active"],
+      },
+    },
+  });
+
+  return count > 0;
+}
+

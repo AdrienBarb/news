@@ -4,7 +4,7 @@ import { MarketCard } from "@/components/markets/MarketCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import useApi from "@/lib/hooks/useApi";
-import { PlusCircleIcon, TrendingUpIcon } from "lucide-react";
+import { TrendingUpIcon } from "lucide-react";
 import Link from "next/link";
 
 interface Market {
@@ -26,19 +26,11 @@ export default function MarketsPage() {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Your Markets</h1>
-          <p className="text-muted-foreground">
-            Monitor market signals for your products and competitors
-          </p>
-        </div>
-        <Link href="/markets/new">
-          <Button>
-            <PlusCircleIcon className="mr-2 h-4 w-4" />
-            New Market
-          </Button>
-        </Link>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">Your Markets</h1>
+        <p className="text-muted-foreground">
+          Monitor market signals for your products and competitors
+        </p>
       </div>
 
       {isLoading ? (

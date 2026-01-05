@@ -3,7 +3,10 @@ import { errorHandler } from "@/lib/errors/errorHandler";
 import { errorMessages } from "@/lib/constants/errorMessage";
 import { auth } from "@/lib/better-auth/auth";
 import { createMarket } from "@/lib/services/markets/createMarket";
-import { getMarketsForUser } from "@/lib/services/markets/getMarkets";
+import {
+  getMarketsForUser,
+  hasActiveMarket,
+} from "@/lib/services/markets/getMarkets";
 import { createMarketSchema } from "@/lib/schemas/markets/createMarketSchema";
 import { inngest } from "@/lib/inngest/client";
 
@@ -44,6 +47,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: errorMessages.UNAUTHORIZED },
         { status: 401 }
+      );
+    }
+
+    // Check if user already has an active market
+    const userHasActiveMarket = await hasActiveMarket(session.user.id);
+    if (userHasActiveMarket) {
+      return NextResponse.json(
+        { error: errorMessages.MARKET_LIMIT_REACHED },
+        { status: 403 }
       );
     }
 

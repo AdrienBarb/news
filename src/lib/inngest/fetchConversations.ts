@@ -42,12 +42,16 @@ async function fetchForSensor(
   try {
     if (sensor.source === "reddit") {
       // Use public JSON API with rate limiting
+      // Note: Reddit public API has strict rate limits (~10 req/min)
+      // Keep limits low to avoid 429 errors
       const results = await searchRedditConversations({
         query: sensor.queryText,
         timeframe: options.isInitialFetch ? "week" : "day",
-        limit: options.isInitialFetch ? 25 : 10,
-        includeComments: true,
-        maxCommentsPerPost: 15,
+        limit: options.isInitialFetch ? 10 : 5,
+        // Disable comments for now due to rate limits (each post = 1 extra request)
+        // Re-enable when using ScrapingBee or if rate limits improve
+        includeComments: false,
+        maxCommentsPerPost: 5,
       });
 
       console.log("🚀 ~ fetchForSensor ~ results:", results);
@@ -262,6 +266,8 @@ export const fetchConversationsJob = inngest.createFunction(
         });
       }
     );
+
+    console.log("🚀 ~ pendingConversations:", pendingConversations);
 
     // Trigger processing for pending conversations
     if (pendingConversations.length > 0) {

@@ -2,9 +2,9 @@ import type { RedditSearchResult } from "./types";
 
 const REDDIT_PUBLIC_BASE = "https://www.reddit.com";
 
-// Rate limiting: Be conservative to avoid blocks
-// Reddit allows ~60 requests/minute unauthenticated, but we'll be safer
-const REQUEST_DELAY_MS = 2500; // 2.5 seconds between requests
+// Rate limiting: Reddit allows ~10 requests/minute for unauthenticated access
+// 1 request every 6 seconds = 10 requests/minute
+const REQUEST_DELAY_MS = 6000; // 6 seconds between requests
 const MAX_RETRIES = 3;
 
 // Pool of realistic browser User-Agents for rotation
