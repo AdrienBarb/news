@@ -253,6 +253,7 @@ enum MarketStatus {
   pending
   analyzing
   active
+  archived
   error
 }
 

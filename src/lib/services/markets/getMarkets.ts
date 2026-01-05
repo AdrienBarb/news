@@ -115,3 +115,44 @@ export async function deleteMarket(
   return result.count > 0;
 }
 
+/**
+ * Archive a market (soft delete - stops processing but keeps data)
+ */
+export async function archiveMarket(
+  marketId: string,
+  userId: string
+): Promise<boolean> {
+  const result = await prisma.market.updateMany({
+    where: {
+      id: marketId,
+      userId,
+    },
+    data: {
+      status: "archived",
+    },
+  });
+
+  return result.count > 0;
+}
+
+/**
+ * Restore an archived market back to active
+ */
+export async function restoreMarket(
+  marketId: string,
+  userId: string
+): Promise<boolean> {
+  const result = await prisma.market.updateMany({
+    where: {
+      id: marketId,
+      userId,
+      status: "archived",
+    },
+    data: {
+      status: "active",
+    },
+  });
+
+  return result.count > 0;
+}
+

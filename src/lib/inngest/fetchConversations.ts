@@ -41,19 +41,28 @@ async function fetchForSensor(
 
   try {
     if (sensor.source === "reddit") {
+      // Use public JSON API with rate limiting
       const results = await searchRedditConversations({
         query: sensor.queryText,
-        timeframe: "week",
-        limit: 25,
+        timeframe: options.isInitialFetch ? "week" : "day",
+        limit: options.isInitialFetch ? 25 : 10,
         includeComments: true,
-        maxCommentsPerPost: 10,
+        maxCommentsPerPost: 15,
       });
+
+      console.log("🚀 ~ fetchForSensor ~ results:", results);
+
+      console.log(
+        `📡 Reddit sensor ${sensor.id}: fetched ${results.length} conversations`
+      );
 
       for (const result of results) {
         const sanitized = sanitizeContent(result.rawContent);
 
-        // Skip if content too short or has injection
-        if (sanitized.content.length < 50 || sanitized.injectionCheck.detected) {
+        if (
+          sanitized.content.length < 50 ||
+          sanitized.injectionCheck.detected
+        ) {
           continue;
         }
 
@@ -69,7 +78,9 @@ async function fetchForSensor(
           publishedAt: result.publishedAt,
         });
       }
-    } else if (sensor.source === "hackernews") {
+    }
+
+    if (sensor.source === "hackernews") {
       const results = await searchHNConversations({
         query: sensor.queryText,
         startDate,
@@ -78,10 +89,15 @@ async function fetchForSensor(
         maxPages: options.isInitialFetch ? 5 : 2, // More pages for initial fetch
       });
 
+      console.log("🚀 ~ fetchForSensor ~ results:", results);
+
       for (const result of results) {
         const sanitized = sanitizeContent(result.rawContent);
 
-        if (sanitized.content.length < 50 || sanitized.injectionCheck.detected) {
+        if (
+          sanitized.content.length < 50 ||
+          sanitized.injectionCheck.detected
+        ) {
           continue;
         }
 
@@ -148,23 +164,27 @@ export const fetchConversationsJob = inngest.createFunction(
       };
     }
 
-    // Check if this is an initial fetch (no existing HN conversations for this market)
-    const existingHNCount = await step.run("check-existing-hn", async () => {
-      return prisma.conversation.count({
-        where: {
-          marketId,
-          source: "hackernews",
-        },
-      });
+    // Check existing conversation counts per source to determine initial fetch
+    const existingCounts = await step.run("check-existing-counts", async () => {
+      const [hnCount, redditCount] = await Promise.all([
+        prisma.conversation.count({
+          where: { marketId, source: "hackernews" },
+        }),
+        prisma.conversation.count({
+          where: { marketId, source: "reddit" },
+        }),
+      ]);
+      return { hackernews: hnCount, reddit: redditCount };
     });
-
-    const isInitialFetch = existingHNCount === 0;
 
     // Fetch conversations for each sensor
     let totalFetched = 0;
     let totalNew = 0;
 
     for (const sensor of market.sensors) {
+      // Determine if this is an initial fetch for this specific source
+      const isInitialFetch = existingCounts[sensor.source] === 0;
+
       const conversations = await step.run(
         `fetch-sensor-${sensor.id}`,
         async () => fetchForSensor(sensor, marketId, { isInitialFetch })
@@ -304,4 +324,3 @@ export const scheduledFetchConversationsJob = inngest.createFunction(
     };
   }
 );
-

@@ -117,7 +117,7 @@ ${websiteContent}`,
  */
 function generateSensors(context: MarketContext): MarketSensorInput[] {
   const sensors: MarketSensorInput[] = [];
-  const sources: SourceType[] = ["reddit", "hackernews"];
+  const sources: SourceType[] = ["hackernews", "reddit"];
 
   // Generate queries based on context
   const queryTemplates = [
@@ -185,8 +185,12 @@ export async function deriveMarketContext(marketId: string): Promise<void> {
       market.websiteUrl
     );
 
+    console.log("🚀 ~ deriveMarketContext ~ context:", context);
+
     // Generate sensors
     const sensors = generateSensors(context);
+
+    console.log("🚀 ~ deriveMarketContext ~ sensors:", sensors);
 
     // Update market with context and create sensors
     await prisma.$transaction(async (tx) => {
@@ -222,4 +226,3 @@ export async function deriveMarketContext(marketId: string): Promise<void> {
     throw error;
   }
 }
-

@@ -15,7 +15,7 @@ interface MutationParams {
 
 export const fetchData = async (
   url: string,
-  params?: Record<string, any>,
+  params?: Record<string, any>
 ): Promise<any> => {
   try {
     const response = await axiosInstance.get(url, { params });
@@ -50,6 +50,18 @@ const useApi = () => {
     return response.data;
   };
 
+  const patcher = async ({ url, data }: MutationParams): Promise<any> => {
+    const response: AxiosResponse = await axiosInstance.patch(url, data);
+
+    return response.data;
+  };
+
+  const deleter = async ({ url }: { url: string }): Promise<any> => {
+    const response: AxiosResponse = await axiosInstance.delete(url);
+
+    return response.data;
+  };
+
   const useGet = (url: string, params?: Record<string, any>, options = {}) =>
     useQuery({
       queryKey: ["get", { url, params }],
@@ -61,7 +73,7 @@ const useApi = () => {
     queryKey: any,
     url: string,
     params: Record<string, any>,
-    options = {},
+    options = {}
   ) => {
     return useInfiniteQuery({
       queryKey: [queryKey],
@@ -96,8 +108,27 @@ const useApi = () => {
       ...options,
     });
 
-  return { useGet, usePost, usePut, useInfinite, fetchData };
+  const usePatch = (url: string, options = {}) =>
+    useMutation({
+      mutationFn: (data: any) => patcher({ url, data }),
+      ...options,
+    });
+
+  const useDelete = (url: string, options = {}) =>
+    useMutation({
+      mutationFn: (_data?: unknown) => deleter({ url }),
+      ...options,
+    });
+
+  return {
+    useGet,
+    usePost,
+    usePut,
+    usePatch,
+    useDelete,
+    useInfinite,
+    fetchData,
+  };
 };
 
 export default useApi;
-

@@ -1,132 +1,91 @@
-import type { RedditAccessToken, RedditSearchResult } from "./types";
+import type { RedditSearchResult } from "./types";
 
-const REDDIT_API_BASE = "https://oauth.reddit.com";
-const REDDIT_AUTH_URL = "https://www.reddit.com/api/v1/access_token";
-const USER_AGENT = "MarketSignals/1.0.0 (by /u/MarketSignalsApp)";
+const REDDIT_PUBLIC_BASE = "https://www.reddit.com";
 
-// Rate limiting: 100 requests per minute for OAuth apps
-const RATE_LIMIT_REQUESTS = 100;
-const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+// Rate limiting: Be conservative to avoid blocks
+// Reddit allows ~60 requests/minute unauthenticated, but we'll be safer
+const REQUEST_DELAY_MS = 2500; // 2.5 seconds between requests
+const MAX_RETRIES = 3;
 
-let tokenCache: RedditAccessToken | null = null;
-let requestTimestamps: number[] = [];
+// Pool of realistic browser User-Agents for rotation
+const USER_AGENTS = [
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+];
+
+let lastRequestTime = 0;
 
 /**
- * Get Reddit OAuth credentials from environment variables
+ * Get a random User-Agent from the pool
  */
-function getCredentials() {
-  const clientId = process.env.REDDIT_CLIENT_ID;
-  const clientSecret = process.env.REDDIT_CLIENT_SECRET;
+function getRandomUserAgent(): string {
+  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+}
 
-  if (!clientId || !clientSecret) {
+/**
+ * Delay execution for specified milliseconds
+ */
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Make a rate-limited request to Reddit's public JSON API
+ * Handles rate limiting with exponential backoff
+ */
+async function redditPublicRequest<T>(url: string, retryCount = 0): Promise<T> {
+  // Enforce minimum delay between requests
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+  if (timeSinceLastRequest < REQUEST_DELAY_MS) {
+    await delay(REQUEST_DELAY_MS - timeSinceLastRequest);
+  }
+  lastRequestTime = Date.now();
+
+  const response = await fetch(url, {
+    headers: {
+      "User-Agent": getRandomUserAgent(),
+      Accept: "application/json",
+      "Accept-Language": "en-US,en;q=0.9",
+    },
+  });
+
+  // Handle rate limiting with exponential backoff
+  if (response.status === 429) {
+    if (retryCount >= MAX_RETRIES) {
+      throw new Error(
+        `Reddit rate limit exceeded after ${MAX_RETRIES} retries`
+      );
+    }
+
+    // Exponential backoff: 30s, 60s, 120s
+    const backoffMs = Math.pow(2, retryCount) * 30000;
+    console.log(
+      `Reddit rate limited (429). Retry ${retryCount + 1}/${MAX_RETRIES} after ${backoffMs / 1000}s`
+    );
+    await delay(backoffMs);
+    return redditPublicRequest<T>(url, retryCount + 1);
+  }
+
+  // Handle other common error codes
+  if (response.status === 403) {
     throw new Error(
-      "Missing Reddit API credentials. Set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET environment variables."
+      "Reddit blocked request (403 Forbidden). Datacenter IP may be blocked."
     );
   }
 
-  return { clientId, clientSecret };
-}
-
-/**
- * Get a valid access token, refreshing if necessary
- */
-async function getAccessToken(): Promise<string> {
-  const now = Date.now();
-
-  // Check if cached token is still valid (with 60s buffer)
-  if (tokenCache && tokenCache.expires_at > now + 60000) {
-    return tokenCache.access_token;
-  }
-
-  const { clientId, clientSecret } = getCredentials();
-
-  // Use application-only OAuth (no user context needed)
-  const authString = Buffer.from(`${clientId}:${clientSecret}`).toString(
-    "base64"
-  );
-
-  const response = await fetch(REDDIT_AUTH_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${authString}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-      "User-Agent": USER_AGENT,
-    },
-    body: new URLSearchParams({
-      grant_type: "client_credentials",
-    }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Failed to get Reddit access token: ${response.status} - ${text}`);
-  }
-
-  const data = await response.json();
-
-  tokenCache = {
-    ...data,
-    expires_at: now + data.expires_in * 1000,
-  };
-
-  return tokenCache!.access_token;
-}
-
-/**
- * Wait if necessary to respect rate limits
- */
-async function waitForRateLimit(): Promise<void> {
-  const now = Date.now();
-
-  // Remove timestamps older than the rate limit window
-  requestTimestamps = requestTimestamps.filter(
-    (ts) => now - ts < RATE_LIMIT_WINDOW_MS
-  );
-
-  // If we've hit the rate limit, wait until the oldest request expires
-  if (requestTimestamps.length >= RATE_LIMIT_REQUESTS) {
-    const oldestTimestamp = requestTimestamps[0];
-    const waitTime = RATE_LIMIT_WINDOW_MS - (now - oldestTimestamp) + 100;
-    if (waitTime > 0) {
-      console.log(`Reddit rate limit reached, waiting ${waitTime}ms`);
-      await new Promise((resolve) => setTimeout(resolve, waitTime));
+  if (response.status === 503) {
+    if (retryCount >= MAX_RETRIES) {
+      throw new Error("Reddit service unavailable after retries");
     }
-  }
-
-  // Record this request
-  requestTimestamps.push(Date.now());
-}
-
-/**
- * Make an authenticated request to the Reddit API with rate limiting
- */
-export async function redditRequest<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
-  await waitForRateLimit();
-
-  const accessToken = await getAccessToken();
-
-  const url = endpoint.startsWith("http")
-    ? endpoint
-    : `${REDDIT_API_BASE}${endpoint}`;
-
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...options.headers,
-      Authorization: `Bearer ${accessToken}`,
-      "User-Agent": USER_AGENT,
-    },
-  });
-
-  if (response.status === 429) {
-    // Rate limited - wait and retry once
-    const retryAfter = parseInt(response.headers.get("Retry-After") || "60", 10);
-    console.log(`Reddit 429 rate limit, retrying after ${retryAfter}s`);
-    await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
-    return redditRequest(endpoint, options);
+    // Reddit sometimes returns 503 under load, retry after brief delay
+    await delay(5000);
+    return redditPublicRequest<T>(url, retryCount + 1);
   }
 
   if (!response.ok) {
@@ -138,7 +97,7 @@ export async function redditRequest<T>(
 }
 
 /**
- * Search Reddit posts
+ * Search Reddit posts using public JSON API
  */
 export async function searchReddit(
   query: string,
@@ -163,15 +122,15 @@ export async function searchReddit(
     params.append("after", options.after);
   }
 
-  const endpoint = options.subreddit
-    ? `/r/${options.subreddit}/search?${params.toString()}&restrict_sr=1`
-    : `/search?${params.toString()}`;
+  const url = options.subreddit
+    ? `${REDDIT_PUBLIC_BASE}/r/${options.subreddit}/search.json?${params.toString()}&restrict_sr=1`
+    : `${REDDIT_PUBLIC_BASE}/search.json?${params.toString()}`;
 
-  return redditRequest<RedditSearchResult>(endpoint);
+  return redditPublicRequest<RedditSearchResult>(url);
 }
 
 /**
- * Get comments for a specific post
+ * Get comments for a specific post using public JSON API
  */
 export async function getPostComments(
   subreddit: string,
@@ -187,9 +146,71 @@ export async function getPostComments(
     raw_json: "1",
   });
 
+  const url = `${REDDIT_PUBLIC_BASE}/r/${subreddit}/comments/${postId}.json?${params.toString()}`;
+
   // Reddit returns an array: [post, comments]
-  return redditRequest<RedditSearchResult[]>(
-    `/r/${subreddit}/comments/${postId}?${params.toString()}`
-  );
+  return redditPublicRequest<RedditSearchResult[]>(url);
 }
 
+/**
+ * Test if Reddit is accessible from this server
+ * Returns success status and diagnostic info
+ */
+export async function testRedditAccess(): Promise<{
+  success: boolean;
+  status?: number;
+  message: string;
+  postsFound?: number;
+}> {
+  try {
+    const response = await fetch(
+      `${REDDIT_PUBLIC_BASE}/r/technology/hot.json?limit=5&raw_json=1`,
+      {
+        headers: {
+          "User-Agent": getRandomUserAgent(),
+          Accept: "application/json",
+        },
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      const postsFound = data?.data?.children?.length || 0;
+      return {
+        success: true,
+        status: response.status,
+        message: "Reddit is accessible from this server",
+        postsFound,
+      };
+    }
+
+    if (response.status === 403) {
+      return {
+        success: false,
+        status: 403,
+        message:
+          "Reddit blocked this request (403). Datacenter IP may be blocked. Consider using ScrapingBee or residential proxies.",
+      };
+    }
+
+    if (response.status === 429) {
+      return {
+        success: false,
+        status: 429,
+        message:
+          "Reddit rate limited this request (429). Try again later or reduce request frequency.",
+      };
+    }
+
+    return {
+      success: false,
+      status: response.status,
+      message: `Reddit returned status ${response.status}`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Failed to connect to Reddit: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+}

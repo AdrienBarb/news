@@ -1,11 +1,27 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { MarketStatusBadge } from "@/components/markets/MarketStatusBadge";
 import { SignalCard } from "@/components/signals/SignalCard";
 import { ReportSummary } from "@/components/reports/ReportSummary";
@@ -18,6 +34,10 @@ import {
   SignalIcon,
   FileTextIcon,
   ExternalLinkIcon,
+  MoreVerticalIcon,
+  ArchiveIcon,
+  ArchiveRestoreIcon,
+  Trash2Icon,
 } from "lucide-react";
 import type { MarketStatus, PainType, SignalTrend } from "@prisma/client";
 
@@ -68,7 +88,10 @@ interface Signal {
 export default function MarketDetailPage({ params }: PageProps) {
   const { marketId } = use(params);
   const router = useRouter();
-  const { useGet, usePost } = useApi();
+  const queryClient = useQueryClient();
+  const { useGet, usePost, usePut, useDelete } = useApi();
+
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: marketData, isLoading: marketLoading } = useGet(
     `/markets/${marketId}`
@@ -89,8 +112,62 @@ export default function MarketDetailPage({ params }: PageProps) {
     }
   );
 
+  const { mutate: archiveMarket, isPending: archiving } = usePut(
+    `/markets/${marketId}`,
+    {
+      onSuccess: () => {
+        toast.success("Market archived successfully");
+        queryClient.invalidateQueries({ queryKey: [`/markets/${marketId}`] });
+      },
+      onError: (error: Error) => {
+        toast.error(error.message || "Failed to archive market");
+      },
+    }
+  );
+
+  const { mutate: restoreMarket, isPending: restoring } = usePut(
+    `/markets/${marketId}`,
+    {
+      onSuccess: () => {
+        toast.success("Market restored successfully");
+        queryClient.invalidateQueries({ queryKey: [`/markets/${marketId}`] });
+      },
+      onError: (error: Error) => {
+        toast.error(error.message || "Failed to restore market");
+      },
+    }
+  );
+
+  const { mutate: deleteMarket, isPending: deleting } = useDelete(
+    `/markets/${marketId}`,
+    {
+      onSuccess: () => {
+        toast.success("Market deleted successfully");
+        router.push("/markets");
+      },
+      onError: (error: Error) => {
+        toast.error(error.message || "Failed to delete market");
+      },
+    }
+  );
+
   const market: Market | undefined = marketData?.market;
   const signals: Signal[] = signalsData?.signals || [];
+
+  const handleArchive = () => {
+    archiveMarket({ action: "archive" });
+  };
+
+  const handleRestore = () => {
+    restoreMarket({ action: "restore" });
+  };
+
+  const handleDelete = () => {
+    deleteMarket({});
+    setShowDeleteDialog(false);
+  };
+
+  const isProcessing = archiving || restoring || deleting;
 
   if (marketLoading) {
     return (
@@ -149,8 +226,69 @@ export default function MarketDetailPage({ params }: PageProps) {
             )}
             Refresh
           </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" disabled={isProcessing}>
+                {isProcessing ? (
+                  <Loader2Icon className="h-4 w-4 animate-spin" />
+                ) : (
+                  <MoreVerticalIcon className="h-4 w-4" />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {(market.status as string) === "archived" ? (
+                <DropdownMenuItem onClick={handleRestore}>
+                  <ArchiveRestoreIcon className="mr-2 h-4 w-4" />
+                  Restore Market
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={handleArchive}>
+                  <ArchiveIcon className="mr-2 h-4 w-4" />
+                  Archive Market
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setShowDeleteDialog(true)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2Icon className="mr-2 h-4 w-4" />
+                Delete Market
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Market</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{market.name}&quot;? This
+              will permanently remove all signals, conversations, and reports
+              associated with this market. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              {deleting ? (
+                <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">

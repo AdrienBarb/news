@@ -1,13 +1,5 @@
 // Reddit API Types
 
-export interface RedditAccessToken {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-  scope: string;
-  expires_at: number; // Unix timestamp when token expires
-}
-
 export interface RedditPost {
   id: string; // Post ID (without t3_ prefix)
   name: string; // Full name with prefix (t3_abc123)

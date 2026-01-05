@@ -62,7 +62,7 @@ export const processConversationJob = inngest.createFunction(
       // Extract market context
       const marketContext = {
         category: conversation.market.category || "software",
-        ...(conversation.market.contextJson as object || {}),
+        ...((conversation.market.contextJson as object) || {}),
       };
 
       // Extract pain statements
@@ -75,6 +75,8 @@ export const processConversationJob = inngest.createFunction(
           );
         }
       );
+
+      console.log("🚀 ~ painStatements:", painStatements);
 
       if (painStatements.length === 0) {
         // Mark as processed with no pain statements
@@ -156,4 +158,3 @@ export const processConversationJob = inngest.createFunction(
     }
   }
 );
-
