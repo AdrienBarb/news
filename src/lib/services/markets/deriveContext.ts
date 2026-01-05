@@ -185,12 +185,8 @@ export async function deriveMarketContext(marketId: string): Promise<void> {
       market.websiteUrl
     );
 
-    console.log("🚀 ~ deriveMarketContext ~ context:", context);
-
     // Generate sensors
     const sensors = generateSensors(context);
-
-    console.log("🚀 ~ deriveMarketContext ~ sensors:", sensors);
 
     // Update market with context and create sensors
     await prisma.$transaction(async (tx) => {

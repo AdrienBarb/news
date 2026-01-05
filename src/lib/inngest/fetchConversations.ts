@@ -25,14 +25,24 @@ interface FetchOptions {
   isInitialFetch: boolean;
 }
 
+interface SensorFetchResult {
+  conversations: ConversationInput[];
+  error?: {
+    sensorId: string;
+    source: SourceType;
+    message: string;
+  };
+}
+
 /**
  * Fetch conversations for a specific market sensor
+ * Returns both conversations and any errors for visibility in Inngest
  */
 async function fetchForSensor(
   sensor: { id: string; source: SourceType; queryText: string },
   marketId: string,
   options: FetchOptions
-): Promise<ConversationInput[]> {
+): Promise<SensorFetchResult> {
   const conversations: ConversationInput[] = [];
 
   // For initial fetch, get full week of history. For incremental, only get last 8 hours.
@@ -53,8 +63,6 @@ async function fetchForSensor(
         includeComments: false,
         maxCommentsPerPost: 5,
       });
-
-      console.log("🚀 ~ fetchForSensor ~ results:", results);
 
       console.log(
         `📡 Reddit sensor ${sensor.id}: fetched ${results.length} conversations`
@@ -93,7 +101,9 @@ async function fetchForSensor(
         maxPages: options.isInitialFetch ? 5 : 2, // More pages for initial fetch
       });
 
-      console.log("🚀 ~ fetchForSensor ~ results:", results);
+      console.log(
+        `📡 HackerNews sensor ${sensor.id}: fetched ${results.length} conversations`
+      );
 
       for (const result of results) {
         const sanitized = sanitizeContent(result.rawContent);
@@ -118,12 +128,26 @@ async function fetchForSensor(
         });
       }
     }
-  } catch (error) {
-    console.error(`Failed to fetch for sensor ${sensor.id}:`, error);
-    // Continue with other sensors even if one fails
-  }
 
-  return conversations;
+    return { conversations };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(
+      `❌ Failed to fetch for sensor ${sensor.id} (${sensor.source}):`,
+      errorMessage
+    );
+
+    // Return error info for visibility in Inngest, but don't throw
+    // This allows other sensors to continue processing
+    return {
+      conversations,
+      error: {
+        sensorId: sensor.id,
+        source: sensor.source,
+        message: errorMessage,
+      },
+    };
+  }
 }
 
 /**
@@ -184,63 +208,73 @@ export const fetchConversationsJob = inngest.createFunction(
     // Fetch conversations for each sensor
     let totalFetched = 0;
     let totalNew = 0;
+    const errors: Array<{ sensorId: string; source: string; message: string }> =
+      [];
 
     for (const sensor of market.sensors) {
       // Determine if this is an initial fetch for this specific source
       const isInitialFetch = existingCounts[sensor.source] === 0;
 
-      const conversations = await step.run(
-        `fetch-sensor-${sensor.id}`,
-        async () => fetchForSensor(sensor, marketId, { isInitialFetch })
+      const result = await step.run(`fetch-sensor-${sensor.id}`, async () =>
+        fetchForSensor(sensor, marketId, { isInitialFetch })
       );
 
+      // Track any errors that occurred
+      if (result.error) {
+        errors.push(result.error);
+      }
+
+      const conversations = result.conversations;
       totalFetched += conversations.length;
 
       if (conversations.length > 0) {
         // Upsert conversations (skip duplicates based on externalId)
-        const result = await step.run(`save-sensor-${sensor.id}`, async () => {
-          let inserted = 0;
+        const saveResult = await step.run(
+          `save-sensor-${sensor.id}`,
+          async () => {
+            let inserted = 0;
 
-          for (const conv of conversations) {
-            try {
-              await prisma.conversation.upsert({
-                where: {
-                  source_externalId: {
+            for (const conv of conversations) {
+              try {
+                await prisma.conversation.upsert({
+                  where: {
+                    source_externalId: {
+                      source: conv.source,
+                      externalId: conv.externalId,
+                    },
+                  },
+                  update: {}, // Don't update existing
+                  create: {
+                    marketId: conv.marketId,
                     source: conv.source,
                     externalId: conv.externalId,
+                    url: conv.url,
+                    title: conv.title,
+                    rawContent: conv.rawContent,
+                    sanitizedContent: conv.sanitizedContent,
+                    author: conv.author,
+                    publishedAt: conv.publishedAt,
+                    processingStatus: "pending",
                   },
-                },
-                update: {}, // Don't update existing
-                create: {
-                  marketId: conv.marketId,
-                  source: conv.source,
-                  externalId: conv.externalId,
-                  url: conv.url,
-                  title: conv.title,
-                  rawContent: conv.rawContent,
-                  sanitizedContent: conv.sanitizedContent,
-                  author: conv.author,
-                  publishedAt: conv.publishedAt,
-                  processingStatus: "pending",
-                },
-              });
-              inserted++;
-            } catch (error) {
-              // Unique constraint violation - conversation already exists
-              if (
-                error instanceof Error &&
-                error.message.includes("Unique constraint")
-              ) {
-                continue;
+                });
+                inserted++;
+              } catch (error) {
+                // Unique constraint violation - conversation already exists
+                if (
+                  error instanceof Error &&
+                  error.message.includes("Unique constraint")
+                ) {
+                  continue;
+                }
+                throw error;
               }
-              throw error;
             }
+
+            return inserted;
           }
+        );
 
-          return inserted;
-        });
-
-        totalNew += result;
+        totalNew += saveResult;
       }
 
       // Update sensor last fetched time
@@ -267,8 +301,6 @@ export const fetchConversationsJob = inngest.createFunction(
       }
     );
 
-    console.log("🚀 ~ pendingConversations:", pendingConversations);
-
     // Trigger processing for pending conversations
     if (pendingConversations.length > 0) {
       await step.sendEvent(
@@ -281,12 +313,13 @@ export const fetchConversationsJob = inngest.createFunction(
     }
 
     return {
-      status: "completed",
+      status: errors.length > 0 ? "completed_with_errors" : "completed",
       marketId,
       sensorsProcessed: market.sensors.length,
       totalFetched,
       totalNew,
       pendingProcessing: pendingConversations.length,
+      errors: errors.length > 0 ? errors : undefined,
     };
   }
 );

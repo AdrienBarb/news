@@ -62,16 +62,13 @@ export async function POST(req: NextRequest) {
     return new NextResponse(`Webhook Error: ${message}`, { status: 400 });
   }
 
-  console.log("🚀 Stripe webhook event:", event.type);
-  console.log("🚀 ~ POST ~ event:", event);
-
   try {
     switch (event.type) {
       // Handle subscription created or updated
       case "customer.subscription.created":
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
-        console.log("🚀 ~ POST ~ subscription:", subscription);
+
         const user = await getUserByCustomerEmail(subscription.customer);
 
         if (!user) {
@@ -90,7 +87,6 @@ export async function POST(req: NextRequest) {
 
         // Get the price ID from the first subscription item
         const stripePriceId = subscription.items.data[0]?.price.id ?? null;
-        console.log("🚀 ~ POST ~ subscription.items:", subscription.items);
 
         await prisma.user.update({
           where: { id: user.id },

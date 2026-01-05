@@ -76,8 +76,6 @@ export const processConversationJob = inngest.createFunction(
         }
       );
 
-      console.log("🚀 ~ painStatements:", painStatements);
-
       if (painStatements.length === 0) {
         // Mark as processed with no pain statements
         await step.run("mark-processed-empty", async () => {
@@ -144,7 +142,12 @@ export const processConversationJob = inngest.createFunction(
         painStatementsFound: statementsWithEmbeddings.length,
       };
     } catch (error) {
-      console.error(`Failed to process conversation ${conversationId}:`, error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error(
+        `❌ Failed to process conversation ${conversationId}:`,
+        errorMessage
+      );
 
       // Mark as error
       await step.run("mark-error", async () => {
@@ -154,7 +157,10 @@ export const processConversationJob = inngest.createFunction(
         });
       });
 
-      throw error;
+      // Return error details for Inngest visibility, then throw to trigger retry
+      throw new Error(
+        `Conversation ${conversationId} processing failed: ${errorMessage}`
+      );
     }
   }
 );
