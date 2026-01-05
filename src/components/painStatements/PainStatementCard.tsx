@@ -31,7 +31,6 @@ interface PainStatementCardProps {
 const sourceLabels: Record<SourceType, string> = {
   reddit: "Reddit",
   hackernews: "Hacker News",
-  twitter: "Twitter",
 };
 
 export function PainStatementCard({
@@ -114,4 +113,3 @@ export function PainStatementCard({
     </Card>
   );
 }
-

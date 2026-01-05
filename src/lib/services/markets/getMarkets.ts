@@ -31,11 +31,46 @@ export async function getMarketsForUser(
     },
   });
 
+  // Get pain statement counts for all markets in one query
+  const painStatementCounts = await prisma.painStatement.groupBy({
+    by: ["conversationId"],
+    where: {
+      conversation: {
+        marketId: { in: markets.map((m) => m.id) },
+      },
+    },
+    _count: true,
+  });
+
+  // Aggregate counts by market
+  const marketPainCounts = new Map<string, number>();
+  for (const market of markets) {
+    marketPainCounts.set(market.id, 0);
+  }
+
+  // Get conversation to market mapping
+  const conversations = await prisma.conversation.findMany({
+    where: { marketId: { in: markets.map((m) => m.id) } },
+    select: { id: true, marketId: true },
+  });
+  const convToMarket = new Map(conversations.map((c) => [c.id, c.marketId]));
+
+  for (const group of painStatementCounts) {
+    const marketId = convToMarket.get(group.conversationId);
+    if (marketId) {
+      marketPainCounts.set(
+        marketId,
+        (marketPainCounts.get(marketId) || 0) + group._count
+      );
+    }
+  }
+
   return markets.map((market) => ({
     ...market,
     latestReport: market.reports[0] || null,
     signalCount: market._count.signals,
     conversationCount: market._count.conversations,
+    painStatementCount: marketPainCounts.get(market.id) || 0,
     reports: undefined,
     _count: undefined,
   })) as MarketWithLatestReport[];
@@ -138,4 +173,3 @@ export async function hasActiveMarket(userId: string): Promise<boolean> {
 
   return count > 0;
 }
-
