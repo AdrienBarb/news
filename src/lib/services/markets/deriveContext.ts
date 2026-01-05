@@ -114,36 +114,65 @@ ${websiteContent}`,
 
 /**
  * Generate search queries (sensors) based on market context
+ *
+ * Strategy: Quality over quantity
+ * - Reddit: 6 focused single-keyword queries (better precision than OR operators)
+ * - HackerNews: Free API, can use more queries
+ *
+ * Cost estimate: ~$15-20/month per active market at ScrapingBee rates
  */
 function generateSensors(context: MarketContext): MarketSensorInput[] {
   const sensors: MarketSensorInput[] = [];
-  const sources: SourceType[] = ["hackernews", "reddit"];
 
-  // Generate queries based on context
-  const queryTemplates = [
-    // Direct product/category queries
+  // Reddit queries - 6 focused, high-intent queries
+  // Single keywords work better with Reddit's search than OR operators
+  const redditQueries = [
+    // Pain discovery (people expressing frustration)
     `${context.category} frustrating`,
     `${context.category} problems`,
+    // Solution seeking (people ready to switch/buy)
     `${context.category} alternative`,
-    `${context.category} vs`,
+    `${context.category} recommendation`,
+    // Competitor intelligence (only top competitor to limit costs)
+    ...(context.competitors[0]
+      ? [
+          `${context.competitors[0]} alternative`,
+          `switching from ${context.competitors[0]}`,
+        ]
+      : []),
+  ];
+
+  // HackerNews queries - More extensive (free API, no credit cost)
+  const hnQueries = [
+    // Core pain queries
+    `${context.category} frustrating`,
+    `${context.category} problems`,
+    `${context.category} issues`,
+    // Solution seeking
+    `${context.category} alternative`,
     `${context.category} recommendation`,
     `switching from ${context.category}`,
     `${context.category} review`,
-    // Competitor comparisons
-    ...context.competitors.slice(0, 3).map((c) => `${c} vs`),
-    ...context.competitors.slice(0, 3).map((c) => `switching from ${c}`),
-    // Pain-based queries
-    ...context.painKeywords.slice(0, 3).map((p) => `${context.category} ${p}`),
+    // Competitor queries (top 2)
+    ...context.competitors.slice(0, 2).map((c) => `${c} alternative`),
+    // Pain keyword queries (top 2)
+    ...context.painKeywords.slice(0, 2).map((p) => `${context.category} ${p}`),
   ];
 
-  // Create sensors for each source
-  for (const source of sources) {
-    for (const query of queryTemplates) {
-      sensors.push({
-        source,
-        queryText: query.toLowerCase().trim(),
-      });
-    }
+  // Add Reddit sensors
+  for (const query of redditQueries) {
+    sensors.push({
+      source: "reddit",
+      queryText: query.toLowerCase().trim(),
+    });
+  }
+
+  // Add HackerNews sensors
+  for (const query of hnQueries) {
+    sensors.push({
+      source: "hackernews",
+      queryText: query.toLowerCase().trim(),
+    });
   }
 
   // Deduplicate

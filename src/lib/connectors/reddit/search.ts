@@ -43,11 +43,13 @@ function commentToConversation(
 
 /**
  * Search Reddit for posts matching the query and optionally fetch their comments
+ * @param existingPostIds - Set of external IDs (e.g., "t3_abc123") already in DB to skip comment fetching
  */
 export async function searchRedditConversations(
   options: RedditSearchOptions & {
     includeComments?: boolean;
     maxCommentsPerPost?: number;
+    existingPostIds?: Set<string>;
   }
 ): Promise<RedditConversation[]> {
   const {
@@ -58,6 +60,7 @@ export async function searchRedditConversations(
     subreddit,
     includeComments = false,
     maxCommentsPerPost = 20,
+    existingPostIds = new Set(),
   } = options;
 
   const conversations: RedditConversation[] = [];
@@ -71,19 +74,34 @@ export async function searchRedditConversations(
       subreddit,
     });
 
+    let newPostsCount = 0;
+    let skippedPostsCount = 0;
+
     for (const child of searchResult.data.children) {
       if (child.kind === "t3") {
         const post = child.data as RedditPost;
+        const postExternalId = `t3_${post.id}`;
 
         // Skip posts by deleted users or AutoModerator
         if (post.author === "[deleted]" || post.author === "AutoModerator") {
           continue;
         }
 
+        // Check if we already have this post in DB
+        const isExistingPost = existingPostIds.has(postExternalId);
+
+        if (isExistingPost) {
+          skippedPostsCount++;
+          // Skip fetching comments for posts we already have
+          continue;
+        }
+
+        newPostsCount++;
+
         // Add the post as a conversation
         conversations.push(postToConversation(post));
 
-        // Optionally fetch and include comments
+        // Only fetch comments for NEW posts (saves API credits!)
         if (includeComments && post.num_comments > 0) {
           try {
             const [, commentsResult] = await getPostComments(
@@ -96,6 +114,12 @@ export async function searchRedditConversations(
               for (const commentChild of commentsResult.data.children) {
                 if (commentChild.kind === "t1") {
                   const comment = commentChild.data as RedditComment;
+                  const commentExternalId = `t1_${comment.id}`;
+
+                  // Skip comments we already have
+                  if (existingPostIds.has(commentExternalId)) {
+                    continue;
+                  }
 
                   // Skip deleted comments and AutoModerator
                   if (
@@ -127,6 +151,10 @@ export async function searchRedditConversations(
         }
       }
     }
+
+    console.log(
+      `📊 Reddit search "${query}": ${newPostsCount} new posts, ${skippedPostsCount} skipped (already in DB)`
+    );
   } catch (error) {
     console.error(`Reddit search failed for query "${query}":`, error);
     throw error;

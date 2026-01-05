@@ -573,31 +573,29 @@ export default function MarketDetailPage({ params }: PageProps) {
               <div className="text-xs text-muted-foreground space-y-1.5">
                 <p>
                   <span className="font-medium text-foreground/80">
-                    1. Collection:
+                    1. Collection (1 AM UTC):
                   </span>{" "}
-                  We continuously scan the web for conversations related to your
-                  market.
+                  We scan the web daily for new posts and comments related to
+                  your market.
                 </p>
                 <p>
                   <span className="font-medium text-foreground/80">
                     2. Extraction:
                   </span>{" "}
-                  AI extracts pain statements from each conversation in
-                  real-time.
+                  AI extracts pain statements from each conversation
+                  automatically.
                 </p>
                 <p>
                   <span className="font-medium text-foreground/80">
-                    3. Clustering:
+                    3. Clustering (2 AM UTC):
                   </span>{" "}
-                  Every day at 2:00 AM UTC, similar statements are grouped into
-                  signals.
+                  Similar pain statements are grouped into signals.
                 </p>
                 <p>
                   <span className="font-medium text-foreground/80">
-                    4. Reports:
+                    4. Reports (3 AM UTC):
                   </span>{" "}
-                  Daily reports are generated with trend analysis and actionable
-                  insights.
+                  Daily reports with trend analysis and actionable insights.
                 </p>
               </div>
             </div>

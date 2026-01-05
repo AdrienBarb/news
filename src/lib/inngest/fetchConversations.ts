@@ -34,6 +34,11 @@ interface SensorFetchResult {
   };
 }
 
+interface ExtendedFetchOptions extends FetchOptions {
+  /** Set of existing external IDs for this market to skip (saves API credits) */
+  existingExternalIds?: Set<string>;
+}
+
 /**
  * Fetch conversations for a specific market sensor
  * Returns both conversations and any errors for visibility in Inngest
@@ -41,7 +46,7 @@ interface SensorFetchResult {
 async function fetchForSensor(
   sensor: { id: string; source: SourceType; queryText: string },
   marketId: string,
-  options: FetchOptions
+  options: ExtendedFetchOptions
 ): Promise<SensorFetchResult> {
   const conversations: ConversationInput[] = [];
 
@@ -51,21 +56,19 @@ async function fetchForSensor(
 
   try {
     if (sensor.source === "reddit") {
-      // Use public JSON API with rate limiting
-      // Note: Reddit public API has strict rate limits (~10 req/min)
-      // Keep limits low to avoid 429 errors
+      // Fetch posts and comments via ScrapingBee (handles rate limits & IP rotation)
+      // Pass existing IDs to skip fetching comments for posts we already have
       const results = await searchRedditConversations({
         query: sensor.queryText,
         timeframe: options.isInitialFetch ? "week" : "day",
-        limit: options.isInitialFetch ? 10 : 5,
-        // Disable comments for now due to rate limits (each post = 1 extra request)
-        // Re-enable when using ScrapingBee or if rate limits improve
-        includeComments: false,
-        maxCommentsPerPost: 5,
+        limit: options.isInitialFetch ? 25 : 15,
+        includeComments: true,
+        maxCommentsPerPost: 10,
+        existingPostIds: options.existingExternalIds,
       });
 
       console.log(
-        `📡 Reddit sensor ${sensor.id}: fetched ${results.length} conversations`
+        `📡 Reddit sensor ${sensor.id}: fetched ${results.length} new conversations`
       );
 
       for (const result of results) {
@@ -205,6 +208,24 @@ export const fetchConversationsJob = inngest.createFunction(
       return { hackernews: hnCount, reddit: redditCount };
     });
 
+    // Get existing Reddit external IDs to skip fetching comments for posts we already have
+    // This saves ScrapingBee API credits on subsequent runs!
+    const existingRedditIds = await step.run(
+      "get-existing-reddit-ids",
+      async () => {
+        const existing = await prisma.conversation.findMany({
+          where: { marketId, source: "reddit" },
+          select: { externalId: true },
+        });
+        return existing.map((c) => c.externalId);
+      }
+    );
+
+    const existingRedditIdsSet = new Set(existingRedditIds);
+    console.log(
+      `💾 Market ${marketId}: ${existingRedditIdsSet.size} existing Reddit conversations in DB`
+    );
+
     // Fetch conversations for each sensor
     let totalFetched = 0;
     let totalNew = 0;
@@ -216,7 +237,10 @@ export const fetchConversationsJob = inngest.createFunction(
       const isInitialFetch = existingCounts[sensor.source] === 0;
 
       const result = await step.run(`fetch-sensor-${sensor.id}`, async () =>
-        fetchForSensor(sensor, marketId, { isInitialFetch })
+        fetchForSensor(sensor, marketId, {
+          isInitialFetch,
+          existingExternalIds: existingRedditIdsSet,
+        })
       );
 
       // Track any errors that occurred
@@ -331,7 +355,7 @@ export const scheduledFetchConversationsJob = inngest.createFunction(
   {
     id: "scheduled-fetch-conversations",
   },
-  { cron: "0 */6 * * *" }, // Every 6 hours
+  { cron: "0 1 * * *" }, // Daily at 1 AM UTC
   async ({ step }) => {
     // Get all active markets
     const activeMarkets = await step.run("get-active-markets", async () => {
