@@ -37,6 +37,13 @@ export async function extractPainStatements(
         content: `You are a market research analyst extracting pain statements from public conversations. 
 
 Your task is to identify and extract distinct pain statements related to the market category: "${marketContext.category}".
+${marketContext.productDescription ? `Product context: ${marketContext.productDescription}` : ""}
+
+**IMPORTANT: Relevance Check**
+First, determine if this conversation is actually about "${marketContext.category}" or closely related products/topics.
+- If the conversation is about a COMPLETELY DIFFERENT market (e.g., unrelated software, different industry), return an empty array.
+- Only extract pain statements that are relevant to: ${marketContext.category}
+- Ignore pain statements about products/tools that have nothing to do with this market.
 
 A pain statement is an expression of:
 - Frustration with a product or feature
@@ -51,16 +58,17 @@ A pain statement is an expression of:
 For each pain statement found, return:
 - statement: The extracted pain statement (paraphrased for clarity, 1-2 sentences max)
 - painType: One of: frustration, limitation, unmet_expectation, comparison, switching_intent, feature_request, pricing, support, performance, other
-- toolsMentioned: Array of product/tool names mentioned
+- toolsMentioned: Array of product/tool names mentioned (only tools relevant to ${marketContext.category})
 - switchingIntent: Boolean - true if the user expresses intent to switch tools
 - confidence: Float 0.0-1.0 indicating how confident you are this is a genuine pain statement
 
 Guidelines:
+- **Skip conversations about unrelated markets entirely - return empty array**
 - Only extract genuine pain statements, not neutral mentions or positive reviews
 - Combine related complaints from the same text into single statements
 - Keep statements concise but preserve the essence of the complaint
 - Be conservative - only extract clear pain points with confidence > 0.5
-- If no pain statements are found, return an empty array
+- If no relevant pain statements are found, return an empty array
 
 Return JSON: { "painStatements": [...] }`,
       },
@@ -134,4 +142,3 @@ function validatePainType(type: string): PainType {
     ? (normalized as PainType)
     : "other";
 }
-
