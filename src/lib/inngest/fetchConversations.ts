@@ -169,8 +169,13 @@ export const fetchConversationsJob = inngest.createFunction(
   async ({ event, step }) => {
     const { marketId } = event.data;
 
+    console.log(`\n${"=".repeat(60)}`);
+    console.log(`🚀 [FETCH-CONVERSATIONS] Starting job for market: ${marketId}`);
+    console.log(`${"=".repeat(60)}`);
+
     // Get market and its active sensors
     const market = await step.run("get-market", async () => {
+      console.log(`📋 [FETCH] Loading market and sensors from database...`);
       return prisma.market.findUnique({
         where: { id: marketId },
         include: {
@@ -182,13 +187,21 @@ export const fetchConversationsJob = inngest.createFunction(
     });
 
     if (!market || market.status !== "active") {
+      console.log(`⚠️ [FETCH] Market not found or not active, skipping`);
       return {
         status: "skipped",
         reason: "Market not found or not active",
       };
     }
 
+    console.log(`✅ [FETCH] Market loaded: "${market.category}" (status: ${market.status})`);
+    console.log(`📡 [FETCH] Active sensors: ${market.sensors.length}`);
+    market.sensors.forEach((s, i) => {
+      console.log(`   ${i + 1}. [${s.source}] "${s.queryText}"`);
+    });
+
     if (market.sensors.length === 0) {
+      console.log(`⚠️ [FETCH] No active sensors, skipping`);
       return {
         status: "skipped",
         reason: "No active sensors",
@@ -196,6 +209,7 @@ export const fetchConversationsJob = inngest.createFunction(
     }
 
     // Check existing conversation counts per source to determine initial fetch
+    console.log(`\n📊 [FETCH] Checking existing conversation counts...`);
     const existingCounts = await step.run("check-existing-counts", async () => {
       const [hnCount, redditCount] = await Promise.all([
         prisma.conversation.count({
@@ -207,6 +221,8 @@ export const fetchConversationsJob = inngest.createFunction(
       ]);
       return { hackernews: hnCount, reddit: redditCount };
     });
+    console.log(`   - HackerNews: ${existingCounts.hackernews} existing conversations`);
+    console.log(`   - Reddit: ${existingCounts.reddit} existing conversations`);
 
     // Get existing Reddit external IDs to skip fetching comments for posts we already have
     // This saves ScrapingBee API credits on subsequent runs!
@@ -222,9 +238,7 @@ export const fetchConversationsJob = inngest.createFunction(
     );
 
     const existingRedditIdsSet = new Set(existingRedditIds);
-    console.log(
-      `💾 Market ${marketId}: ${existingRedditIdsSet.size} existing Reddit conversations in DB`
-    );
+    console.log(`💾 [FETCH] ${existingRedditIdsSet.size} existing Reddit IDs will be skipped`);
 
     // Fetch conversations for each sensor
     let totalFetched = 0;
@@ -232,9 +246,15 @@ export const fetchConversationsJob = inngest.createFunction(
     const errors: Array<{ sensorId: string; source: string; message: string }> =
       [];
 
+    console.log(`\n🔄 [FETCH] Starting to fetch from ${market.sensors.length} sensors...`);
+
     for (const sensor of market.sensors) {
       // Determine if this is an initial fetch for this specific source
       const isInitialFetch = existingCounts[sensor.source] === 0;
+
+      console.log(`\n${"─".repeat(40)}`);
+      console.log(`🔍 [SENSOR] Processing: [${sensor.source}] "${sensor.queryText}"`);
+      console.log(`   Initial fetch: ${isInitialFetch ? "YES (full week)" : "NO (incremental)"}`);
 
       const result = await step.run(`fetch-sensor-${sensor.id}`, async () =>
         fetchForSensor(sensor, marketId, {
@@ -245,14 +265,17 @@ export const fetchConversationsJob = inngest.createFunction(
 
       // Track any errors that occurred
       if (result.error) {
+        console.log(`   ❌ [SENSOR] Error: ${result.error.message}`);
         errors.push(result.error);
       }
 
       const conversations = result.conversations;
       totalFetched += conversations.length;
+      console.log(`   📥 [SENSOR] Fetched ${conversations.length} conversations`);
 
       if (conversations.length > 0) {
         // Upsert conversations (skip duplicates based on externalId)
+        console.log(`   💾 [SENSOR] Saving conversations to database...`);
         const saveResult = await step.run(
           `save-sensor-${sensor.id}`,
           async () => {
@@ -299,6 +322,7 @@ export const fetchConversationsJob = inngest.createFunction(
         );
 
         totalNew += saveResult;
+        console.log(`   ✅ [SENSOR] Saved ${saveResult} new conversations (${conversations.length - saveResult} duplicates skipped)`);
       }
 
       // Update sensor last fetched time
@@ -311,6 +335,8 @@ export const fetchConversationsJob = inngest.createFunction(
     }
 
     // Get pending conversations and trigger processing
+    console.log(`\n${"─".repeat(40)}`);
+    console.log(`📋 [FETCH] Getting pending conversations to process...`);
     const pendingConversations = await step.run(
       "get-pending-conversations",
       async () => {
@@ -325,8 +351,11 @@ export const fetchConversationsJob = inngest.createFunction(
       }
     );
 
+    console.log(`   Found ${pendingConversations.length} pending conversations`);
+
     // Trigger processing for pending conversations
     if (pendingConversations.length > 0) {
+      console.log(`🚀 [FETCH] Triggering process-conversation jobs for ${pendingConversations.length} conversations...`);
       await step.sendEvent(
         "trigger-processing",
         pendingConversations.map((c) => ({
@@ -335,6 +364,16 @@ export const fetchConversationsJob = inngest.createFunction(
         }))
       );
     }
+
+    console.log(`\n${"=".repeat(60)}`);
+    console.log(`✅ [FETCH-CONVERSATIONS] Job completed!`);
+    console.log(`   📊 Summary:`);
+    console.log(`   - Sensors processed: ${market.sensors.length}`);
+    console.log(`   - Total fetched: ${totalFetched}`);
+    console.log(`   - New conversations: ${totalNew}`);
+    console.log(`   - Pending processing: ${pendingConversations.length}`);
+    console.log(`   - Errors: ${errors.length}`);
+    console.log(`${"=".repeat(60)}\n`);
 
     return {
       status: errors.length > 0 ? "completed_with_errors" : "completed",

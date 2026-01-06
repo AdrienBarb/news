@@ -25,6 +25,10 @@ async function isConversationRelevant(
   content: string,
   marketContext: MarketContext
 ): Promise<boolean> {
+  console.log(`\n      🔍 [RELEVANCE-CHECK] Starting relevance check...`);
+  console.log(`         Target market: "${marketContext.category}"`);
+  console.log(`         Content preview: "${content.substring(0, 100)}..."`);
+
   const escapedContent = escapeForPrompt(content);
 
   const response = await openai.chat.completions.create({
@@ -62,13 +66,23 @@ ${escapedContent.substring(0, 3000)}`,
 
   const responseContent = response.choices[0]?.message?.content;
   if (!responseContent) {
+    console.log(
+      `         ⚠️ [RELEVANCE-CHECK] No response from OpenAI, defaulting to false`
+    );
     return false;
   }
 
   try {
     const parsed = JSON.parse(responseContent);
-    return parsed.relevant === true;
+    const isRelevant = parsed.relevant === true;
+    console.log(
+      `         ${isRelevant ? "✅" : "❌"} [RELEVANCE-CHECK] Result: ${isRelevant ? "RELEVANT" : "NOT RELEVANT"}`
+    );
+    return isRelevant;
   } catch {
+    console.log(
+      `         ⚠️ [RELEVANCE-CHECK] Failed to parse response, defaulting to false`
+    );
     return false;
   }
 }
@@ -81,15 +95,21 @@ export async function extractPainStatements(
   content: string,
   marketContext: MarketContext
 ): Promise<ExtractedPainStatement[]> {
+  console.log(`\n      📝 [EXTRACT] Starting pain statement extraction...`);
+
   // STEP 1: Check relevance first
   const isRelevant = await isConversationRelevant(content, marketContext);
 
   if (!isRelevant) {
     console.log(
-      `⏭️ Skipping irrelevant conversation for market: ${marketContext.category}`
+      `      ⏭️ [EXTRACT] Skipping - conversation not relevant to market: "${marketContext.category}"`
     );
     return [];
   }
+
+  console.log(
+    `\n      🔎 [EXTRACT] Conversation is relevant, extracting pain statements...`
+  );
 
   // STEP 2: Only extract if relevant
   const escapedContent = escapeForPrompt(content);
@@ -149,6 +169,7 @@ ${escapedContent}`,
 
   const responseContent = response.choices[0]?.message?.content;
   if (!responseContent) {
+    console.log(`      ⚠️ [EXTRACT] No response from OpenAI`);
     return [];
   }
 
@@ -156,8 +177,12 @@ ${escapedContent}`,
     const parsed = JSON.parse(responseContent);
     const statements = parsed.painStatements || [];
 
+    console.log(
+      `      📊 [EXTRACT] OpenAI returned ${statements.length} raw pain statements`
+    );
+
     // Validate and filter results
-    return statements
+    const filtered = statements
       .filter(
         (s: ExtractedPainStatement) =>
           s.statement &&
@@ -174,8 +199,17 @@ ${escapedContent}`,
         switchingIntent: Boolean(s.switchingIntent),
         confidence: Math.min(1, Math.max(0, s.confidence)),
       }));
+
+    console.log(
+      `      ✅ [EXTRACT] After filtering (confidence >= 0.5): ${filtered.length} pain statements`
+    );
+
+    return filtered;
   } catch (error) {
-    console.error("Failed to parse pain statements response:", error);
+    console.error(
+      "      ❌ [EXTRACT] Failed to parse pain statements response:",
+      error
+    );
     return [];
   }
 }
