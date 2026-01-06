@@ -46,7 +46,9 @@ Rules:
 - Return {"relevant": false} if the conversation is about a DIFFERENT software category or industry
 - Be STRICT: the conversation must be specifically about "${marketContext.category}" or closely related tools/topics, not just any software discussion
 - If the conversation mentions any of the known competitors, it is likely relevant
-- Generic discussions that don't specifically relate to "${marketContext.category}" should return false`,
+- Generic discussions that don't specifically relate to "${marketContext.category}" should return false
+
+Return JSON: {"relevant": true} or {"relevant": false}`,
       },
       {
         role: "user",
