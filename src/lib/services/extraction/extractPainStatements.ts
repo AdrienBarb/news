@@ -18,13 +18,78 @@ interface MarketContext {
 }
 
 /**
+ * Check if a conversation is relevant to the market category
+ * Returns true only if the conversation is clearly about the target market
+ */
+async function isConversationRelevant(
+  content: string,
+  marketContext: MarketContext
+): Promise<boolean> {
+  const escapedContent = escapeForPrompt(content);
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0,
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content: `You are a strict relevance classifier. Your job is to determine if a conversation is about a specific market category.
+
+Target market: "${marketContext.category}"
+${marketContext.productDescription ? `Product context: ${marketContext.productDescription}` : ""}
+${marketContext.competitors?.length ? `Known competitors in this market: ${marketContext.competitors.join(", ")}` : ""}
+${marketContext.keyPhrases?.length ? `Related keywords: ${marketContext.keyPhrases.join(", ")}` : ""}
+
+Rules:
+- Return {"relevant": true} ONLY if the conversation is clearly discussing products/tools/topics related to "${marketContext.category}"
+- Return {"relevant": false} if the conversation is about a DIFFERENT software category or industry
+- Be STRICT: the conversation must be specifically about "${marketContext.category}" or closely related tools/topics, not just any software discussion
+- If the conversation mentions any of the known competitors, it is likely relevant
+- Generic discussions that don't specifically relate to "${marketContext.category}" should return false`,
+      },
+      {
+        role: "user",
+        content: `Is this conversation relevant to "${marketContext.category}"?
+
+Conversation:
+${escapedContent.substring(0, 3000)}`,
+      },
+    ],
+  });
+
+  const responseContent = response.choices[0]?.message?.content;
+  if (!responseContent) {
+    return false;
+  }
+
+  try {
+    const parsed = JSON.parse(responseContent);
+    return parsed.relevant === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Extract pain statements from conversation content using OpenAI
+ * Uses a two-step approach: first checks relevance, then extracts pain statements
  */
 export async function extractPainStatements(
   content: string,
   marketContext: MarketContext
 ): Promise<ExtractedPainStatement[]> {
-  // Escape content for safe prompt injection
+  // STEP 1: Check relevance first
+  const isRelevant = await isConversationRelevant(content, marketContext);
+
+  if (!isRelevant) {
+    console.log(
+      `⏭️ Skipping irrelevant conversation for market: ${marketContext.category}`
+    );
+    return [];
+  }
+
+  // STEP 2: Only extract if relevant
   const escapedContent = escapeForPrompt(content);
 
   const response = await openai.chat.completions.create({
@@ -38,12 +103,6 @@ export async function extractPainStatements(
 
 Your task is to identify and extract distinct pain statements related to the market category: "${marketContext.category}".
 ${marketContext.productDescription ? `Product context: ${marketContext.productDescription}` : ""}
-
-**IMPORTANT: Relevance Check**
-First, determine if this conversation is actually about "${marketContext.category}" or closely related products/topics.
-- If the conversation is about a COMPLETELY DIFFERENT market (e.g., unrelated software, different industry), return an empty array.
-- Only extract pain statements that are relevant to: ${marketContext.category}
-- Ignore pain statements about products/tools that have nothing to do with this market.
 
 A pain statement is an expression of:
 - Frustration with a product or feature
@@ -63,7 +122,6 @@ For each pain statement found, return:
 - confidence: Float 0.0-1.0 indicating how confident you are this is a genuine pain statement
 
 Guidelines:
-- **Skip conversations about unrelated markets entirely - return empty array**
 - Only extract genuine pain statements, not neutral mentions or positive reviews
 - Combine related complaints from the same text into single statements
 - Keep statements concise but preserve the essence of the complaint
