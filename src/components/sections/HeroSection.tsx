@@ -44,63 +44,6 @@ export default function HeroSection({
                 <Link href={getStartedUrl}>Get Started for free</Link>
               </Button>
             </div>
-
-            <div className="flex flex-col md:flex-row items-center justify-center gap-3 pt-8">
-              <div className="flex -space-x-2">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 border-2 border-background flex items-center justify-center overflow-hidden">
-                  <Image
-                    src="/peoples/people-1.jpg"
-                    alt="User"
-                    width={40}
-                    height={40}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-foreground to-foreground/60 border-2 border-background flex items-center justify-center overflow-hidden">
-                  <Image
-                    src="/peoples/people-2.jpg"
-                    alt="User"
-                    width={40}
-                    height={40}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-secondary/60 border-2 border-background flex items-center justify-center overflow-hidden">
-                  <Image
-                    src="/peoples/people-3.jpg"
-                    alt="User"
-                    width={40}
-                    height={40}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary border-2 border-background flex items-center justify-center overflow-hidden">
-                  <Image
-                    src="/peoples/people-4.jpg"
-                    alt="User"
-                    width={40}
-                    height={40}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-foreground to-primary border-2 border-background flex items-center justify-center overflow-hidden">
-                  <Image
-                    src="/peoples/people-5.jpg"
-                    alt="User"
-                    width={40}
-                    height={40}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-
-              <p className="text-foreground text-center md:text-left">
-                <span className="font-semibold">500+</span>{" "}
-                <span className="text-foreground/70">
-                  SaaS founders understanding their market
-                </span>
-              </p>
-            </div>
           </div>
         </div>
       </div>
