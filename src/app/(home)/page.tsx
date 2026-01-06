@@ -5,6 +5,7 @@ import HowItWorksSection from "@/components/sections/HowItWorksSection";
 import TestimonialsSection from "@/components/sections/TestimonialsSection";
 import FAQSection from "@/components/sections/FAQSection";
 import PricingSection from "@/components/sections/PricingSection";
+import LandingPageTracker from "@/components/tracking/LandingPageTracker";
 import { auth } from "@/lib/better-auth/auth";
 import { getStartedUrl } from "@/lib/utils/getStartedUrl";
 
@@ -16,6 +17,7 @@ export default async function Home() {
 
   return (
     <div className="flex flex-col">
+      <LandingPageTracker />
       <HeroSection getStartedUrl={getStartedUrlValue} />
       <WhatPrediqteDoesSection />
       <HowItWorksSection />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -31,10 +31,17 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 
 export default function SignUpPageClient() {
   const router = useRouter();
-  const { sendEvent } = useClientPostHogEvent();
+  const { sendEvent, sendEventOnce } = useClientPostHogEvent();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
+
+  // Track signup page view
+  useEffect(() => {
+    sendEventOnce({
+      eventName: TRACKING_EVENTS.SIGNUP_PAGE_VIEWED,
+    });
+  }, [sendEventOnce]);
 
   const {
     register,

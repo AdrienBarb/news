@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useClientPostHogEvent } from "@/lib/tracking/useClientPostHogEvent";
+import { TRACKING_EVENTS } from "@/lib/constants/tracking";
 import { useUser } from "@/lib/hooks/useUser";
 import { SUBSCRIPTION } from "@/lib/constants/subscription";
 
@@ -13,7 +14,7 @@ export default function PricingPageClient() {
 
   const handleStartTrial = () => {
     sendEvent({
-      eventName: "pricing_page_trial_started",
+      eventName: TRACKING_EVENTS.FREE_TRIAL_STARTED,
     });
 
     const paymentLink = process.env.NEXT_PUBLIC_STRIPE_PRICE_LINK_MONTHLY;

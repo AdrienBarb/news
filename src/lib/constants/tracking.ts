@@ -1,8 +1,9 @@
 export const TRACKING_EVENTS = {
-  ONBOARDING_STARTED: "onboarding_started",
-  ONBOARDING_TAGS_SELECTED: "onboarding_tags_selected",
-  ONBOARDING_ACCOUNT_CREATED: "onboarding_account_created",
-  ONBOARDING_TRIAL_STARTED: "onboarding_trial_started",
-  HERO_GET_INSIGHTS_CLICKED: "hero_get_insights_clicked",
+  // Page views
+  LANDING_PAGE_VIEWED: "landing_page_viewed",
+  SIGNUP_PAGE_VIEWED: "signup_page_viewed",
+
+  // Conversion funnel
   ACCOUNT_CREATED: "account_created",
+  FREE_TRIAL_STARTED: "free_trial_started",
 };
