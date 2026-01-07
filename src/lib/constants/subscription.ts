@@ -1,13 +1,15 @@
 export const SUBSCRIPTION = {
   PLAN_NAME: "Founder Plan",
-  PRICE_MONTHLY: 45,
-  TRIAL_DAYS: 3,
+  PRICE_MONTHLY: 49,
+  TRIAL_DAYS: 7,
   FEATURES: [
-    "Continuous market insights",
-    "Repeated user pain & unmet expectations",
-    "User comparison & switching signals",
-    "Emerging opportunities & trends",
-    "Market-wide view (not just your product)",
-    "Regular insight updates",
+    "1 seat",
+    "1 domain",
+    "20 keywords tracked",
+    "Unlimited Reddit lead monitoring",
+    "AI-powered intent signal detection",
+    "Competitor mention tracking",
+    "Daily lead alerts",
+    "AI-suggested reply drafts",
   ],
 } as const;

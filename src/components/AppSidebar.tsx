@@ -31,11 +31,11 @@ import useApi from "@/lib/hooks/useApi";
 
 const data = {
   navMain: [
-    {
-      title: "Markets",
-      url: "/markets",
-      icon: LayoutDashboardIcon,
-    },
+    // {
+    //   title: "Markets",
+    //   url: "/markets",
+    //   icon: LayoutDashboardIcon,
+    // },
   ],
 };
 
@@ -72,10 +72,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader className="p-4">
-        <Button className="w-full" onClick={handleNewMarketClick}>
+        {/* <Button className="w-full" onClick={handleNewMarketClick}>
           <PlusCircleIcon className="mr-2 h-4 w-4" />
           New Market
-        </Button>
+        </Button> */}
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />

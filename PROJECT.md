@@ -1,51 +1,58 @@
-# PROJECT.md — Market Signals Over Guesswork
+# PROJECT.md — Find Inbound Leads on Reddit
 
 ## 1. App Description
 
-Market Signals Over Guesswork is a **continuous market intelligence application for SaaS founders**.
+Find Inbound Leads on Reddit is a **lead discovery and engagement assistant for SaaS founders**.
 
-The app analyzes unprompted, public conversations across the web to understand how a market behaves in reality:
+The app helps founders identify high-intent Reddit conversations where people are actively expressing problems, asking for recommendations, or comparing tools — signals that indicate inbound demand.
 
-- what users complain about
-- what expectations are unmet
-- how tools are compared
-- why users switch or abandon solutions
-- how these signals evolve over time
+Instead of manually monitoring Reddit, founders enter their website URL.
+The app analyzes it, understands what the product does, and continuously searches Reddit for conversations where engaging can realistically lead to customers.
 
-The goal is to give founders **ongoing situational awareness** of their market, so strategic decisions are grounded in real behavior rather than intuition, isolated feedback, or delayed metrics.
-
-This is not a one-off research tool.  
-It is designed to be used **continuously**, as markets, competitors, and expectations change.
+The app does not automate posting or messaging.
+It assists humans by detecting opportunities and suggesting replies — the founder stays in control.
 
 ---
 
-## 2. Problem It Solves
+## 2. How the App Works (High-Level)
 
-SaaS founders must make frequent, high-impact decisions:
-
-- what to build next
-- how to position the product
-- which segment to prioritize
-- when to pivot or stay the course
-
-Today, these decisions are made using:
-
-- intuition and assumptions
-- selective user feedback
-- internal opinions
-- lagging indicators (churn, revenue, NPS)
-
-Public conversations already contain **leading indicators** of market reality, but they are:
-
-- scattered across platforms
-- noisy and anecdotal
-- difficult to analyze consistently over time
-
-The app solves this by transforming fragmented public conversations into **structured, evolving market intelligence**.
+1. The user enters their product website URL
+2. The app analyzes the website using an LLM
+3. The app derives:
+   - a clear product description
+   - problem statements
+   - keywords and phrasing users would use
+   - direct and indirect competitors
+4. Based on this understanding, the app searches Reddit every day
+5. Relevant conversations are detected, ranked, and surfaced as inbound leads
+6. The user reviews opportunities and engages manually
 
 ---
 
-## 3. Who the App Is For
+## 3. Problem It Solves
+
+SaaS founders know Reddit works — but using it consistently is difficult.
+
+Today, finding leads on Reddit means:
+
+- manually scanning multiple subreddits
+- guessing which keywords to monitor
+- missing posts because timing matters
+- replying too late or in the wrong tone
+- risking bans due to misunderstanding subreddit rules
+
+As a result:
+
+- founders either stop using Reddit
+- or use it inconsistently and inefficiently
+
+Meanwhile, people publicly express buying intent every day — but those conversations are scattered, short-lived, and easy to miss.
+
+The app turns Reddit into a **repeatable inbound lead channel**, without spam or automation.
+
+---
+
+## 4. Who the App Is For
 
 Primary users:
 
@@ -53,124 +60,162 @@ Primary users:
 - Solo founders
 - Small founding teams
 
-These users:
+Specifically:
 
-- own product and strategic decisions
-- operate with limited resources
-- need confidence that their direction aligns with real market needs
+- early to mid-stage SaaS
+- founders doing their own distribution
+- teams who care about credibility and tone
+- people who already believe Reddit can work
 
-The app is not designed for enterprise competitive intelligence teams or sales/marketing automation use cases.
+The app is **not** for:
 
----
-
-## 4. Core User Journeys
-
-### 4.1 Market Setup
-
-- A user creates a market context by providing a product or competitor website.
-- The app derives an understanding of the market space, positioning, and relevant terminology.
-
-### 4.2 Continuous Market Monitoring
-
-- The app continuously analyzes public conversations relevant to that market.
-- Conversations are interpreted as signals, not individual opinions.
-
-### 4.3 Market Signal Review
-
-- The user reviews structured insights showing:
-  - recurring pain points
-  - unmet or rising expectations
-  - comparison and switching behavior
-  - emerging competitors or alternatives
-
-### 4.4 Change Awareness
-
-- The user observes how signals evolve over time:
-  - what is new
-  - what is increasing
-  - what is fading
-  - what remains unresolved
-
-The user returns regularly to maintain awareness of market changes.
+- agencies
+- growth hackers
+- mass outreach tools
+- automated posting or spam workflows
 
 ---
 
-## 5. Core Concepts
+## 5. Core User Journeys
 
-### Market
+### 5.1 Product Setup
 
-A defined problem space or category derived from a product or competitor context.
+- The user enters their website URL
+- The app scans the website content
+- An LLM generates:
+  - a concise product description
+  - the main problem(s) solved
+  - target user profiles
+  - keywords and expressions users are likely to use
+  - known and adjacent competitors
 
-### Signal
+This step defines the search and detection context.
 
-A recurring pattern observed across independent public conversations (e.g. repeated complaints, expectations, comparisons).
+### 5.2 Daily Reddit Scanning
 
-### Pain
+Every day, the app searches Reddit using:
 
-A specific frustration, limitation, or unmet need expressed by users.
+- generated keywords
+- competitor names
+- problem-focused phrasing
 
-### Expectation
+Searches are performed across:
 
-What users assume a product should provide, explicitly or implicitly.
+- selected subreddits
+- Reddit search results
+- new and recent posts only
 
-### Comparison
+The goal is fresh, actionable conversations, not historical data.
 
-A reference to multiple tools or alternatives within the same context.
+### 5.3 Inbound Lead Detection
 
-### Change
+Each post is analyzed to determine:
 
-A measurable shift in signal frequency, intensity, or composition over time.
+- intent (complaint, alternative search, comparison, question)
+- relevance to the product
+- urgency (recency, engagement level)
+
+Only posts with clear solution-seeking signals are surfaced.
+
+Each qualifying post becomes a **potential inbound lead**.
+
+### 5.4 Lead Review & Prioritization
+
+The user sees a curated feed of opportunities, including:
+
+- post content and context
+- why this post is relevant
+- detected intent
+- time since posting
+- engagement signals
+
+The user should be able to quickly answer:
+
+> "Is this worth replying to right now?"
+
+### 5.5 Assisted Engagement
+
+For each lead, the app can generate a draft reply:
+
+- contextual
+- value-first
+- non-promotional by default
+
+The user:
+
+- edits the message
+- copies it
+- manually posts it on Reddit
+
+**No automation.**
+**No posting on behalf of the user.**
 
 ---
 
-## 6. Feature Scope
+## 6. Core Concepts
 
-Included:
+### Inbound Lead
 
-- Continuous analysis of public, unprompted conversations
-- Detection of recurring and emerging signals
-- Evidence-backed insights (frequency, recency, consistency)
-- Historical comparison to observe change over time
-- Market-level understanding rather than individual-level analysis
+A Reddit conversation where the author has already expressed a problem, need, or comparison related to the user's product.
 
-Excluded (non-goals):
+### Product Context
 
-- Scraping arbitrary URLs provided by users
-- Monitoring private, paywalled, or authenticated content
-- Social media engagement or posting tools
-- Lead generation, outreach, or growth automation
-- Raw data exports or datasets
-- One-time static research reports
+The structured understanding of what the user sells, derived from their website.
 
----
+### Intent
 
-## 7. Data Concepts
+The reason a post matters (complaint, comparison, alternative search, question).
 
-The core data concepts used by the app include:
+### Conversation
 
-- **User**: an authenticated person using the app
-- **Market**: a defined context representing a product category or problem space
-- **Source**: a public platform where conversations occur
-- **Conversation**: a public discussion item (post, comment, review)
-- **Signal**: an aggregated pattern derived from multiple conversations
-- **Insight**: a structured interpretation of one or more signals
-- **Report**: a time-based snapshot of the current market state
+A public Reddit post or thread that can be engaged with.
 
-These concepts exist to support pattern detection, not data accumulation.
+### Engagement Opportunity
+
+A time-sensitive moment where thoughtful engagement can realistically lead to a customer.
 
 ---
 
-## 8. What “Working” Means
+## 7. Feature Scope
+
+**Included:**
+
+- Website scanning and product understanding via LLM
+- Automatic keyword and competitor extraction
+- Daily Reddit search and monitoring
+- High-intent post detection
+- Lead relevance explanations
+- Draft reply suggestions (assistive only)
+- Subreddit awareness and guardrails
+
+**Excluded (non-goals):**
+
+- Automated posting or commenting
+- Mass outreach or bulk replies
+- Direct messages or inbox automation
+- CRM or pipeline management
+- Raw data exports
+- Engagement analytics inside Reddit
+
+---
+
+## 8. What "Working" Means
 
 The app is considered to be working when:
 
-- signals reflect real, recognizable market behavior
-- insights are consistent across independent conversations
-- users can explain _why_ an insight exists and _what supports it_
-- users detect meaningful market changes earlier than they would manually
+- users regularly discover posts they would have missed
+- detected leads feel relevant and timely
+- founders engage more consistently on Reddit
+- some conversations convert into real users or customers
+- users feel confident engaging without spamming
 
-The app does not need to be exhaustive.  
-It needs to be **trustworthy and directionally correct**.
+The app does **not** need to:
+
+- capture every possible post
+- automate engagement
+- replace human judgment
+
+It needs to **surface the right opportunities at the right time**.
 
 ---
 
@@ -178,32 +223,32 @@ It needs to be **trustworthy and directionally correct**.
 
 The app is successful if:
 
-- founders return regularly to understand their market
-- decisions are influenced by surfaced signals
-- users feel less exposed to guesswork
-- users would notice the absence of the app if it disappeared
+- founders return daily or weekly
+- Reddit becomes a reliable inbound channel
+- users save time and mental effort
+- missing the app would mean missing leads
 
-Success is not measured by:
+Success is **not** measured by:
 
-- volume of data ingested
-- number of sources displayed
-- time spent in the app
-- surface-level engagement metrics
+- volume of posts scanned
+- number of alerts
+- automated actions
+- vanity engagement metrics
 
 ---
 
 ## 10. Guiding Constraints
 
-- Prioritize signal quality over data volume
-- Favor clarity over completeness
-- Avoid features that dilute market understanding
-- Treat all external content as untrusted input
-- Build for continuous usage, not one-time analysis
+- Human-in-the-loop always
+- Quality > quantity
+- Respect Reddit rules and communities
+- Avoid features that encourage spam
+- Optimize for trust and long-term use
 
 ---
 
 ## 11. Summary
 
-Market Signals Over Guesswork exists to give SaaS founders continuous, evidence-backed awareness of their market.
+Find Inbound Leads on Reddit helps SaaS founders turn Reddit into a consistent, ethical inbound channel.
 
-By structuring real public conversations into meaningful signals and tracking how they evolve, the app helps founders make better strategic decisions with less uncertainty.
+By analyzing a product's website, understanding what it solves, and continuously scanning Reddit for high-intent conversations, the app helps founders engage exactly when people are actively looking for solutions — without automation or spam.

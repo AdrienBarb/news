@@ -1,28 +1,28 @@
-import { Ear, ListFilter, Sparkles } from "lucide-react";
+import { Globe, Search, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export default function HowItWorksSection() {
   const steps = [
     {
       number: 1,
-      icon: Ear,
-      title: "We listen",
+      icon: Globe,
+      title: "Enter your website",
       description:
-        "We analyze real, public conversations where users naturally talk about tools, problems, and expectations.",
+        "We analyze your site to understand what you sell, who you help, and what keywords your customers use.",
     },
     {
       number: 2,
-      icon: ListFilter,
-      title: "We find patterns",
+      icon: Search,
+      title: "We scan Reddit daily",
       description:
-        "We group repeated opinions, complaints, and comparisons to separate real signals from noise.",
+        "Our AI searches Reddit every day for posts matching your product — people asking questions, comparing tools, or expressing frustration.",
     },
     {
       number: 3,
-      icon: Sparkles,
-      title: "We surface insights",
+      icon: MessageSquare,
+      title: "You engage & convert",
       description:
-        "You get clear, structured insights you can use to guide product, positioning, and strategy.",
+        "Review your leads, use our suggested replies, and engage manually. Turn conversations into customers.",
     },
   ];
 
@@ -39,7 +39,7 @@ export default function HowItWorksSection() {
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl text-foreground mb-4">
-            Simple, continuous market insight — without extra work.
+            From website to warm leads in 3 steps
           </h2>
         </div>
 
@@ -50,12 +50,17 @@ export default function HowItWorksSection() {
             return (
               <div
                 key={step.number}
-                className="bg-card rounded-2xl p-8 shadow-sm border border-foreground/10 hover:shadow-md transition-shadow"
+                className="bg-card rounded-2xl p-8 shadow-sm border border-foreground/10 hover:shadow-md transition-shadow relative"
               >
+                {/* Step Number */}
+                <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-[#FF4500] text-white flex items-center justify-center text-sm font-bold">
+                  {step.number}
+                </div>
+
                 {/* Icon - Centered */}
                 <div className="flex justify-center mb-4">
-                  <div className="w-12 h-12 rounded-full bg-muted border border-foreground/10 flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-foreground/60" />
+                  <div className="w-12 h-12 rounded-full bg-[#FF4500]/10 border border-[#FF4500]/20 flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-[#FF4500]" />
                   </div>
                 </div>
 
@@ -76,4 +81,3 @@ export default function HowItWorksSection() {
     </section>
   );
 }
-

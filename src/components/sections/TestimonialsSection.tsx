@@ -8,28 +8,28 @@ import "swiper/css";
 export default function TestimonialsSection() {
   const testimonials = [
     {
-      name: "Alex Martin",
+      name: "Marcus Chen",
       role: "Founder, B2B SaaS",
-      text: "Prediqte helped me see the same user complaints repeating across competitors. It quickly became part of how I think about what to build next.",
+      text: "I used to spend hours scrolling Reddit looking for potential leads. Now I get a curated list every morning. Closed 3 deals last month from Reddit alone.",
       avatar: "https://i.pravatar.cc/150?img=12",
     },
     {
-      name: "Sophie Laurent",
+      name: "Sarah Mitchell",
       role: "Solo founder",
-      text: "Before Prediqte, I relied on gut feeling and a few support tickets. Now I have a clear view of what users expect across the whole market.",
+      text: "Finally, Reddit marketing that doesn't feel spammy. I reply to people who are actually looking for what I built. It's like having a radar for buying intent.",
       avatar: "https://i.pravatar.cc/150?img=47",
     },
     {
-      name: "Thomas Nguyen",
-      role: "Co-founder, SaaS startup",
-      text: "It's like having a constant pulse on user frustration and unmet needs. It helped us avoid shipping features no one actually cared about.",
+      name: "David Park",
+      role: "Co-founder, DevTools",
+      text: "We were missing so many conversations. Now we catch posts within hours of being published. The timing difference is everything.",
       avatar: "https://i.pravatar.cc/150?img=33",
     },
     {
-      name: "Marco Rossi",
-      role: "Product-focused founder",
-      text: "Prediqte doesn't drown you in data. It highlights what users keep repeating — and that's what makes it useful.",
-      avatar: "https://i.pravatar.cc/150?img=60",
+      name: "Emma Rodriguez",
+      role: "Founder, Marketing SaaS",
+      text: "The competitor tracking is gold. I see every time someone asks for alternatives to our competitors. Easy wins.",
+      avatar: "https://i.pravatar.cc/150?img=44",
     },
   ];
 
@@ -46,7 +46,7 @@ export default function TestimonialsSection() {
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl text-foreground mb-4">
-            Trusted by founders building SaaS products
+            Founders finding leads on Reddit
           </h2>
         </div>
 
@@ -114,4 +114,3 @@ export default function TestimonialsSection() {
     </section>
   );
 }
-

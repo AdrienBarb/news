@@ -5,26 +5,30 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useClientPostHogEvent } from "@/lib/tracking/useClientPostHogEvent";
 import { TRACKING_EVENTS } from "@/lib/constants/tracking";
-import { useUser } from "@/lib/hooks/useUser";
+import { useRouter } from "next/navigation";
 import { SUBSCRIPTION } from "@/lib/constants/subscription";
 
 export default function PricingPageClient() {
   const { sendEvent } = useClientPostHogEvent();
-  const { user } = useUser();
+  const router = useRouter();
 
   const handleStartTrial = () => {
     sendEvent({
       eventName: TRACKING_EVENTS.FREE_TRIAL_STARTED,
     });
 
-    const paymentLink = process.env.NEXT_PUBLIC_STRIPE_PRICE_LINK_MONTHLY;
-    if (paymentLink) {
-      const url = new URL(paymentLink);
-      if (user?.email) {
-        url.searchParams.set("prefilled_email", user.email);
-      }
-      window.location.href = url.toString();
-    }
+    // TODO: Re-enable Stripe payment when ready
+    // const paymentLink = process.env.NEXT_PUBLIC_STRIPE_PRICE_LINK_MONTHLY;
+    // if (paymentLink) {
+    //   const url = new URL(paymentLink);
+    //   if (user?.email) {
+    //     url.searchParams.set("prefilled_email", user.email);
+    //   }
+    //   window.location.href = url.toString();
+    // }
+
+    // Redirect to thank you page (fake payment for now)
+    router.push("/d");
   };
 
   return (
@@ -66,11 +70,6 @@ export default function PricingPageClient() {
                 After your {SUBSCRIPTION.TRIAL_DAYS}-day free trial
               </p>
             </div>
-
-            {/* Description */}
-            <p className="text-lg text-foreground/70 mb-8">
-              Everything you need to stay aligned with your market.
-            </p>
 
             {/* CTA Button */}
             <Button
