@@ -3,9 +3,9 @@ export const SUBSCRIPTION = {
   PRICE_MONTHLY: 49,
   TRIAL_DAYS: 7,
   FEATURES: [
-    "1 seat",
     "1 domain",
     "20 keywords tracked",
+    "AI agent runs every 24h",
     "Unlimited Reddit lead monitoring",
     "AI-powered intent signal detection",
     "Competitor mention tracking",
