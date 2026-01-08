@@ -129,7 +129,7 @@ function IntentVisual() {
         <div className="bg-gradient-to-br from-[#FF4500]/10 to-[#FF4500]/5 rounded-xl p-4 border border-[#FF4500]/20">
           <div className="text-2xl font-semibold text-foreground mb-1">47</div>
           <div className="text-xs text-foreground/60">&quot;Looking for&quot;</div>
-        </div>
+          </div>
         <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-4 border border-primary/20">
           <div className="text-2xl font-semibold text-foreground mb-1">32</div>
           <div className="text-xs text-foreground/60">&quot;Alternative to&quot;</div>
@@ -183,7 +183,7 @@ function CompetitorsVisual() {
               className="h-full bg-gradient-to-r from-[#FF4500] to-[#FF4500]/60 rounded-full"
               style={{ width: "35%" }}
             ></div>
-          </div>
+        </div>
           <span className="text-sm font-medium text-foreground w-20 text-right">
             Competitor C
           </span>

@@ -1,37 +1,20 @@
 import { serve } from "inngest/next";
 import { inngest } from "@/lib/inngest/client";
 
-// Market Signals functions
+// Reddit Lead Discovery functions
 import { deriveMarketContextJob } from "@/lib/inngest/deriveMarketContext";
 import {
-  fetchConversationsJob,
-  scheduledFetchConversationsJob,
-} from "@/lib/inngest/fetchConversations";
-import { processConversationJob } from "@/lib/inngest/processConversation";
-import {
-  clusterSignalsJob,
-  scheduledClusterSignalsJob,
-} from "@/lib/inngest/clusterSignals";
-import {
-  generateReportJob,
-  scheduledGenerateReportJob,
-} from "@/lib/inngest/generateReport";
+  fetchLeadsJob,
+  scheduledFetchLeadsJob,
+} from "@/lib/inngest/fetchLeads";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
-    // Market context derivation
+    // Market context derivation (analyze website)
     deriveMarketContextJob,
-    // Conversation fetching
-    fetchConversationsJob,
-    scheduledFetchConversationsJob,
-    // Conversation processing
-    processConversationJob,
-    // Signal clustering
-    clusterSignalsJob,
-    scheduledClusterSignalsJob,
-    // Report generation
-    generateReportJob,
-    scheduledGenerateReportJob,
+    // Lead fetching from Reddit
+    fetchLeadsJob,
+    scheduledFetchLeadsJob,
   ],
 });

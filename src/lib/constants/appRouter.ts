@@ -1,7 +1,7 @@
 export const APP_ROUTER = {
   HOME: "/",
   SIGNUP: "/signup",
-  MARKETS: "/d",
+  MARKETS: "/markets",
   SIGNIN: "/signin",
   PRICING: "/pricing",
 };

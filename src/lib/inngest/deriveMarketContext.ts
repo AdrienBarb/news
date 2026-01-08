@@ -1,9 +1,9 @@
 import { inngest } from "./client";
-import { deriveMarketContext } from "@/lib/services/markets/deriveContext";
+import { analyzeWebsite } from "@/lib/services/markets/analyzeWebsite";
 import { prisma } from "@/lib/db/prisma";
 
 /**
- * Inngest function to derive market context from a website
+ * Inngest function to analyze a website and derive keywords
  * Triggered when a new market is created
  */
 export const deriveMarketContextJob = inngest.createFunction(
@@ -15,11 +15,11 @@ export const deriveMarketContextJob = inngest.createFunction(
   async ({ event, step }) => {
     const { marketId } = event.data;
 
-    // Check if market exists and is still pending
+    // Check if market exists and is still pending/analyzing
     const market = await step.run("check-market", async () => {
       return prisma.market.findUnique({
         where: { id: marketId },
-        select: { id: true, status: true, websiteUrl: true },
+        select: { id: true, status: true, websiteUrl: true, name: true },
       });
     });
 
@@ -30,48 +30,66 @@ export const deriveMarketContextJob = inngest.createFunction(
       };
     }
 
-    // Only process pending markets (idempotency check)
-    if (market.status !== "pending") {
+    // Only process pending or analyzing markets
+    if (market.status !== "pending" && market.status !== "analyzing") {
       return {
         status: "skipped",
         reason: `Market already ${market.status}`,
       };
     }
 
-    // Derive context
-    await step.run("derive-context", async () => {
-      await deriveMarketContext(marketId);
+    // Update status to analyzing
+    await step.run("set-analyzing", async () => {
+      await prisma.market.update({
+        where: { id: marketId },
+        data: { status: "analyzing" },
+      });
     });
 
-    // Get updated market info
-    const updatedMarket = await step.run("get-updated-market", async () => {
-      return prisma.market.findUnique({
+    // Analyze website to extract description and keywords
+    const result = await step.run("analyze-website", async () => {
+      return analyzeWebsite(market.websiteUrl);
+    });
+
+    if (!result.success) {
+      // Mark market as error
+      await step.run("set-error", async () => {
+        await prisma.market.update({
+          where: { id: marketId },
+          data: { status: "error" },
+        });
+      });
+
+      return {
+        status: "error",
+        marketId,
+        error: result.error,
+      };
+    }
+
+    // Update market with extracted data
+    await step.run("update-market", async () => {
+      await prisma.market.update({
         where: { id: marketId },
-        select: {
-          id: true,
-          status: true,
-          category: true,
-          _count: {
-            select: { sensors: true },
-          },
+        data: {
+          description: result.data.description,
+          keywords: result.data.keywords.slice(0, 20), // Max 20 keywords
+          status: "active",
         },
       });
     });
 
-    // If market is now active, trigger initial conversation fetch
-    if (updatedMarket?.status === "active") {
-      await step.sendEvent("trigger-initial-fetch", {
-        name: "market/conversations.fetch",
-        data: { marketId },
-      });
-    }
+    // Trigger initial lead fetch
+    // await step.sendEvent("trigger-initial-fetch", {
+    //   name: "market/leads.fetch",
+    //   data: { marketId },
+    // });
 
     return {
       status: "completed",
       marketId,
-      category: updatedMarket?.category,
-      sensorCount: updatedMarket?._count.sensors || 0,
+      description: result.data.description,
+      keywordsCount: result.data.keywords.length,
     };
   }
 );
-

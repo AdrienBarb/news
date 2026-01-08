@@ -10,7 +10,7 @@ interface RouteParams {
 }
 
 /**
- * POST /api/markets/[marketId]/refresh - Manually trigger a refresh for a market
+ * POST /api/markets/[marketId]/refresh - Manually trigger lead fetching for a market
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
@@ -44,20 +44,19 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Trigger the fetchConversations job for this specific market
+    // Trigger the fetchLeads job for this specific market
     await inngest.send({
-      name: "market/conversations.fetch",
+      name: "market/leads.fetch",
       data: {
         marketId: market.id,
       },
     });
 
     return NextResponse.json(
-      { message: "Refresh triggered successfully" },
+      { message: "Lead refresh triggered successfully" },
       { status: 200 }
     );
   } catch (error) {
     return errorHandler(error);
   }
 }
-

@@ -36,6 +36,12 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/markets - Create a new market
+ * 
+ * Expected body:
+ * - websiteUrl: string (required)
+ * - name?: string (optional, will be derived from URL if not provided)
+ * - description?: string (optional, AI-generated suggestion)
+ * - keywords?: string[] (optional, AI-generated suggestions, max 20)
  */
 export async function POST(req: NextRequest) {
   try {
@@ -50,7 +56,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if user already has an active market
+    // Check if user already has an active market (1 domain limit)
     const userHasActiveMarket = await hasActiveMarket(session.user.id);
     if (userHasActiveMarket) {
       return NextResponse.json(
@@ -67,17 +73,24 @@ export async function POST(req: NextRequest) {
       data: validatedData,
     });
 
-    // Trigger the deriveMarketContext background job
+    // If keywords provided, market is ready to start fetching leads
+    // Otherwise, trigger AI analysis
+    if (validatedData.keywords && validatedData.keywords.length > 0) {
+      // Market has keywords, trigger lead fetching
+      // await inngest.send({
+      //   name: "market/leads.fetch",
+      //   data: { marketId: market.id },
+      // });
+    } else {
+      // Trigger AI analysis to derive keywords
     await inngest.send({
       name: "market/context.derive",
-      data: {
-        marketId: market.id,
-      },
+        data: { marketId: market.id },
     });
+    }
 
     return NextResponse.json({ market }, { status: 201 });
   } catch (error) {
     return errorHandler(error);
   }
 }
-

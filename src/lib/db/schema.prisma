@@ -1,13 +1,11 @@
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  directUrl  = env("DIRECT_URL")
-  extensions = [pg_graphql, pg_net, pg_stat_statements, pgcrypto, supabase_vault, uuid_ossp(map: "uuid-ossp")]
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
+  provider = "prisma-client-js"
 }
 
 model User {
@@ -79,7 +77,7 @@ model Verification {
 }
 
 // ============================================================================
-// Market Signals Domain Models
+// Reddit Lead Discovery Domain Models
 // ============================================================================
 
 model Market {
@@ -88,162 +86,46 @@ model Market {
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   websiteUrl  String
   name        String
-  category    String?
-  contextJson Json? // ICP hints, key phrases, competitor names
+  description String? // Short product description (AI-generated, user-editable)
+  keywords    String[] // Keywords for Reddit search (max 20, user-editable)
   status      MarketStatus @default(pending)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  sensors       MarketSensor[]
-  conversations Conversation[]
-  signals       Signal[]
-  reports       Report[]
+  leads Lead[]
 
   @@index([userId])
   @@index([status])
   @@map("market")
 }
 
-model MarketSensor {
-  id            String     @id @default(cuid())
-  marketId      String
-  market        Market     @relation(fields: [marketId], references: [id], onDelete: Cascade)
-  source        SourceType
-  queryText     String
-  isActive      Boolean    @default(true)
-  lastFetchedAt DateTime?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-
-  @@index([marketId])
-  @@index([source, isActive])
-  @@map("market_sensor")
-}
-
-model Conversation {
-  id               String           @id @default(cuid())
-  marketId         String
-  market           Market           @relation(fields: [marketId], references: [id], onDelete: Cascade)
-  source           SourceType
-  externalId       String // e.g., "t3_abc123" for Reddit, "hn_12345" for HN
-  url              String
-  title            String?
-  rawContent       String
-  sanitizedContent String?
-  author           String?
-  publishedAt      DateTime?
-  fetchedAt        DateTime         @default(now())
-  processingStatus ProcessingStatus @default(pending)
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-
-  painStatements PainStatement[]
+model Lead {
+  id          String      @id @default(cuid())
+  marketId    String
+  market      Market      @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  source      SourceType  @default(reddit)
+  externalId  String // Reddit post ID (e.g., "t3_abc123")
+  url         String
+  subreddit   String?
+  title       String
+  content     String
+  author      String?
+  score       Int         @default(0)
+  numComments Int         @default(0)
+  publishedAt DateTime?
+  intent      IntentType?
+  relevance   Float? // 0.0 to 1.0 relevance score
+  isRead      Boolean     @default(false)
+  isArchived  Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   @@unique([source, externalId])
   @@index([marketId])
-  @@index([processingStatus])
+  @@index([isRead, isArchived])
   @@index([publishedAt])
-  @@map("conversation")
-}
-
-model PainStatement {
-  id              String       @id @default(cuid())
-  conversationId  String
-  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  statement       String // The extracted pain statement text
-  painType        PainType
-  toolsMentioned  String[] // Array of tool/product names mentioned
-  switchingIntent Boolean      @default(false)
-  confidence      Float // 0.0 to 1.0
-  embedding       Float[] // Vector embedding for clustering
-  signalId        String? // Assigned after clustering
-  signal          Signal?      @relation(fields: [signalId], references: [id], onDelete: SetNull)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-
-  evidence SignalEvidence[]
-
-  @@index([conversationId])
-  @@index([signalId])
-  @@index([painType])
-  @@index([createdAt])
-  @@map("pain_statement")
-}
-
-model Signal {
-  id            String   @id @default(cuid())
-  marketId      String
-  market        Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
-  title         String
-  description   String?
-  painType      PainType
-  frequency     Int      @default(0) // Count of associated pain statements
-  avgConfidence Float    @default(0)
-  centroid      Float[] // Average embedding for similarity matching
-  firstSeenAt   DateTime @default(now())
-  lastSeenAt    DateTime @default(now())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  painStatements PainStatement[]
-  evidence       SignalEvidence[]
-  reportSignals  ReportSignal[]
-
-  @@index([marketId])
-  @@index([painType])
-  @@index([frequency])
-  @@index([lastSeenAt])
-  @@map("signal")
-}
-
-model SignalEvidence {
-  id              String        @id @default(cuid())
-  signalId        String
-  signal          Signal        @relation(fields: [signalId], references: [id], onDelete: Cascade)
-  painStatementId String
-  painStatement   PainStatement @relation(fields: [painStatementId], references: [id], onDelete: Cascade)
-  quote           String // Short quote from the conversation
-  sourceUrl       String
-  createdAt       DateTime      @default(now())
-
-  @@unique([signalId, painStatementId])
-  @@index([signalId])
-  @@map("signal_evidence")
-}
-
-model Report {
-  id          String   @id @default(cuid())
-  marketId    String
-  market      Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
-  periodStart DateTime
-  periodEnd   DateTime
-  summaryJson Json? // AI-generated executive summary
-  generatedAt DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  reportSignals ReportSignal[]
-
-  @@unique([marketId, periodStart, periodEnd])
-  @@index([marketId])
-  @@index([periodEnd])
-  @@map("report")
-}
-
-model ReportSignal {
-  id                String      @id @default(cuid())
-  reportId          String
-  report            Report      @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  signalId          String
-  signal            Signal      @relation(fields: [signalId], references: [id], onDelete: Cascade)
-  trend             SignalTrend
-  currentFrequency  Int
-  previousFrequency Int
-  createdAt         DateTime    @default(now())
-
-  @@unique([reportId, signalId])
-  @@index([reportId])
-  @@map("report_signal")
+  @@index([intent])
+  @@map("lead")
 }
 
 // ============================================================================
@@ -251,42 +133,21 @@ model ReportSignal {
 // ============================================================================
 
 enum MarketStatus {
-  pending
-  analyzing
-  active
-  paused
-  archived
-  error
+  pending // Just created, waiting for setup
+  analyzing // AI is analyzing the website
+  active // Ready and scanning Reddit
+  paused // Temporarily stopped
+  error // Something went wrong
 }
 
 enum SourceType {
   reddit
-  hackernews
 }
 
-enum ProcessingStatus {
-  pending
-  processing
-  processed
-  error
-}
-
-enum PainType {
-  frustration // "X is so annoying/frustrating"
-  limitation // "X doesn't support Y"
-  unmet_expectation // "I expected X to do Y"
-  comparison // "X vs Y" or "switching from X to Y"
-  switching_intent // "thinking of switching to Y"
-  feature_request // "I wish X had Y"
-  pricing // "X is too expensive"
-  support // "X support is terrible"
-  performance // "X is slow/buggy"
-  other
-}
-
-enum SignalTrend {
-  new // First seen in this period
-  rising // Frequency increased > 30%
-  stable // Frequency within +/- 30%
-  fading // Frequency decreased > 30%
+enum IntentType {
+  recommendation // "looking for", "recommend me", "best tool for"
+  alternative // "alternative to X", "switching from X"
+  complaint // "frustrated with", "hate X", "X sucks"
+  question // General question about the problem space
+  comparison // "X vs Y", "comparing tools"
 }

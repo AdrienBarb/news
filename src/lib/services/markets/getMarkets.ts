@@ -1,79 +1,50 @@
 import { prisma } from "@/lib/db/prisma";
-import type { Market, Report } from "@prisma/client";
+import type { Market } from "@prisma/client";
 
-export interface MarketWithLatestReport extends Market {
-  latestReport: Report | null;
-  signalCount: number;
-  conversationCount: number;
-  painStatementCount: number;
+export interface MarketWithLeadCount extends Market {
+  leadCount: number;
+  unreadLeadCount: number;
 }
 
 /**
- * Get all markets for a user with summary data
+ * Get all markets for a user with lead counts
  */
 export async function getMarketsForUser(
   userId: string
-): Promise<MarketWithLatestReport[]> {
+): Promise<MarketWithLeadCount[]> {
   const markets = await prisma.market.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
     include: {
-      reports: {
-        orderBy: { generatedAt: "desc" },
-        take: 1,
-      },
       _count: {
         select: {
-          signals: true,
-          conversations: true,
+          leads: true,
         },
       },
     },
   });
 
-  // Get pain statement counts for all markets in one query
-  const painStatementCounts = await prisma.painStatement.groupBy({
-    by: ["conversationId"],
+  // Get unread lead counts
+  const unreadCounts = await prisma.lead.groupBy({
+    by: ["marketId"],
     where: {
-      conversation: {
         marketId: { in: markets.map((m) => m.id) },
-      },
+      isRead: false,
+      isArchived: false,
     },
     _count: true,
   });
 
-  // Aggregate counts by market
-  const marketPainCounts = new Map<string, number>();
-  for (const market of markets) {
-    marketPainCounts.set(market.id, 0);
-  }
-
-  // Get conversation to market mapping
-  const conversations = await prisma.conversation.findMany({
-    where: { marketId: { in: markets.map((m) => m.id) } },
-    select: { id: true, marketId: true },
-  });
-  const convToMarket = new Map(conversations.map((c) => [c.id, c.marketId]));
-
-  for (const group of painStatementCounts) {
-    const marketId = convToMarket.get(group.conversationId);
-    if (marketId) {
-      marketPainCounts.set(
-        marketId,
-        (marketPainCounts.get(marketId) || 0) + group._count
-      );
-    }
-  }
+  const unreadCountMap = new Map(
+    unreadCounts.map((c) => [c.marketId, c._count])
+  );
 
   return markets.map((market) => ({
     ...market,
-    latestReport: market.reports[0] || null,
-    signalCount: market._count.signals,
-    conversationCount: market._count.conversations,
-    painStatementCount: marketPainCounts.get(market.id) || 0,
-    reports: undefined,
+    leadCount: market._count.leads,
+    unreadLeadCount: unreadCountMap.get(market.id) || 0,
     _count: undefined,
-  })) as MarketWithLatestReport[];
+  })) as MarketWithLeadCount[];
 }
 
 /**
@@ -82,36 +53,16 @@ export async function getMarketsForUser(
 export async function getMarketById(
   marketId: string,
   userId: string
-): Promise<MarketWithLatestReport | null> {
+): Promise<MarketWithLeadCount | null> {
   const market = await prisma.market.findFirst({
     where: {
       id: marketId,
       userId,
     },
     include: {
-      reports: {
-        orderBy: { generatedAt: "desc" },
-        take: 1,
-        include: {
-          reportSignals: {
-            orderBy: [{ trend: "asc" }, { currentFrequency: "desc" }],
-            include: {
-              signal: {
-                select: {
-                  id: true,
-                  title: true,
-                  painType: true,
-                  description: true,
-                },
-              },
-            },
-          },
-        },
-      },
       _count: {
         select: {
-          signals: true,
-          conversations: true,
+          leads: true,
         },
       },
     },
@@ -121,24 +72,21 @@ export async function getMarketById(
     return null;
   }
 
-  // Count pain statements through conversations
-  const painStatementCount = await prisma.painStatement.count({
+  // Get unread lead count
+  const unreadCount = await prisma.lead.count({
     where: {
-      conversation: {
         marketId,
-      },
+      isRead: false,
+      isArchived: false,
     },
   });
 
   return {
     ...market,
-    latestReport: market.reports[0] || null,
-    signalCount: market._count.signals,
-    conversationCount: market._count.conversations,
-    painStatementCount,
-    reports: undefined,
+    leadCount: market._count.leads,
+    unreadLeadCount: unreadCount,
     _count: undefined,
-  } as MarketWithLatestReport;
+  } as MarketWithLeadCount;
 }
 
 /**
@@ -172,4 +120,35 @@ export async function hasActiveMarket(userId: string): Promise<boolean> {
   });
 
   return count > 0;
+}
+
+/**
+ * Update market keywords and description
+ */
+export async function updateMarketSettings(
+  marketId: string,
+  userId: string,
+  data: { description?: string; keywords?: string[] }
+): Promise<Market | null> {
+  // Verify ownership first
+  const market = await prisma.market.findFirst({
+    where: { id: marketId, userId },
+  });
+
+  if (!market) {
+    return null;
+  }
+
+  // Validate keywords limit
+  if (data.keywords && data.keywords.length > 20) {
+    throw new Error("Maximum 20 keywords allowed");
+  }
+
+  return prisma.market.update({
+    where: { id: marketId },
+    data: {
+      ...(data.description !== undefined && { description: data.description }),
+      ...(data.keywords !== undefined && { keywords: data.keywords }),
+    },
+  });
 }
