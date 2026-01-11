@@ -31,6 +31,14 @@ export async function createMarket({
     }
   }
 
+  // Normalize competitor URLs
+  const competitorUrls = (data.competitorUrls || []).map((url) => {
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      return `https://${url}`;
+    }
+    return url;
+  });
+
   // Determine initial status based on whether keywords are provided
   const hasKeywords = data.keywords && data.keywords.length > 0;
   const status = hasKeywords ? "active" : "pending";
@@ -42,6 +50,7 @@ export async function createMarket({
       name,
       description: data.description || null,
       keywords: data.keywords || [],
+      competitorUrls,
       status,
     },
   });

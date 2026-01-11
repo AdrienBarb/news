@@ -4,4 +4,6 @@ export const APP_ROUTER = {
   MARKETS: "/markets",
   SIGNIN: "/signin",
   PRICING: "/pricing",
+  ONBOARDING: "/onboarding",
+  SUCCESS: "/success",
 };

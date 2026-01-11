@@ -89,15 +89,20 @@ async function extractKeywordsWithLLM(
         role: "system",
         content: `You are a marketing expert specializing in Reddit lead generation. Your task is to analyze a website and extract:
 
-1. **description**: A short 1-2 sentence description of what the product/service does and who it's for
-2. **keywords**: An array of 10-20 search keywords/phrases to find potential customers on Reddit
+1. **description**: A short 1-2 sentence description of what the product/service does and who it's for (max 500 characters)
+2. **keywords**: An array of 10-15 high-intent search keywords/phrases to find potential customers on Reddit
 
-For keywords, focus on:
-- Product category terms (e.g., "CRM software", "email marketing tool")
-- Problem-related searches (e.g., "tired of managing spreadsheets", "looking for better X")
-- Competitor names if identifiable
-- Alternative/recommendation queries (e.g., "salesforce alternative", "best tool for X")
-- Industry-specific terms the target audience would use
+For keywords, generate STRONG intent-based phrases that people actually search for. Focus on:
+- "best [category] tools" (e.g., "best Reddit lead tools", "best inbound lead generation software")
+- "affordable [product type] software" (e.g., "affordable Reddit listening software")
+- "[product name] alternatives" (e.g., "hootsuite alternatives", "sprout social alternatives")
+- "[category] recommendations" (e.g., "Reddit lead generation tools", "social media listening tools")
+- "must-have [category] for [audience]" (e.g., "must-have Reddit tools for entrepreneurs")
+- "top [category] [year]" (e.g., "top Reddit engagement tools 2026")
+- "which [product type] is best for [use case]" (e.g., "which Reddit tool is best for capturing leads")
+- "[competitor] vs" searches (e.g., "brandwatch vs sprinklr")
+- "looking for [solution]" (e.g., "looking for Reddit monitoring tool")
+- "[category] software recommendations" (e.g., "community listening tools recommendations")
 
 Return a JSON object with these fields:
 {
@@ -105,7 +110,7 @@ Return a JSON object with these fields:
   "keywords": ["string", ...]
 }
 
-Keep keywords concise (2-5 words each) and focused on high-intent searches where people are actively looking for solutions.`,
+Keywords should be 3-7 words each. Focus on phrases people ACTUALLY search when looking for solutions. Avoid generic single-word terms.`,
       },
       {
         role: "user",

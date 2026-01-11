@@ -24,11 +24,15 @@ export const createMarketSchema = z.object({
     .optional(),
   description: z
     .string()
-    .max(500, "Description must be 500 characters or less")
+    .max(800, "Description must be 800 characters or less")
     .optional(),
   keywords: z
     .array(z.string().min(1).max(100))
-    .max(20, "Maximum 20 keywords allowed")
+    .max(30, "Maximum 30 keywords allowed")
+    .optional(),
+  competitorUrls: z
+    .array(z.string().min(1).max(200))
+    .max(3, "Maximum 3 competitor URLs allowed")
     .optional(),
 });
 

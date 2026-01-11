@@ -2,33 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/db/prisma";
 import { stripe } from "@/lib/stripe/client";
+import { ACCESS } from "@/lib/constants/subscription";
+import { calculateAccessExpiration } from "@/lib/utils/subscription";
+import { createMarket } from "@/lib/services/markets/createMarket";
 
-async function getCustomerEmail(
-  customerId: string | Stripe.Customer | Stripe.DeletedCustomer
-): Promise<string | null> {
-  const id = typeof customerId === "string" ? customerId : customerId.id;
-  const customer = await stripe.customers.retrieve(id);
-
-  if (customer.deleted) {
-    return null;
-  }
-
-  return customer.email;
+function getPassFromPriceId(priceId: string) {
+  return ACCESS.PASSES.find((pass) => pass.stripePriceId === priceId) ?? null;
 }
 
-async function getUserByCustomerEmail(
-  customerId: string | Stripe.Customer | Stripe.DeletedCustomer
-) {
-  const email = await getCustomerEmail(customerId);
-
-  if (!email) {
-    console.error("⚠️ Could not retrieve customer email from Stripe");
-    return null;
-  }
-
+async function getUserByEmail(email: string) {
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { id: true },
+    select: {
+      id: true,
+      accessExpiresAt: true,
+      onboardingWebsiteUrl: true,
+      onboardingDescription: true,
+      onboardingKeywords: true,
+      onboardingCompetitors: true,
+    },
   });
 
   if (!user) {
@@ -64,160 +56,102 @@ export async function POST(req: NextRequest) {
 
   try {
     switch (event.type) {
-      // Handle subscription created or updated
-      case "customer.subscription.created":
-      case "customer.subscription.updated": {
-        const subscription = event.data.object as Stripe.Subscription;
+      // Handle successful one-time payment (checkout session completed)
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
 
-        const user = await getUserByCustomerEmail(subscription.customer);
+        // Only process completed payments
+        if (session.payment_status !== "paid") {
+          console.log("⚠️ Payment not completed, skipping");
+          break;
+        }
 
+        // Get customer email from session (prefer customer_details.email, fallback to customer_email)
+        const customerEmail =
+          session.customer_details?.email ?? session.customer_email;
+        if (!customerEmail) {
+          console.error("⚠️ No customer email in checkout session");
+          break;
+        }
+
+        const user = await getUserByEmail(customerEmail);
         if (!user) {
           break;
         }
 
-        // Subscription is active if status is "active" or "trialing"
-        const isActive =
-          subscription.status === "active" ||
-          subscription.status === "trialing";
+        // Get the price ID from line items
+        const lineItems = await stripe.checkout.sessions.listLineItems(
+          session.id,
+          { limit: 1 }
+        );
+        const priceId = lineItems.data[0]?.price?.id;
 
-        const stripeCustomerId =
-          typeof subscription.customer === "string"
-            ? subscription.customer
-            : subscription.customer.id;
+        if (!priceId) {
+          console.error("⚠️ No price ID found in checkout session");
+          break;
+        }
 
-        // Get the price ID from the first subscription item
-        const stripePriceId = subscription.items.data[0]?.price.id ?? null;
+        // Find the pass that matches this price ID
+        const pass = getPassFromPriceId(priceId);
+        if (!pass) {
+          console.error(`⚠️ Unknown price ID: ${priceId}, no access granted`);
+          break;
+        }
+
+        const accessExpiresAt = calculateAccessExpiration(
+          pass.durationDays,
+          user.accessExpiresAt
+        );
 
         await prisma.user.update({
           where: { id: user.id },
           data: {
-            isSubscribed: isActive,
-            stripeSubscriptionId: subscription.id,
-            stripeCustomerId,
-            stripePriceId,
+            accessExpiresAt,
+            accessPassId: pass.id,
           },
         });
 
-        // If subscription became active, resume any paused markets
-        if (isActive) {
-          await prisma.market.updateMany({
-            where: {
+        console.log(
+          `✅ User ${user.id} purchased ${pass.id}, access expires: ${accessExpiresAt}`
+        );
+
+        // Create market from onboarding data if available
+        if (user.onboardingWebsiteUrl) {
+          try {
+            const market = await createMarket({
               userId: user.id,
-              status: "paused",
-            },
-            data: {
-              status: "active",
-            },
-          });
-          console.log(
-            `✅ User ${user.id} subscription active, markets resumed`
-          );
+              data: {
+                websiteUrl: user.onboardingWebsiteUrl,
+                description: user.onboardingDescription || undefined,
+                keywords: user.onboardingKeywords || [],
+                competitorUrls: user.onboardingCompetitors || [],
+              },
+            });
+
+            console.log(`✅ Created market ${market.id} for user ${user.id}`);
+
+            // Clear onboarding state after successful market creation
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                onboardingStep: null,
+                onboardingWebsiteUrl: null,
+                onboardingDescription: null,
+                onboardingKeywords: [],
+                onboardingCompetitors: [],
+              },
+            });
+
+            console.log(`✅ Cleared onboarding state for user ${user.id}`);
+          } catch (marketError) {
+            console.error(
+              `⚠️ Failed to create market for user ${user.id}:`,
+              marketError
+            );
+            // Don't fail the webhook - user still has access, they can create market manually
+          }
         }
 
-        console.log(
-          `✅ User ${user.id} subscription updated: isSubscribed=${isActive}`
-        );
-        break;
-      }
-
-      // Handle subscription cancelled or expired
-      case "customer.subscription.deleted": {
-        const subscription = event.data.object as Stripe.Subscription;
-        const user = await getUserByCustomerEmail(subscription.customer);
-
-        if (!user) {
-          break;
-        }
-
-        // Update user subscription status
-        await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            isSubscribed: false,
-            stripeSubscriptionId: null,
-          },
-        });
-
-        // Pause all active markets for this user
-        await prisma.market.updateMany({
-          where: {
-            userId: user.id,
-            status: "active",
-          },
-          data: {
-            status: "paused",
-          },
-        });
-
-        console.log(
-          `✅ User ${user.id} subscription cancelled, markets paused`
-        );
-        break;
-      }
-
-      // Handle subscription paused
-      case "customer.subscription.paused": {
-        const subscription = event.data.object as Stripe.Subscription;
-        const user = await getUserByCustomerEmail(subscription.customer);
-
-        if (!user) {
-          break;
-        }
-
-        // Update user subscription status
-        await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            isSubscribed: false,
-          },
-        });
-
-        // Pause all active markets for this user
-        await prisma.market.updateMany({
-          where: {
-            userId: user.id,
-            status: "active",
-          },
-          data: {
-            status: "paused",
-          },
-        });
-
-        console.log(`✅ User ${user.id} subscription paused, markets paused`);
-        break;
-      }
-
-      // Handle subscription resumed
-      case "customer.subscription.resumed": {
-        const subscription = event.data.object as Stripe.Subscription;
-        const user = await getUserByCustomerEmail(subscription.customer);
-
-        if (!user) {
-          break;
-        }
-
-        // Update user subscription status
-        await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            isSubscribed: true,
-          },
-        });
-
-        // Resume all paused markets for this user
-        await prisma.market.updateMany({
-          where: {
-            userId: user.id,
-            status: "paused",
-          },
-          data: {
-            status: "active",
-          },
-        });
-
-        console.log(
-          `✅ User ${user.id} subscription resumed, markets reactivated`
-        );
         break;
       }
 

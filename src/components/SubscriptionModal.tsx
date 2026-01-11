@@ -4,6 +4,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import SubscriptionPaymentContent from "@/components/SubscriptionPaymentContent";
 import { useUser } from "@/lib/hooks/useUser";
 import { useQueryState } from "nuqs";
+import { hasActiveAccess } from "@/lib/utils/subscription";
 
 export default function SubscriptionModal() {
   const { user, isLoading } = useUser();
@@ -19,12 +20,10 @@ export default function SubscriptionModal() {
     return null;
   }
 
-  // Don't show modal if user is subscribed
-  if (user?.isSubscribed) {
+  // Don't show modal if user has active access
+  if (hasActiveAccess(user?.accessExpiresAt as Date | null | undefined)) {
     return null;
   }
-
-  const hasStartedTrial = !!user?.stripeCustomerId;
 
   return (
     <Dialog
@@ -46,7 +45,7 @@ export default function SubscriptionModal() {
           e.preventDefault();
         }}
       >
-        <SubscriptionPaymentContent hasStartedTrial={hasStartedTrial} />
+        <SubscriptionPaymentContent />
       </DialogContent>
     </Dialog>
   );

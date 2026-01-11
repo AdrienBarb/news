@@ -52,12 +52,6 @@ export function NavUser({
     }
   );
 
-  const handleManageSubscription = () => {
-    openBillingPortal({
-      returnUrl: window.location.href,
-    });
-  };
-
   const handleSignOut = async () => {
     await signOut({
       fetchOptions: {
@@ -105,18 +99,6 @@ export function NavUser({
             align="end"
             sideOffset={4}
           >
-            {currentUser?.stripeCustomerId && (
-              <>
-                <DropdownMenuItem
-                  onClick={handleManageSubscription}
-                  disabled={isOpeningPortal}
-                >
-                  <CreditCard />
-                  {isOpeningPortal ? "Opening..." : "Manage Subscription"}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            )}
             <DropdownMenuItem onClick={handleSignOut}>
               <LogOutIcon />
               Log out
