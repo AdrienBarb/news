@@ -114,7 +114,9 @@ async function fetchForKeyword(
   const config = getTimeWindowConfig(timeWindow);
 
   console.log(`\n🔍 [FETCH] Keyword: "${keyword}"`);
-  console.log(`   └── Time window: ${config.label} (${config.maxAgeDays} days)`);
+  console.log(
+    `   └── Time window: ${config.label} (${config.maxAgeDays} days)`
+  );
   console.log(`   └── Limit per keyword: ${config.limitPerKeyword}`);
 
   try {
@@ -176,7 +178,10 @@ async function fetchForKeyword(
     return { leads };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`   ❌ Failed to fetch for keyword "${keyword}":`, errorMessage);
+    console.error(
+      `   ❌ Failed to fetch for keyword "${keyword}":`,
+      errorMessage
+    );
     return { leads, error: errorMessage };
   }
 }
@@ -414,11 +419,10 @@ export const runAgentJob = inngest.createFunction(
     console.log(`🔎 Processing ${allKeywords.length} keywords...`);
     console.log(`${"─".repeat(60)}`);
 
-    for (const keyword of allKeywords) {
-      const result = await step.run(
-        `fetch-keyword-${keyword.slice(0, 20)}`,
-        async () =>
-          fetchForKeyword(keyword, agentId, agent.timeWindow, existingIdsSet)
+    for (let kwIndex = 0; kwIndex < allKeywords.length; kwIndex++) {
+      const keyword = allKeywords[kwIndex];
+      const result = await step.run(`fetch-kw-${kwIndex}`, async () =>
+        fetchForKeyword(keyword, agentId, agent.timeWindow, existingIdsSet)
       );
 
       if (result.error) {
@@ -428,48 +432,52 @@ export const runAgentJob = inngest.createFunction(
       totalFetched += result.leads.length;
 
       if (result.leads.length > 0) {
-        const savedIds = await step.run(
-          `save-keyword-${keyword.slice(0, 20)}`,
-          async () => {
-            const ids: string[] = [];
+        const savedIds = await step.run(`save-kw-${kwIndex}`, async () => {
+          const ids: string[] = [];
 
-            for (const lead of result.leads) {
-              try {
-                const saved = await prisma.lead.create({
-                  data: {
-                    agentId: lead.agentId,
-                    source: "reddit",
-                    externalId: lead.externalId,
-                    url: lead.url,
-                    subreddit: lead.subreddit,
-                    title: lead.title,
-                    content: lead.content,
-                    author: lead.author,
-                    score: lead.score,
-                    numComments: lead.numComments,
-                    publishedAt: lead.publishedAt,
-                  },
-                });
-                ids.push(saved.id);
-                existingIdsSet.add(lead.externalId);
-              } catch (error) {
-                if (
-                  error instanceof Error &&
-                  error.message.includes("Unique constraint")
-                ) {
-                  continue;
-                }
-                throw error;
+          for (const lead of result.leads) {
+            try {
+              const saved = await prisma.lead.create({
+                data: {
+                  agentId: lead.agentId,
+                  source: "reddit",
+                  externalId: lead.externalId,
+                  url: lead.url,
+                  subreddit: lead.subreddit,
+                  title: lead.title,
+                  content: lead.content,
+                  author: lead.author,
+                  score: lead.score,
+                  numComments: lead.numComments,
+                  publishedAt: lead.publishedAt,
+                },
+              });
+              ids.push(saved.id);
+              existingIdsSet.add(lead.externalId);
+            } catch (error) {
+              if (
+                error instanceof Error &&
+                error.message.includes("Unique constraint")
+              ) {
+                continue;
               }
+              throw error;
             }
-
-            console.log(`   💾 Saved ${ids.length} leads to database`);
-            return ids;
           }
-        );
 
+          console.log(`   💾 Saved ${ids.length} leads to database`);
+          return ids;
+        });
+
+        console.log(
+          `   ✅ Keyword ${kwIndex + 1}/${allKeywords.length} complete: ${savedIds.length} new leads`
+        );
         allLeadIds.push(...savedIds);
         totalNew += savedIds.length;
+      } else {
+        console.log(
+          `   ⏭️ Keyword ${kwIndex + 1}/${allKeywords.length} complete: no new leads`
+        );
       }
     }
 
@@ -549,7 +557,9 @@ export const runAgentJob = inngest.createFunction(
             let deleted = 0;
 
             for (const analysis of analyses) {
-              const lead = batch.find((l) => l.externalId === analysis.externalId);
+              const lead = batch.find(
+                (l) => l.externalId === analysis.externalId
+              );
               if (!lead) continue;
 
               if (analysis.relevance >= MIN_RELEVANCE_SCORE) {
@@ -618,7 +628,9 @@ export const runAgentJob = inngest.createFunction(
     console.log(`\n${"─".repeat(60)}`);
     console.log(`📊 FINAL SUMMARY`);
     console.log(`${"─".repeat(60)}`);
-    console.log(`   └── Leads kept (score >= ${MIN_RELEVANCE_SCORE}): ${totalKept}`);
+    console.log(
+      `   └── Leads kept (score >= ${MIN_RELEVANCE_SCORE}): ${totalKept}`
+    );
     console.log(`   └── Leads deleted: ${totalDeleted}`);
 
     console.log(`\n${"=".repeat(60)}`);
@@ -636,4 +648,3 @@ export const runAgentJob = inngest.createFunction(
     };
   }
 );
-
