@@ -2,294 +2,263 @@
 
 ## Overview
 
-Market Signals is built with:
+Reddit Lead Finder is a one-time lead discovery tool built with:
+
 - **Next.js 16** (App Router) + TypeScript
 - **Prisma** + PostgreSQL (Supabase)
 - **Inngest** for background jobs
-- **OpenAI** for extraction + embeddings
+- **OpenAI** for website analysis & lead scoring
+- **Apify** for Reddit data fetching
+- **Stripe** for one-time payments
 
 ---
 
 ## Data Model
 
 ```
-User (1) ──→ (N) Market
+User (1) ──→ (N) AiAgent
                     │
-                    ├──→ (N) MarketSensor (search queries)
-                    │
-                    ├──→ (N) Conversation (Reddit/HN posts)
-                    │         │
-                    │         └──→ (N) PainStatement (extracted complaints)
-                    │                   │
-                    │                   └──→ (1) Signal (clustered pattern)
-                    │
-                    ├──→ (N) Signal
-                    │         └──→ (N) SignalEvidence (quotes + links)
-                    │
-                    └──→ (N) Report
-                              └──→ (N) ReportSignal (signal deltas)
+                    └──→ (N) Lead (Reddit posts with buying intent)
 ```
 
 ### Key Entities
 
-| Entity | Purpose |
-|--------|---------|
-| **Market** | User's market context (from website URL) |
-| **MarketSensor** | Search queries for Reddit/HN |
-| **Conversation** | Single Reddit post or HN comment |
-| **PainStatement** | Extracted complaint with embedding |
-| **Signal** | Clustered pattern across statements |
-| **SignalEvidence** | Quote + URL for a signal |
-| **Report** | Period snapshot with signal deltas |
+| Entity      | Purpose                                         |
+| ----------- | ----------------------------------------------- |
+| **User**    | Authenticated user                              |
+| **AiAgent** | One-time job to find leads (website + keywords) |
+| **Lead**    | Reddit post with potential buying intent        |
+
+### AiAgent Fields
+
+| Field             | Type        | Purpose                                    |
+| ----------------- | ----------- | ------------------------------------------ |
+| `websiteUrl`      | String      | User's product website                     |
+| `description`     | String?     | Product description (AI-generated)         |
+| `keywords`        | String[]    | Search keywords for Reddit (max 20)        |
+| `competitors`     | String[]    | Competitor names (max 3)                   |
+| `timeWindow`      | TimeWindow  | Search period (7d, 30d, 365d)              |
+| `stripeSessionId` | String?     | Stripe checkout session ID                 |
+| `amountPaid`      | Int?        | Amount paid in cents                       |
+| `status`          | AgentStatus | PENDING_PAYMENT → QUEUED → ... → COMPLETED |
+| `startedAt`       | DateTime?   | When agent started processing              |
+| `completedAt`     | DateTime?   | When agent finished                        |
+
+### Lead Fields
+
+| Field             | Type        | Purpose                            |
+| ----------------- | ----------- | ---------------------------------- |
+| `source`          | SourceType  | Always "reddit" for now            |
+| `externalId`      | String      | Reddit post ID (e.g., "t3_abc123") |
+| `url`             | String      | Full Reddit URL                    |
+| `subreddit`       | String?     | Subreddit name                     |
+| `title`           | String      | Post title                         |
+| `content`         | String      | Sanitized post content             |
+| `author`          | String?     | Reddit username                    |
+| `score`           | Int         | Reddit upvotes                     |
+| `numComments`     | Int         | Number of comments                 |
+| `publishedAt`     | DateTime?   | When post was created              |
+| `intent`          | IntentType? | Detected buying intent type        |
+| `relevance`       | Float?      | Relevance score (0-100)            |
+| `relevanceReason` | String?     | AI explanation for score           |
 
 ### Enums
 
-| Enum | Values |
-|------|--------|
-| **MarketStatus** | `pending`, `analyzing`, `active`, `error` |
-| **SourceType** | `reddit`, `hackernews` |
-| **ProcessingStatus** | `pending`, `processing`, `processed`, `error` |
-| **PainType** | `frustration`, `limitation`, `unmet_expectation`, `comparison`, `switching_intent`, `feature_request`, `pricing`, `support`, `performance`, `other` |
-| **SignalTrend** | `new`, `rising`, `stable`, `fading` |
+| Enum            | Values                                                                                  |
+| --------------- | --------------------------------------------------------------------------------------- |
+| **TimeWindow**  | `LAST_7_DAYS`, `LAST_30_DAYS`, `LAST_365_DAYS`                                          |
+| **AgentStatus** | `PENDING_PAYMENT`, `QUEUED`, `FETCHING_LEADS`, `ANALYZING_LEADS`, `COMPLETED`, `FAILED` |
+| **SourceType**  | `reddit`                                                                                |
+| **IntentType**  | `recommendation`, `alternative`, `complaint`, `question`, `comparison`                  |
 
 ---
 
 ## Background Jobs (Inngest)
 
-| Job | Trigger | What It Does |
-|-----|---------|--------------|
-| `deriveMarketContext` | `market/context.derive` | Analyzes website, creates sensors |
-| `fetchConversations` | Every 6h + `market/conversations.fetch` | Fetches from Reddit/HN |
-| `processConversation` | `conversation/process` | Extracts pain statements |
-| `clusterSignals` | Daily 2 AM + `market/signals.cluster` | Groups statements into signals |
-| `generateReport` | Daily 3 AM + `market/report.generate` | Creates report with deltas |
+| Job        | Event       | What It Does                           |
+| ---------- | ----------- | -------------------------------------- |
+| `runAgent` | `agent/run` | Fetches Reddit posts, analyzes with AI |
 
 ### Job Flow
 
 ```
-Market Created → deriveMarketContext → fetchConversations
-                                              ↓
-                                    processConversation (for each)
-                                              ↓
-                                       clusterSignals
-                                              ↓
-                                       generateReport
+Payment Completed (Stripe webhook)
+       ↓
+  Update agent status → QUEUED
+       ↓
+  Trigger Inngest: agent/run
+       ↓
+  runAgent job:
+    1. Status → FETCHING_LEADS
+    2. For each keyword: fetch Reddit posts via Apify
+    3. Status → ANALYZING_LEADS
+    4. AI analyzes each post for relevance
+    5. Save leads to database
+    6. Status → COMPLETED
+    7. Send email notification
 ```
 
-### Inngest Events
+### Time Window Configuration
 
-| Event Name | Payload | Triggers |
-|------------|---------|----------|
-| `market/context.derive` | `{ marketId }` | deriveMarketContext |
-| `market/conversations.fetch` | `{ marketId }` | fetchConversations |
-| `conversation/process` | `{ conversationId }` | processConversation |
-| `market/signals.cluster` | `{ marketId }` | clusterSignals |
-| `market/report.generate` | `{ marketId }` | generateReport |
+| Time Window     | Label          | Price  | Apify Time | Internal Cap/Keyword |
+| --------------- | -------------- | ------ | ---------- | -------------------- |
+| `LAST_7_DAYS`   | Recent signals | $9.50  | week       | 10 posts             |
+| `LAST_30_DAYS`  | Market scan    | $24.50 | month      | 20 posts             |
+| `LAST_365_DAYS` | Deep research  | $49.50 | year       | 30 posts             |
+
+_Note: Prices shown are after 50% launch discount_
 
 ---
 
 ## Key Files
 
-### Connectors
+### Components
 
-| File | Purpose |
-|------|---------|
-| `src/lib/connectors/reddit/client.ts` | OAuth authentication + rate limiting (100 req/min) |
-| `src/lib/connectors/reddit/search.ts` | Search posts and comments |
-| `src/lib/connectors/reddit/types.ts` | TypeScript types for Reddit API |
-| `src/lib/connectors/hn/client.ts` | Algolia HN API client (1 req/sec courtesy) |
-| `src/lib/connectors/hn/search.ts` | Search stories and comments |
-| `src/lib/connectors/hn/types.ts` | TypeScript types for HN API |
+| Directory                      | Components                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------ |
+| `src/components/agents/`       | `CreateAgentForm`, `CreateAgentModal`, `AgentCard`, `AgentsList`, `EmptyAgentsState` |
+| `src/components/agents/steps/` | `WebsiteStep`, `ReviewStep`, `TimeWindowStep`                                        |
 
 ### Services
 
-| File | Purpose |
-|------|---------|
-| `src/lib/services/markets/createMarket.ts` | Create market record |
-| `src/lib/services/markets/getMarkets.ts` | Get/delete markets |
-| `src/lib/services/markets/deriveContext.ts` | Analyze website + generate sensors |
-| `src/lib/services/extraction/extractPainStatements.ts` | OpenAI extraction of pain points |
-| `src/lib/services/extraction/generateEmbedding.ts` | Vector embeddings + cosine similarity |
-| `src/lib/services/clustering/clusterPainStatements.ts` | Group statements into signals |
-| `src/lib/services/signals/getSignals.ts` | Get signals with evidence |
-| `src/lib/services/reports/generateReport.ts` | Delta computation + AI summary |
-| `src/lib/services/reports/getReports.ts` | Get reports for a market |
-
-### Utilities
-
-| File | Purpose |
-|------|---------|
-| `src/lib/utils/textSanitizer.ts` | Strip HTML, normalize text, detect prompt injection |
+| File                                  | Purpose                               |
+| ------------------------------------- | ------------------------------------- |
+| `src/lib/connectors/reddit/client.ts` | Apify integration for Reddit scraping |
+| `src/lib/utils/articleExtractor.ts`   | Extract content from websites         |
 
 ### Inngest Jobs
 
-| File | Functions |
-|------|-----------|
-| `src/lib/inngest/deriveMarketContext.ts` | `deriveMarketContextJob` |
-| `src/lib/inngest/fetchConversations.ts` | `fetchConversationsJob`, `scheduledFetchConversationsJob` |
-| `src/lib/inngest/processConversation.ts` | `processConversationJob` |
-| `src/lib/inngest/clusterSignals.ts` | `clusterSignalsJob`, `scheduledClusterSignalsJob` |
-| `src/lib/inngest/generateReport.ts` | `generateReportJob`, `scheduledGenerateReportJob` |
+| File                          | Function      | Purpose                       |
+| ----------------------------- | ------------- | ----------------------------- |
+| `src/lib/inngest/runAgent.ts` | `runAgentJob` | Main lead fetching & analysis |
+
+### Constants
+
+| File                                | Purpose                             |
+| ----------------------------------- | ----------------------------------- |
+| `src/lib/constants/timeWindow.ts`   | Time window config, pricing, limits |
+| `src/lib/constants/errorMessage.ts` | Centralized error messages          |
 
 ### API Routes
 
-| Route | Methods | Purpose |
-|-------|---------|---------|
-| `/api/markets` | GET, POST | List/create markets |
-| `/api/markets/[marketId]` | GET, DELETE | Get/delete market |
-| `/api/markets/[marketId]/refresh` | POST | Manual refresh trigger |
-| `/api/markets/[marketId]/signals` | GET | List signals for market |
-| `/api/markets/[marketId]/reports` | GET | List reports for market |
-| `/api/signals/[signalId]` | GET | Signal detail with evidence |
+| Route                   | Methods   | Purpose                         |
+| ----------------------- | --------- | ------------------------------- |
+| `/api/agents`           | GET, POST | List agents / Create + checkout |
+| `/api/agents/[agentId]` | GET       | Get agent details with leads    |
+| `/api/analyze-website`  | POST      | AI-analyze website for keywords |
+| `/api/webhooks/stripe`  | POST      | Handle Stripe payment events    |
 
 ### UI Pages
 
-| Page | Path | Purpose |
-|------|------|---------|
-| Markets List | `/markets` | View all markets |
-| New Market | `/markets/new` | Create market form |
-| Market Detail | `/markets/[id]` | Report + signals tabs |
-| Signal Detail | `/markets/[id]/signals/[signalId]` | Signal with evidence |
-| Report History | `/markets/[id]/reports` | All reports |
-
-### UI Components
-
-| Directory | Components |
-|-----------|------------|
-| `src/components/markets/` | `MarketCard`, `MarketStatusBadge`, `CreateMarketForm` |
-| `src/components/signals/` | `SignalCard`, `TrendBadge`, `PainTypeBadge`, `EvidenceList` |
-| `src/components/reports/` | `ReportSummary`, `SignalDeltaTable` |
+| Page         | Path             | Purpose                    |
+| ------------ | ---------------- | -------------------------- |
+| Dashboard    | `/d`             | Create agent / List agents |
+| Agent Detail | `/d/agents/[id]` | View leads + status        |
 
 ---
 
-## How Conversation Processing Works
+## Agent Creation Flow
 
-### Step 1: Fetch Conversations
-- Reddit: OAuth API with query, returns posts + comments
-- HN: Algolia API with query, returns stories + comments
-- Deduplication: `externalId` unique per source (e.g., `t3_abc123`, `hn_12345`)
+### 3-Step Process
 
-### Step 2: Sanitize Content
-- Strip HTML tags
-- Normalize unicode
-- Detect prompt injection patterns
-- Truncate to max length
+```
+Step 1: User enters website URL
+        ↓
+        POST /api/analyze-website
+        ↓
+        AI analyzes website → returns { description, keywords[] }
 
-### Step 3: Extract Pain Statements
-- Send to OpenAI GPT-4o-mini with market context
-- Returns structured JSON with:
-  - `statement`: The extracted complaint
-  - `painType`: Category of pain
-  - `toolsMentioned`: Products referenced
-  - `switchingIntent`: Boolean
-  - `confidence`: 0.0-1.0
+Step 2: User reviews/edits description + keywords + competitors
+        ↓
+        Max 20 keywords, max 3 competitors
 
-### Step 4: Generate Embeddings
-- Each statement → OpenAI `text-embedding-3-small`
-- Returns 1536-dimension vector
-- Stored in database for clustering
-
----
-
-## How Clustering Works
-
-### The Algorithm
-
-1. Get all **unclustered** pain statements (where `signalId = null`)
-2. Get all **existing signals** with their centroids
-3. For each statement:
-   - Compare embedding to each signal centroid using **cosine similarity**
-   - If similarity ≥ 0.85 → Add to that signal
-   - Else → Try to match with other unclustered statements
-   - If still no match → Start new potential cluster
-4. For new clusters with 2+ statements:
-   - Generate title via OpenAI
-   - Create new Signal record
-   - Link statements to signal
-5. Update signal metrics:
-   - Recalculate centroid (average of embeddings)
-   - Update frequency (count of statements)
-   - Update lastSeenAt
-
-### Cosine Similarity
-
-```typescript
-function cosineSimilarity(a: number[], b: number[]): number {
-  let dotProduct = 0, normA = 0, normB = 0;
-  for (let i = 0; i < a.length; i++) {
-    dotProduct += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-}
+Step 3: User selects time window
+        ↓
+        POST /api/agents
+        ↓
+        Create AiAgent (status: PENDING_PAYMENT)
+        ↓
+        Create Stripe Checkout Session
+        ↓
+        Redirect to Stripe
 ```
 
-### Centroid Calculation
+### Website Analysis
 
-```typescript
-function calculateCentroid(embeddings: number[][]): number[] {
-  const centroid = new Array(1536).fill(0);
-  for (const embedding of embeddings) {
-    for (let i = 0; i < embedding.length; i++) {
-      centroid[i] += embedding[i];
-    }
-  }
-  for (let i = 0; i < centroid.length; i++) {
-    centroid[i] /= embeddings.length;
-  }
-  return centroid;
-}
+1. **Fetch website content**
+   - Extract text using article extractor
+   - Limit content for API
+
+2. **AI keyword extraction**
+   - Send to OpenAI GPT-4o-mini
+   - Returns description + up to 15 keywords
+   - Keywords focused on:
+     - Product category terms
+     - Problem-related searches
+     - Use cases
+
+---
+
+## Payment Flow
+
+```
+1. User submits Step 3 (time window selected)
+   ↓
+2. POST /api/agents
+   - Create AiAgent with PENDING_PAYMENT
+   - Create Stripe Checkout Session
+   - Return checkout URL
+   ↓
+3. User completes payment on Stripe
+   ↓
+4. Stripe webhook: checkout.session.completed
+   - Get agentId from session.metadata
+   - Update agent: status → QUEUED, amountPaid
+   - Trigger Inngest: agent/run
+   ↓
+5. User redirected to /d/agents/[agentId]
 ```
 
 ---
 
-## How Reports Work
+## Lead Discovery Flow
 
-### Delta Computation
+### How runAgent Works
 
-1. Define periods:
-   - **Current**: last 30 days
-   - **Previous**: 30-60 days ago
-2. For each signal:
-   - Count pain statements in current period
-   - Count pain statements in previous period
-3. Determine trend:
-   - `new`: previous = 0, current > 0
-   - `rising`: current > previous × 1.3
-   - `fading`: current < previous × 0.7
-   - `stable`: otherwise
+1. **Update status to FETCHING_LEADS**
 
-### AI Summary
+2. **Build search queries**
+   - Product keywords
+   - Competitor + "alternative" patterns
 
-- Send signal data to GPT-4o-mini
-- Returns:
-  - `overview`: 2-3 sentence summary
-  - `keyInsights`: Array of insights
-  - `recommendations`: Actionable suggestions
+3. **Fetch from Reddit (via Apify)**
+   - For each keyword:
+     - Scrape Reddit search results
+     - Filter by time window (maxAgeDays)
+     - Limit posts per keyword (based on tier)
+   - Deduplicate by externalId
 
----
+4. **Update status to ANALYZING_LEADS**
 
-## Key Configuration
+5. **AI Analysis**
+   - For each post:
+     - Score relevance (0-100)
+     - Classify intent
+     - Generate reasoning
 
-| Setting | Location | Default | Description |
-|---------|----------|---------|-------------|
-| `SIMILARITY_THRESHOLD` | `clusterPainStatements.ts` | 0.85 | Min similarity to cluster (0-1) |
-| `REPORT_PERIOD_DAYS` | `generateReport.ts` | 30 | Days in each report period |
-| Fetch schedule | `fetchConversations.ts` | `0 */6 * * *` | Every 6 hours |
-| Cluster schedule | `clusterSignals.ts` | `0 2 * * *` | Daily 2 AM |
-| Report schedule | `generateReport.ts` | `0 3 * * *` | Daily 3 AM |
-| Min cluster size | `clusterPainStatements.ts` | 2 | Min statements to form signal |
-| Confidence threshold | `extractPainStatements.ts` | 0.5 | Min confidence to keep |
+6. **Save leads to database**
+
+7. **Update status to COMPLETED**
+
+8. **Send email notification**
 
 ---
 
 ## Environment Variables
 
 ```env
-# Reddit API (create "script" app at reddit.com/prefs/apps)
-REDDIT_CLIENT_ID=your_client_id
-REDDIT_CLIENT_SECRET=your_client_secret
+# Apify (Reddit scraping)
+APIFY_API_KEY=your_key
 
 # OpenAI
 OPENAI_API_KEY=sk-...
@@ -304,6 +273,13 @@ INNGEST_SIGNING_KEY=...
 
 # Auth
 BETTER_AUTH_SECRET=...
+
+# Stripe
+STRIPE_SECRET_KEY=sk_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# App
+NEXT_PUBLIC_BASE_URL=https://...
 ```
 
 ---
@@ -311,75 +287,84 @@ BETTER_AUTH_SECRET=...
 ## Data Flow Summary
 
 ```
-1. User pastes URL
-   └── POST /api/markets
-       └── Create Market (status: pending)
-       └── Trigger: market/context.derive
+1. User enters website URL
+   └── POST /api/analyze-website
+       └── Fetch website content
+       └── OpenAI: Extract description + keywords
+       └── Return to UI
 
-2. Derive Context (Inngest)
-   └── Fetch website HTML
-   └── OpenAI: Analyze content
-   └── Generate search sensors
-   └── Update status: active
-   └── Trigger: market/conversations.fetch
+2. User edits keywords/competitors & selects time window
+   └── POST /api/agents
+       └── Create AiAgent (status: PENDING_PAYMENT)
+       └── Create Stripe Checkout Session
+       └── Redirect to Stripe
 
-3. Fetch Conversations (Inngest - every 6h)
-   └── For each sensor:
-       └── Reddit API / HN Algolia
-       └── Sanitize content
-       └── Upsert conversations (dedup by externalId)
-   └── Trigger: conversation/process (for each new)
+3. Payment completed
+   └── Stripe webhook
+       └── Update status → QUEUED
+       └── Trigger Inngest: agent/run
 
-4. Process Conversation (Inngest)
-   └── OpenAI: Extract pain statements
-   └── OpenAI: Generate embeddings
-   └── Save pain statements with embeddings
+4. Run Agent (Inngest)
+   └── Status → FETCHING_LEADS
+   └── For each keyword:
+       └── Apify → Reddit search
+       └── Filter by time window
+   └── Status → ANALYZING_LEADS
+   └── AI scores each post
+   └── Save leads
+   └── Status → COMPLETED
+   └── Send email
 
-5. Cluster Signals (Inngest - daily 2 AM)
-   └── Get unclustered statements
-   └── Compare to existing signal centroids
-   └── Group similar statements
-   └── Create new signals (if 2+ statements)
-   └── Update signal metrics
-   └── Create evidence records
-   └── Trigger: market/report.generate
-
-6. Generate Report (Inngest - daily 3 AM)
-   └── Compute 30-day deltas
-   └── Determine trends (new/rising/stable/fading)
-   └── OpenAI: Generate summary
-   └── Save report + report signals
-
-7. User Views
-   └── /markets - List markets
-   └── /markets/[id] - Report + signals
-   └── /markets/[id]/signals/[id] - Evidence
+5. User Views
+   └── /d - Dashboard with agent list
+   └── /d/agents/[id] - Lead list with sorting
 ```
 
 ---
 
-## Current Limitations
+## UI Components Structure
 
-1. **No cross-user sharing** - Each market is isolated per user. If 100 users monitor "notion.so", we fetch the same data 100 times.
-
-2. **No real-time updates** - Jobs run on schedule (6h for fetch, daily for cluster/report).
-
-3. **Reddit API limits** - 100 requests/minute with OAuth.
-
-4. **OpenAI costs** - Each extraction + embedding costs money. Budget ~$0.01-0.05 per conversation.
-
-5. **Single statements stay unclustered** - Need 2+ similar statements to form a signal.
+```
+src/components/agents/
+├── CreateAgentForm.tsx      # 3-step form orchestration
+├── CreateAgentModal.tsx     # Modal wrapper for existing users
+├── AgentCard.tsx            # Single agent card in list
+├── AgentsList.tsx           # List of agent cards
+├── EmptyAgentsState.tsx     # First-time user view
+└── steps/
+    ├── WebsiteStep.tsx      # Step 1: Enter URL
+    ├── ReviewStep.tsx       # Step 2: Edit keywords/competitors
+    └── TimeWindowStep.tsx   # Step 3: Select time window + pricing
+```
 
 ---
 
-## Future Improvements
+## Dashboard Logic
 
-- [ ] Shared conversation pool across users (reduce API calls)
-- [ ] More sources (Twitter/X, ProductHunt, G2, Capterra)
-- [ ] Custom sensor configuration (user can add/edit queries)
-- [ ] Alert notifications for rising signals
-- [ ] Export functionality (CSV, PDF reports)
-- [ ] Webhook integrations (Slack, email)
-- [ ] Manual signal merging/splitting
-- [ ] Confidence tuning per market
+```
+User arrives at /d
+       │
+       ├── Has agents? → Show AgentsList + "Run an agent" button
+       │                 Button opens CreateAgentModal
+       │
+       └── No agents? → Show EmptyAgentsState
+                        Form displayed directly on page
+```
 
+---
+
+## Agent Detail Page Features
+
+- **Processing states**: QUEUED, FETCHING_LEADS, ANALYZING_LEADS
+  - Shows animated progress indicator
+  - Email notification reminder
+
+- **Completed state**: Lead list with:
+  - Subreddit badge
+  - Intent badge
+  - Relevance score
+  - AI reasoning
+  - Post metadata (author, upvotes, comments, date)
+  - Link to Reddit
+
+- **Sorting**: By relevance (default) or by newest

@@ -69,7 +69,7 @@ export default function SignUpPageClient() {
       });
 
       toast.success("Account created successfully!");
-      router.push(APP_ROUTER.PRICING);
+      router.push(APP_ROUTER.DASHBOARD);
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -88,7 +88,7 @@ export default function SignUpPageClient() {
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold">Create Your Account</h1>
           <p className="text-muted-foreground">
-            Sign up to get started with market intelligence
+            Sign up to find high-intent leads on Reddit
           </p>
         </div>
 

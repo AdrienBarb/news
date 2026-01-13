@@ -2,42 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/db/prisma";
 import { stripe } from "@/lib/stripe/client";
-
-async function getCustomerEmail(
-  customerId: string | Stripe.Customer | Stripe.DeletedCustomer
-): Promise<string | null> {
-  const id = typeof customerId === "string" ? customerId : customerId.id;
-  const customer = await stripe.customers.retrieve(id);
-
-  if (customer.deleted) {
-    return null;
-  }
-
-  return customer.email;
-}
-
-async function getUserByCustomerEmail(
-  customerId: string | Stripe.Customer | Stripe.DeletedCustomer
-) {
-  const email = await getCustomerEmail(customerId);
-
-  if (!email) {
-    console.error("⚠️ Could not retrieve customer email from Stripe");
-    return null;
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { email },
-    select: { id: true },
-  });
-
-  if (!user) {
-    console.error(`⚠️ No user found with email: ${email}`);
-    return null;
-  }
-
-  return user;
-}
+import { inngest } from "@/lib/inngest/client";
 
 export async function POST(req: NextRequest) {
   const sig = req.headers.get("stripe-signature");
@@ -64,160 +29,53 @@ export async function POST(req: NextRequest) {
 
   try {
     switch (event.type) {
-      // Handle subscription created or updated
-      case "customer.subscription.created":
-      case "customer.subscription.updated": {
-        const subscription = event.data.object as Stripe.Subscription;
+      // Handle successful one-time payment (checkout session completed)
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
 
-        const user = await getUserByCustomerEmail(subscription.customer);
-
-        if (!user) {
+        // Only process completed payments
+        if (session.payment_status !== "paid") {
+          console.log("⚠️ Payment not completed, skipping");
           break;
         }
 
-        // Subscription is active if status is "active" or "trialing"
-        const isActive =
-          subscription.status === "active" ||
-          subscription.status === "trialing";
-
-        const stripeCustomerId =
-          typeof subscription.customer === "string"
-            ? subscription.customer
-            : subscription.customer.id;
-
-        // Get the price ID from the first subscription item
-        const stripePriceId = subscription.items.data[0]?.price.id ?? null;
-
-        await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            isSubscribed: isActive,
-            stripeSubscriptionId: subscription.id,
-            stripeCustomerId,
-            stripePriceId,
-          },
-        });
-
-        // If subscription became active, resume any paused markets
-        if (isActive) {
-          await prisma.market.updateMany({
-            where: {
-              userId: user.id,
-              status: "paused",
-            },
-            data: {
-              status: "active",
-            },
-          });
-          console.log(
-            `✅ User ${user.id} subscription active, markets resumed`
-          );
-        }
-
-        console.log(
-          `✅ User ${user.id} subscription updated: isSubscribed=${isActive}`
-        );
-        break;
-      }
-
-      // Handle subscription cancelled or expired
-      case "customer.subscription.deleted": {
-        const subscription = event.data.object as Stripe.Subscription;
-        const user = await getUserByCustomerEmail(subscription.customer);
-
-        if (!user) {
+        // Get agent ID from metadata
+        const agentId = session.metadata?.agentId;
+        if (!agentId) {
+          console.error("⚠️ No agentId in checkout session metadata");
           break;
         }
 
-        // Update user subscription status
-        await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            isSubscribed: false,
-            stripeSubscriptionId: null,
-          },
+        // Verify agent exists
+        const agent = await prisma.aiAgent.findUnique({
+          where: { id: agentId },
+          select: { id: true, status: true },
         });
 
-        // Pause all active markets for this user
-        await prisma.market.updateMany({
-          where: {
-            userId: user.id,
-            status: "active",
-          },
-          data: {
-            status: "paused",
-          },
-        });
-
-        console.log(
-          `✅ User ${user.id} subscription cancelled, markets paused`
-        );
-        break;
-      }
-
-      // Handle subscription paused
-      case "customer.subscription.paused": {
-        const subscription = event.data.object as Stripe.Subscription;
-        const user = await getUserByCustomerEmail(subscription.customer);
-
-        if (!user) {
+        if (!agent) {
+          console.error(`⚠️ Agent not found: ${agentId}`);
           break;
         }
 
-        // Update user subscription status
-        await prisma.user.update({
-          where: { id: user.id },
+        // Update agent status to QUEUED and save payment amount
+        await prisma.aiAgent.update({
+          where: { id: agentId },
           data: {
-            isSubscribed: false,
+            status: "QUEUED",
+            amountPaid: session.amount_total,
           },
         });
 
-        // Pause all active markets for this user
-        await prisma.market.updateMany({
-          where: {
-            userId: user.id,
-            status: "active",
-          },
-          data: {
-            status: "paused",
-          },
+        console.log(`✅ Agent ${agentId} payment completed, status: QUEUED`);
+
+        // Trigger the agent run job
+        await inngest.send({
+          name: "agent/run",
+          data: { agentId },
         });
 
-        console.log(`✅ User ${user.id} subscription paused, markets paused`);
-        break;
-      }
+        console.log(`🚀 Triggered agent run job for ${agentId}`);
 
-      // Handle subscription resumed
-      case "customer.subscription.resumed": {
-        const subscription = event.data.object as Stripe.Subscription;
-        const user = await getUserByCustomerEmail(subscription.customer);
-
-        if (!user) {
-          break;
-        }
-
-        // Update user subscription status
-        await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            isSubscribed: true,
-          },
-        });
-
-        // Resume all paused markets for this user
-        await prisma.market.updateMany({
-          where: {
-            userId: user.id,
-            status: "paused",
-          },
-          data: {
-            status: "active",
-          },
-        });
-
-        console.log(
-          `✅ User ${user.id} subscription resumed, markets reactivated`
-        );
         break;
       }
 
