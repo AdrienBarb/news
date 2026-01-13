@@ -2,15 +2,16 @@
   "project": {
     "name": "PREDIQTE",
     "shortName": "prediqte",
-    "description": "Find high-intent leads on Reddit. AI monitors conversations 24/7 and surfaces people actively looking for solutions like yours.",
-    "tagline": "Find Leads on Reddit Before Your Competitors.",
+    "brandName": "Prediqte",
+    "description": "Enter your website, pick 7 days / 30 days / 12 months, and get a curated list of high-intent Reddit posts where people ask for tools like yours.",
+    "tagline": "Reddit Lead Finder for SaaS Founders",
     "url": "https://prediqte.com",
     "logo": "/logo.png",
     "favicon": "/favicon.ico"
   },
   "seo": {
-    "title": "PREDIQTE — Find High-Intent Leads on Reddit",
-    "description": "Turn Reddit into your #1 inbound lead channel. Our AI monitors Reddit 24/7, detects buying signals, and surfaces people actively looking for solutions like yours.",
+    "title": "Reddit Lead Finder for SaaS Founders",
+    "description": "Enter your website, pick 7 days / 30 days / 12 months, and get a curated list of high-intent Reddit posts where people ask for tools like yours.",
     "keywords": [
       "reddit lead generation",
       "reddit marketing",
@@ -23,9 +24,9 @@
       "reddit monitoring tool",
       "reddit intent signals"
     ],
-    "author": "The Hacker Brief",
+    "author": "Prediqte",
     "ogImage": "/og-image.png",
-    "twitterHandle": "@thehackerbrief"
+    "twitterHandle": "@prediqte"
   },
   "contact": {
     "email": "hello@prediqte.com",

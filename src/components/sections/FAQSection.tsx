@@ -4,6 +4,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
+import Script from "next/script";
 
 const faqs = [
   {
@@ -48,13 +49,34 @@ const faqs = [
   },
 ];
 
+// Generate FAQ structured data for SEO
+const faqStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: faq.answer,
+    },
+  })),
+};
+
 export default function FAQSection() {
   return (
-    <section className="relative py-24 bg-background">
+    <section id="faq" className="relative py-24 bg-background scroll-mt-20">
+      {/* FAQ Structured Data for SEO */}
+      <Script
+        id="faq-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
+      />
+
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl text-foreground mb-4">
-            Questions? We&apos;ve got answers.
+          <h2 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">
+            Frequently Asked Questions
           </h2>
         </div>
 
@@ -67,9 +89,9 @@ export default function FAQSection() {
                 className="bg-card rounded-2xl border-2 border-border/50 px-6 overflow-hidden hover:border-[#FF4500]/30 transition-colors"
               >
                 <AccordionTrigger className="hover:no-underline py-6">
-                  <span className="text-lg text-foreground text-left pr-4">
+                  <h3 className="text-lg font-medium text-foreground text-left pr-4">
                     {faq.question}
-                  </span>
+                  </h3>
                 </AccordionTrigger>
                 <AccordionContent className="pb-6">
                   <p className="text-muted-foreground leading-relaxed">

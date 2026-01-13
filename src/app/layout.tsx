@@ -5,9 +5,7 @@ import GlobalErrorHandler from "@/components/GlobalErrorHandler";
 import { QueryProviders } from "@/components/providers/QueryProviders";
 import { PostHogProvider } from "@/components/tracking/PostHogProvider";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import Navbar from "@/components/Navbar";
 import "./globals.css";
-import { genPageMetadata } from "@/lib/seo/genPageMetadata";
 import { siteMetadata } from "@/data/siteMetadata";
 
 const rethinkSans = Rethink_Sans({
@@ -22,11 +20,15 @@ const geist = Geist({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
 });
 
-export const metadata: Metadata = genPageMetadata({
-  title: siteMetadata.title,
+// Default metadata for all pages (can be overridden by individual pages)
+export const metadata: Metadata = {
+  metadataBase: new URL(siteMetadata.siteUrl),
+  title: {
+    default: `${siteMetadata.title} | ${siteMetadata.brandName}`,
+    template: `%s | ${siteMetadata.brandName}`,
+  },
   description: siteMetadata.description,
-  url: "/",
-});
+};
 
 export default function RootLayout({
   children,

@@ -2,6 +2,7 @@ import config from "@/lib/config";
 
 export const siteMetadata = {
   title: config.seo.title,
+  brandName: config.project.brandName,
   description: config.seo.description,
   siteUrl: config.project.url,
   socialBanner: config.seo.ogImage,

@@ -6,9 +6,12 @@ interface PageSEOProps {
   description?: string;
   image?: string;
   url?: string;
-  [key: string]: any;
+  [key: string]: string | undefined;
 }
 
+/**
+ * Generates page metadata following the SEO template: <Primary Keyword or Promise> | Prediqte
+ */
 export function genPageMetadata({
   title,
   description,
@@ -24,11 +27,14 @@ export function genPageMetadata({
     ? image
     : `${siteMetadata.siteUrl}${siteMetadata.socialBanner}`;
 
+  // Full title following template: <Primary Keyword or Promise> | Prediqte
+  const fullTitle = `${title} | ${siteMetadata.brandName}`;
+
   return {
     metadataBase: new URL(siteMetadata.siteUrl),
     title: {
-      default: title || siteMetadata.title,
-      template: `%s | ${siteMetadata.title}`,
+      default: fullTitle,
+      template: `%s | ${siteMetadata.brandName}`,
     },
     description: description || siteMetadata.description,
     keywords: [
@@ -41,38 +47,38 @@ export function genPageMetadata({
       "reddit for saas",
       "reddit monitoring tool",
     ],
-    authors: [{ name: siteMetadata.title }],
-    creator: siteMetadata.title,
-    publisher: siteMetadata.title,
+    authors: [{ name: siteMetadata.brandName }],
+    creator: siteMetadata.brandName,
+    publisher: siteMetadata.brandName,
     formatDetection: {
       email: false,
       address: false,
       telephone: false,
     },
     openGraph: {
-      title: `${title} | ${siteMetadata.title}`,
+      title: fullTitle,
       description: description || siteMetadata.description,
       url: absoluteUrl,
-      siteName: siteMetadata.title,
+      siteName: siteMetadata.brandName,
       images: [
         {
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: `${title} | ${siteMetadata.title}`,
+          alt: fullTitle,
         },
       ],
       locale: "en_US",
       type: "website",
     },
     twitter: {
-      title: `${title} | ${siteMetadata.title}`,
+      title: fullTitle,
       description: description || siteMetadata.description,
       card: "summary_large_image",
       images: [
         {
           url: imageUrl,
-          alt: `${title} | ${siteMetadata.title}`,
+          alt: fullTitle,
         },
       ],
       creator: siteMetadata.twitter,
