@@ -69,7 +69,7 @@ export default function SignUpPageClient() {
       });
 
       toast.success("Account created successfully!");
-      router.push(APP_ROUTER.ONBOARDING);
+      router.push(APP_ROUTER.DASHBOARD);
     } catch (error) {
       toast.error(
         error instanceof Error

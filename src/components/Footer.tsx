@@ -12,18 +12,16 @@ export default function Footer() {
               <BrandLogo />
             </div>
             <p className="text-background/60 leading-relaxed mb-6">
-              Validate demand before you build.
+              Find high-intent leads on Reddit.
             </p>
           </div>
           <div>
             <h3 className="text-background font-semibold mb-4">Support</h3>
             <a
-              href={config.contact.telegramUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-background/60 hover:text-secondary text-sm transition-colors block"
+              href={`mailto:${config.contact.email}`}
+              className="text-background/60 hover:text-secondary text-sm transition-colors block mb-2"
             >
-              {config.contact.telegram}
+              Contact us
             </a>
           </div>
         </div>

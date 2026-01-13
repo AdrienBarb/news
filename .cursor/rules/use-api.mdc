@@ -25,7 +25,7 @@ The `useApi` hook is our centralized solution for handling all API interactions,
 ```typescript
 const { useGet } = useApi();
 const { data, isLoading, error } = useGet(
-  "/api/endpoint",
+  "/endpoint",
   { queryParam: "value" }, // Optional query parameters
   {
     // ... other React Query options
@@ -37,7 +37,7 @@ const { data, isLoading, error } = useGet(
 
 ```typescript
 const { usePost } = useApi();
-const { mutate: createData, isPending } = usePost("/api/endpoint", {
+const { mutate: createData, isPending } = usePost("/endpoint", {
   onSuccess: (data) => {
     // Handle success
   },
@@ -54,7 +54,7 @@ createData(payload);
 
 ```typescript
 const { usePut } = useApi();
-const { mutate: updateData } = usePut("/api/endpoint", {
+const { mutate: updateData } = usePut("/endpoint", {
   onSuccess: (data) => {
     // Handle success
   },
@@ -70,7 +70,7 @@ updateData({ id: 1, ...updatePayload });
 const { useInfinite } = useApi();
 const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfinite(
   "uniqueQueryKey",
-  "/api/endpoint",
+  "/endpoint",
   { limit: 10 }, // Pagination parameters
   {
     getNextPageParam: (lastPage) => lastPage.nextCursor,
@@ -84,7 +84,7 @@ const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfinite(
 
 ```typescript
 const { usePut } = useApi();
-const { mutate } = usePut("/api/endpoint", {
+const { mutate } = usePut("/endpoint", {
   onMutate: async (newData) => {
     // Cancel outgoing refetches
     await queryClient.cancelQueries({ queryKey: ["your-query"] });

@@ -1,54 +1,49 @@
-# PROJECT.md — Find Inbound Leads on Reddit
+# PROJECT.md — Reddit Lead Finder
 
 ## 1. App Description
 
-Find Inbound Leads on Reddit is a **lead discovery and engagement assistant for SaaS founders**.
+Reddit Lead Finder is a **one-time lead discovery tool for SaaS founders**.
 
-The app helps founders identify high-intent Reddit conversations where people are actively expressing problems, asking for recommendations, or comparing tools — signals that indicate inbound demand.
+The app helps founders find high-intent Reddit conversations from the past week, month, or year — where people are actively expressing problems, asking for recommendations, or comparing tools.
 
-Instead of manually monitoring Reddit, founders enter their website URL.
-The app analyzes it, understands what the product does, and continuously searches Reddit for conversations where engaging can realistically lead to customers.
+Instead of setting up ongoing monitoring, founders pay once to run an AI agent that scans Reddit based on their product context and delivers a curated list of leads.
 
 The app does not automate posting or messaging.
-It assists humans by detecting opportunities and suggesting replies — the founder stays in control.
+It finds opportunities — the founder decides which ones to engage with.
 
 ---
 
 ## 2. How the App Works (High-Level)
 
-1. The user enters their product website URL
-2. The app analyzes the website using an LLM
-3. The app derives:
-   - a clear product description
-   - problem statements
-   - keywords and phrasing users would use
-   - direct and indirect competitors
-4. Based on this understanding, the app searches Reddit every day
-5. Relevant conversations are detected, ranked, and surfaced as inbound leads
-6. The user reviews opportunities and engages manually
+1. The user signs up and lands on their dashboard (`/d`)
+2. They fill a form with:
+   - Their website URL
+   - Target keywords
+   - Competitor names
+3. They select a time window (7 days, 30 days, or 12 months)
+4. They pay based on the selected time window
+5. An AI agent runs and fetches relevant Reddit posts
+6. The user reviews their leads on the dashboard
 
 ---
 
 ## 3. Problem It Solves
 
-SaaS founders know Reddit works — but using it consistently is difficult.
+SaaS founders know Reddit has buying intent — but finding relevant posts is tedious.
 
 Today, finding leads on Reddit means:
 
-- manually scanning multiple subreddits
-- guessing which keywords to monitor
-- missing posts because timing matters
-- replying too late or in the wrong tone
-- risking bans due to misunderstanding subreddit rules
+- manually scanning subreddits
+- guessing which keywords to use
+- missing older posts with valuable context
+- spending hours scrolling
 
 As a result:
 
-- founders either stop using Reddit
-- or use it inconsistently and inefficiently
+- founders give up on Reddit
+- or miss high-intent conversations
 
-Meanwhile, people publicly express buying intent every day — but those conversations are scattered, short-lived, and easy to miss.
-
-The app turns Reddit into a **repeatable inbound lead channel**, without spam or automation.
+The app delivers a **curated list of leads** in one click, for any time period.
 
 ---
 
@@ -64,115 +59,92 @@ Specifically:
 
 - early to mid-stage SaaS
 - founders doing their own distribution
-- teams who care about credibility and tone
-- people who already believe Reddit can work
+- people launching a new product who need initial traction
+- founders who want a one-time lead list, not another subscription
 
 The app is **not** for:
 
-- agencies
-- growth hackers
-- mass outreach tools
+- agencies running campaigns for clients
 - automated posting or spam workflows
+- mass outreach tools
 
 ---
 
-## 5. Core User Journeys
+## 5. Core User Journey
 
-### 5.1 Product Setup
+### 5.1 Sign Up & Dashboard
 
-- The user enters their website URL
-- The app scans the website content
-- An LLM generates:
-  - a concise product description
-  - the main problem(s) solved
-  - target user profiles
-  - keywords and expressions users are likely to use
-  - known and adjacent competitors
+- User signs up (email or OAuth)
+- Redirected to `/d` (dashboard)
+- Dashboard shows:
+  - Form to create a new AI agent
+  - List of previous AI agents (if any)
 
-This step defines the search and detection context.
+### 5.2 Create AI Agent
 
-### 5.2 Daily Reddit Scanning
+Step 1: Product Context
 
-Every day, the app searches Reddit using:
+- Website URL
+- Description (auto-generated or manual)
+- Target keywords
+- Competitor names
 
-- generated keywords
-- competitor names
-- problem-focused phrasing
+Step 2: Time Window & Pricing
 
-Searches are performed across:
+- Last 7 days (Recent signals) — $19
+- Last 30 days (Market scan) — $49
+- Last 12 months (Deep research) — $99
 
-- selected subreddits
-- Reddit search results
-- new and recent posts only
+Step 3: Payment
 
-The goal is fresh, actionable conversations, not historical data.
+- Stripe Checkout
+- One-time payment (no subscription)
 
-### 5.3 Inbound Lead Detection
+### 5.3 Agent Execution
 
-Each post is analyzed to determine:
+After payment:
 
-- intent (complaint, alternative search, comparison, question)
-- relevance to the product
-- urgency (recency, engagement level)
+- Webhook triggers the AI agent
+- Agent status: `QUEUED` → `FETCHING_LEADS` → `ANALYZING_LEADS` → `COMPLETED`
+- User can leave — email notification when done
 
-Only posts with clear solution-seeking signals are surfaced.
+### 5.4 Lead Review
 
-Each qualifying post becomes a **potential inbound lead**.
+Once complete, the user sees:
 
-### 5.4 Lead Review & Prioritization
+- List of leads with:
+  - Post title and content
+  - Subreddit
+  - Author name and link
+  - Post link
+  - Relevance score (0-100)
+  - AI reasoning for why it's relevant
+  - Date posted
 
-The user sees a curated feed of opportunities, including:
+The user can:
 
-- post content and context
-- why this post is relevant
-- detected intent
-- time since posting
-- engagement signals
-
-The user should be able to quickly answer:
-
-> "Is this worth replying to right now?"
-
-### 5.5 Assisted Engagement
-
-For each lead, the app can generate a draft reply:
-
-- contextual
-- value-first
-- non-promotional by default
-
-The user:
-
-- edits the message
-- copies it
-- manually posts it on Reddit
-
-**No automation.**
-**No posting on behalf of the user.**
+- Click to open the Reddit post
+- Decide which leads to engage with manually
 
 ---
 
 ## 6. Core Concepts
 
-### Inbound Lead
+### AI Agent
 
-A Reddit conversation where the author has already expressed a problem, need, or comparison related to the user's product.
+A one-time job that searches Reddit based on user-defined keywords and time window.
 
-### Product Context
+### Lead
 
-The structured understanding of what the user sells, derived from their website.
+A Reddit post identified as relevant to the user's product.
 
-### Intent
+### Time Window
 
-The reason a post matters (complaint, comparison, alternative search, question).
+The period to search: 7 days, 30 days, or 12 months. Determines pricing.
 
-### Conversation
+### Relevance Score
 
-A public Reddit post or thread that can be engaged with.
-
-### Engagement Opportunity
-
-A time-sensitive moment where thoughtful engagement can realistically lead to a customer.
+AI-generated score (0-100) indicating how likely the post represents a lead opportunity.
 
 ---
 
@@ -180,42 +152,42 @@ A time-sensitive moment where thoughtful engagement can realistically lead to a 
 
 **Included:**
 
-- Website scanning and product understanding via LLM
-- Automatic keyword and competitor extraction
-- Daily Reddit search and monitoring
-- High-intent post detection
-- Lead relevance explanations
-- Draft reply suggestions (assistive only)
-- Subreddit awareness and guardrails
+- Website-based keyword suggestions
+- Keyword and competitor input
+- Time window selection with clear pricing
+- One-time payment via Stripe
+- AI-powered Reddit search
+- Lead relevance scoring and reasoning
+- Email notification when leads are ready
+- Dashboard to view all agents and leads
 
 **Excluded (non-goals):**
 
+- Subscriptions or recurring billing
+- Daily/weekly automated monitoring
 - Automated posting or commenting
-- Mass outreach or bulk replies
-- Direct messages or inbox automation
-- CRM or pipeline management
-- Raw data exports
-- Engagement analytics inside Reddit
+- Reply suggestions or draft generation
+- CRM or pipeline features
+- Subreddit-specific targeting
 
 ---
 
 ## 8. What "Working" Means
 
-The app is considered to be working when:
+The app is working when:
 
-- users regularly discover posts they would have missed
-- detected leads feel relevant and timely
-- founders engage more consistently on Reddit
-- some conversations convert into real users or customers
-- users feel confident engaging without spamming
+- users pay and receive relevant leads within minutes
+- leads feel actionable and worth reviewing
+- the process is faster than manual Reddit searching
+- users come back to run new agents when they need fresh leads
 
 The app does **not** need to:
 
 - capture every possible post
-- automate engagement
-- replace human judgment
+- provide ongoing monitoring
+- automate any engagement
 
-It needs to **surface the right opportunities at the right time**.
+It needs to **deliver a quality lead list for the price paid**.
 
 ---
 
@@ -223,32 +195,53 @@ It needs to **surface the right opportunities at the right time**.
 
 The app is successful if:
 
-- founders return daily or weekly
-- Reddit becomes a reliable inbound channel
-- users save time and mental effort
-- missing the app would mean missing leads
+- users find leads they would have missed
+- conversion from sign-up to payment is healthy
+- users return to run additional agents
+- founders recommend it to others
 
 Success is **not** measured by:
 
-- volume of posts scanned
-- number of alerts
-- automated actions
-- vanity engagement metrics
+- number of leads returned (quality > quantity)
+- time spent in-app
+- engagement metrics
 
 ---
 
-## 10. Guiding Constraints
+## 10. Pricing Model
 
-- Human-in-the-loop always
-- Quality > quantity
-- Respect Reddit rules and communities
-- Avoid features that encourage spam
-- Optimize for trust and long-term use
+| Time Window    | Label          | Price | Internal Cap (per keyword) |
+| -------------- | -------------- | ----- | -------------------------- |
+| Last 7 days    | Recent signals | $19   | ~10 posts                  |
+| Last 30 days   | Market scan    | $49   | ~20 posts                  |
+| Last 12 months | Deep research  | $99   | ~30 posts                  |
+
+Pricing reflects the volume of posts analyzed and leads returned.
+Internal caps are not shown to users — they only see the time window.
 
 ---
 
-## 11. Summary
+## 11. Technical Flow
 
-Find Inbound Leads on Reddit helps SaaS founders turn Reddit into a consistent, ethical inbound channel.
+1. User submits form → Create `AiAgent` record with status `PENDING_PAYMENT`
+2. Create Stripe Checkout Session with `agentId` in metadata
+3. Redirect to Stripe
+4. On `checkout.session.completed` webhook:
+   - Update agent status to `QUEUED`
+   - Trigger Inngest job `agent/run`
+5. Inngest job:
+   - Fetches Reddit posts for each keyword (using Apify)
+   - Filters by time window
+   - Runs AI analysis for relevance
+   - Saves leads to database
+   - Updates status to `COMPLETED`
+   - Sends email notification
+6. User views leads on dashboard
 
-By analyzing a product's website, understanding what it solves, and continuously scanning Reddit for high-intent conversations, the app helps founders engage exactly when people are actively looking for solutions — without automation or spam.
+---
+
+## 12. Summary
+
+Reddit Lead Finder helps SaaS founders get a curated list of Reddit leads — fast.
+
+Pick your time window, pay once, and receive AI-analyzed leads based on your product's keywords and competitors. No subscriptions, no ongoing monitoring — just leads when you need them.

@@ -2,247 +2,263 @@
 
 ## Overview
 
-PREDIQTE is a Reddit lead discovery tool built with:
+Reddit Lead Finder is a one-time lead discovery tool built with:
 
 - **Next.js 16** (App Router) + TypeScript
 - **Prisma** + PostgreSQL (Supabase)
 - **Inngest** for background jobs
-- **OpenAI** for website analysis
-- **ScrapingBee** for Reddit data fetching
+- **OpenAI** for website analysis & lead scoring
+- **Apify** for Reddit data fetching
+- **Stripe** for one-time payments
 
 ---
 
 ## Data Model
 
 ```
-User (1) ──→ (N) Market
+User (1) ──→ (N) AiAgent
                     │
                     └──→ (N) Lead (Reddit posts with buying intent)
 ```
 
 ### Key Entities
 
-| Entity     | Purpose                                          |
-| ---------- | ------------------------------------------------ |
-| **User**   | Authenticated user with subscription             |
-| **Market** | User's product context (website + keywords)      |
-| **Lead**   | Reddit post/comment with potential buying intent |
+| Entity      | Purpose                                         |
+| ----------- | ----------------------------------------------- |
+| **User**    | Authenticated user                              |
+| **AiAgent** | One-time job to find leads (website + keywords) |
+| **Lead**    | Reddit post with potential buying intent        |
 
-### Market Fields
+### AiAgent Fields
 
-| Field         | Type         | Purpose                                       |
-| ------------- | ------------ | --------------------------------------------- |
-| `websiteUrl`  | String       | User's product website                        |
-| `name`        | String       | Market name (usually domain)                  |
-| `description` | String?      | Product description (AI-generated, editable)  |
-| `keywords`    | String[]     | Search keywords for Reddit (max 20, editable) |
-| `status`      | MarketStatus | pending → analyzing → active                  |
+| Field             | Type        | Purpose                                    |
+| ----------------- | ----------- | ------------------------------------------ |
+| `websiteUrl`      | String      | User's product website                     |
+| `description`     | String?     | Product description (AI-generated)         |
+| `keywords`        | String[]    | Search keywords for Reddit (max 20)        |
+| `competitors`     | String[]    | Competitor names (max 3)                   |
+| `timeWindow`      | TimeWindow  | Search period (7d, 30d, 365d)              |
+| `stripeSessionId` | String?     | Stripe checkout session ID                 |
+| `amountPaid`      | Int?        | Amount paid in cents                       |
+| `status`          | AgentStatus | PENDING_PAYMENT → QUEUED → ... → COMPLETED |
+| `startedAt`       | DateTime?   | When agent started processing              |
+| `completedAt`     | DateTime?   | When agent finished                        |
 
 ### Lead Fields
 
-| Field        | Type        | Purpose                            |
-| ------------ | ----------- | ---------------------------------- |
-| `source`     | SourceType  | Always "reddit" for now            |
-| `externalId` | String      | Reddit post ID (e.g., "t3_abc123") |
-| `url`        | String      | Full Reddit URL                    |
-| `subreddit`  | String?     | Subreddit name                     |
-| `title`      | String      | Post title                         |
-| `content`    | String      | Sanitized post content             |
-| `author`     | String?     | Reddit username                    |
-| `intent`     | IntentType? | Detected buying intent type        |
-| `relevance`  | Float?      | Relevance score (0-1)              |
-| `isRead`     | Boolean     | User marked as read                |
-| `isArchived` | Boolean     | User archived                      |
+| Field             | Type        | Purpose                            |
+| ----------------- | ----------- | ---------------------------------- |
+| `source`          | SourceType  | Always "reddit" for now            |
+| `externalId`      | String      | Reddit post ID (e.g., "t3_abc123") |
+| `url`             | String      | Full Reddit URL                    |
+| `subreddit`       | String?     | Subreddit name                     |
+| `title`           | String      | Post title                         |
+| `content`         | String      | Sanitized post content             |
+| `author`          | String?     | Reddit username                    |
+| `score`           | Int         | Reddit upvotes                     |
+| `numComments`     | Int         | Number of comments                 |
+| `publishedAt`     | DateTime?   | When post was created              |
+| `intent`          | IntentType? | Detected buying intent type        |
+| `relevance`       | Float?      | Relevance score (0-100)            |
+| `relevanceReason` | String?     | AI explanation for score           |
 
 ### Enums
 
-| Enum             | Values                                                                 |
-| ---------------- | ---------------------------------------------------------------------- |
-| **MarketStatus** | `pending`, `analyzing`, `active`, `paused`, `error`                    |
-| **SourceType**   | `reddit`                                                               |
-| **IntentType**   | `recommendation`, `alternative`, `complaint`, `question`, `comparison` |
+| Enum            | Values                                                                                  |
+| --------------- | --------------------------------------------------------------------------------------- |
+| **TimeWindow**  | `LAST_7_DAYS`, `LAST_30_DAYS`, `LAST_365_DAYS`                                          |
+| **AgentStatus** | `PENDING_PAYMENT`, `QUEUED`, `FETCHING_LEADS`, `ANALYZING_LEADS`, `COMPLETED`, `FAILED` |
+| **SourceType**  | `reddit`                                                                                |
+| **IntentType**  | `recommendation`, `alternative`, `complaint`, `question`, `comparison`                  |
 
 ---
 
 ## Background Jobs (Inngest)
 
-| Job                   | Trigger                           | What It Does                        |
-| --------------------- | --------------------------------- | ----------------------------------- |
-| `deriveMarketContext` | `market/context.derive`           | Analyzes website, extracts keywords |
-| `fetchLeads`          | Daily 1 AM + `market/leads.fetch` | Searches Reddit for leads           |
+| Job        | Event       | What It Does                           |
+| ---------- | ----------- | -------------------------------------- |
+| `runAgent` | `agent/run` | Fetches Reddit posts, analyzes with AI |
 
 ### Job Flow
 
 ```
-Market Created (with keywords)
+Payment Completed (Stripe webhook)
        ↓
-  fetchLeads → Search Reddit → Save Leads
-
-Market Created (without keywords)
+  Update agent status → QUEUED
        ↓
-  deriveMarketContext → Analyze Website → Extract Keywords
+  Trigger Inngest: agent/run
        ↓
-  fetchLeads → Search Reddit → Save Leads
+  runAgent job:
+    1. Status → FETCHING_LEADS
+    2. For each keyword: fetch Reddit posts via Apify
+    3. Status → ANALYZING_LEADS
+    4. AI analyzes each post for relevance
+    5. Save leads to database
+    6. Status → COMPLETED
+    7. Send email notification
 ```
 
-### Inngest Events
+### Time Window Configuration
 
-| Event Name              | Payload        | Triggers               |
-| ----------------------- | -------------- | ---------------------- |
-| `market/context.derive` | `{ marketId }` | deriveMarketContextJob |
-| `market/leads.fetch`    | `{ marketId }` | fetchLeadsJob          |
+| Time Window     | Label          | Price  | Apify Time | Internal Cap/Keyword |
+| --------------- | -------------- | ------ | ---------- | -------------------- |
+| `LAST_7_DAYS`   | Recent signals | $9.50  | week       | 10 posts             |
+| `LAST_30_DAYS`  | Market scan    | $24.50 | month      | 20 posts             |
+| `LAST_365_DAYS` | Deep research  | $49.50 | year       | 30 posts             |
+
+_Note: Prices shown are after 50% launch discount_
 
 ---
 
 ## Key Files
 
-### Connectors
+### Components
 
-| File                                  | Purpose                          |
-| ------------------------------------- | -------------------------------- |
-| `src/lib/connectors/reddit/client.ts` | ScrapingBee proxy for Reddit API |
-| `src/lib/connectors/reddit/search.ts` | Search Reddit posts              |
-| `src/lib/connectors/reddit/types.ts`  | TypeScript types for Reddit API  |
+| Directory                      | Components                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------ |
+| `src/components/agents/`       | `CreateAgentForm`, `CreateAgentModal`, `AgentCard`, `AgentsList`, `EmptyAgentsState` |
+| `src/components/agents/steps/` | `WebsiteStep`, `ReviewStep`, `TimeWindowStep`                                        |
 
 ### Services
 
-| File                                         | Purpose                                          |
-| -------------------------------------------- | ------------------------------------------------ |
-| `src/lib/services/markets/createMarket.ts`   | Create market record                             |
-| `src/lib/services/markets/getMarkets.ts`     | Get/delete/update markets                        |
-| `src/lib/services/markets/analyzeWebsite.ts` | AI-powered website analysis + keyword extraction |
-
-### Utilities
-
-| File                             | Purpose                                             |
-| -------------------------------- | --------------------------------------------------- |
-| `src/lib/utils/textSanitizer.ts` | Strip HTML, normalize text, detect prompt injection |
+| File                                  | Purpose                               |
+| ------------------------------------- | ------------------------------------- |
+| `src/lib/connectors/reddit/client.ts` | Apify integration for Reddit scraping |
+| `src/lib/utils/articleExtractor.ts`   | Extract content from websites         |
 
 ### Inngest Jobs
 
-| File                                     | Functions                                 |
-| ---------------------------------------- | ----------------------------------------- |
-| `src/lib/inngest/deriveMarketContext.ts` | `deriveMarketContextJob`                  |
-| `src/lib/inngest/fetchLeads.ts`          | `fetchLeadsJob`, `scheduledFetchLeadsJob` |
+| File                          | Function      | Purpose                       |
+| ----------------------------- | ------------- | ----------------------------- |
+| `src/lib/inngest/runAgent.ts` | `runAgentJob` | Main lead fetching & analysis |
+
+### Constants
+
+| File                                | Purpose                             |
+| ----------------------------------- | ----------------------------------- |
+| `src/lib/constants/timeWindow.ts`   | Time window config, pricing, limits |
+| `src/lib/constants/errorMessage.ts` | Centralized error messages          |
 
 ### API Routes
 
-| Route                             | Methods          | Purpose                        |
-| --------------------------------- | ---------------- | ------------------------------ |
-| `/api/markets`                    | GET, POST        | List/create markets            |
-| `/api/markets/analyze`            | POST             | Analyze website URL → keywords |
-| `/api/markets/[marketId]`         | GET, PUT, DELETE | Get/update/delete market       |
-| `/api/markets/[marketId]/refresh` | POST             | Manual lead refresh trigger    |
-| `/api/markets/[marketId]/leads`   | GET              | List leads for market          |
+| Route                   | Methods   | Purpose                         |
+| ----------------------- | --------- | ------------------------------- |
+| `/api/agents`           | GET, POST | List agents / Create + checkout |
+| `/api/agents/[agentId]` | GET       | Get agent details with leads    |
+| `/api/analyze-website`  | POST      | AI-analyze website for keywords |
+| `/api/webhooks/stripe`  | POST      | Handle Stripe payment events    |
 
 ### UI Pages
 
-| Page          | Path            | Purpose            |
-| ------------- | --------------- | ------------------ |
-| Markets List  | `/markets`      | View all markets   |
-| New Market    | `/markets/new`  | Create market form |
-| Market Detail | `/markets/[id]` | Leads + settings   |
-
-### UI Components
-
-| Directory                 | Components                                            |
-| ------------------------- | ----------------------------------------------------- |
-| `src/components/markets/` | `MarketCard`, `MarketStatusBadge`, `CreateMarketForm` |
+| Page         | Path             | Purpose                    |
+| ------------ | ---------------- | -------------------------- |
+| Dashboard    | `/d`             | Create agent / List agents |
+| Agent Detail | `/d/agents/[id]` | View leads + status        |
 
 ---
 
-## Market Creation Flow
+## Agent Creation Flow
 
-### 2-Step Process
+### 3-Step Process
 
 ```
 Step 1: User enters website URL
         ↓
-        POST /api/markets/analyze
+        POST /api/analyze-website
         ↓
         AI analyzes website → returns { description, keywords[] }
 
-Step 2: User reviews/edits description + keywords (max 20)
+Step 2: User reviews/edits description + keywords + competitors
         ↓
-        User confirms
+        Max 20 keywords, max 3 competitors
+
+Step 3: User selects time window
         ↓
-        POST /api/markets → Create market with keywords
+        POST /api/agents
         ↓
-        Trigger: market/leads.fetch
+        Create AiAgent (status: PENDING_PAYMENT)
+        ↓
+        Create Stripe Checkout Session
+        ↓
+        Redirect to Stripe
 ```
 
-### Website Analysis (analyzeWebsite.ts)
+### Website Analysis
 
 1. **Fetch website content**
-   - HTTP GET with user-agent header
-   - Extract text from HTML (strip scripts, styles)
-   - Limit to 15,000 characters
+   - Extract text using article extractor
+   - Limit content for API
 
 2. **AI keyword extraction**
    - Send to OpenAI GPT-4o-mini
-   - Returns description + 10-20 keywords
+   - Returns description + up to 15 keywords
    - Keywords focused on:
      - Product category terms
      - Problem-related searches
-     - Competitor names
-     - Alternative/recommendation queries
+     - Use cases
+
+---
+
+## Payment Flow
+
+```
+1. User submits Step 3 (time window selected)
+   ↓
+2. POST /api/agents
+   - Create AiAgent with PENDING_PAYMENT
+   - Create Stripe Checkout Session
+   - Return checkout URL
+   ↓
+3. User completes payment on Stripe
+   ↓
+4. Stripe webhook: checkout.session.completed
+   - Get agentId from session.metadata
+   - Update agent: status → QUEUED, amountPaid
+   - Trigger Inngest: agent/run
+   ↓
+5. User redirected to /d/agents/[agentId]
+```
 
 ---
 
 ## Lead Discovery Flow
 
-### How fetchLeads Works
+### How runAgent Works
 
-1. **Get market keywords**
-   - Load market from database
-   - Get user-defined keywords (max 20)
+1. **Update status to FETCHING_LEADS**
 
-2. **Search Reddit for each keyword**
-   - Use ScrapingBee proxy → Reddit JSON API
-   - Timeframe: last week (initial) or last day (subsequent)
-   - Limit: 25 posts (initial) or 15 posts (subsequent)
+2. **Build search queries**
+   - Product keywords
+   - Competitor + "alternative" patterns
 
-3. **Process results**
-   - Sanitize content (strip HTML, normalize)
-   - Skip very short content (<30 chars)
-   - Skip prompt injection attempts
-   - Extract subreddit from URL
+3. **Fetch from Reddit (via Apify)**
+   - For each keyword:
+     - Scrape Reddit search results
+     - Filter by time window (maxAgeDays)
+     - Limit posts per keyword (based on tier)
+   - Deduplicate by externalId
 
-4. **Save leads**
-   - Upsert by `source + externalId`
-   - Skip duplicates
+4. **Update status to ANALYZING_LEADS**
 
-### Reddit API Integration
+5. **AI Analysis**
+   - For each post:
+     - Score relevance (0-100)
+     - Classify intent
+     - Generate reasoning
 
-```typescript
-// Search endpoint via ScrapingBee
-const url = `https://www.reddit.com/search.json?q=${query}&t=${timeframe}&limit=${limit}&sort=relevance`;
+6. **Save leads to database**
 
-// ScrapingBee handles:
-// - Rate limiting (100 req/min)
-// - IP rotation
-// - CAPTCHA solving
-```
+7. **Update status to COMPLETED**
 
----
-
-## Key Configuration
-
-| Setting                | Location        | Default     | Description                    |
-| ---------------------- | --------------- | ----------- | ------------------------------ |
-| Max keywords           | Schema + UI     | 20          | Per market keyword limit       |
-| Fetch schedule         | `fetchLeads.ts` | `0 1 * * *` | Daily 1 AM UTC                 |
-| Initial fetch posts    | `fetchLeads.ts` | 25          | Posts per keyword on first run |
-| Subsequent fetch posts | `fetchLeads.ts` | 15          | Posts per keyword on updates   |
-| Min content length     | `fetchLeads.ts` | 30          | Skip shorter posts             |
+8. **Send email notification**
 
 ---
 
 ## Environment Variables
 
 ```env
-# ScrapingBee (for Reddit API proxy)
-SCRAPINGBEE_API_KEY=your_key
+# Apify (Reddit scraping)
+APIFY_API_KEY=your_key
 
 # OpenAI
 OPENAI_API_KEY=sk-...
@@ -258,9 +274,12 @@ INNGEST_SIGNING_KEY=...
 # Auth
 BETTER_AUTH_SECRET=...
 
-# Stripe (payments)
+# Stripe
 STRIPE_SECRET_KEY=sk_...
-NEXT_PUBLIC_STRIPE_PRICE_LINK_MONTHLY=...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# App
+NEXT_PUBLIC_BASE_URL=https://...
 ```
 
 ---
@@ -269,37 +288,83 @@ NEXT_PUBLIC_STRIPE_PRICE_LINK_MONTHLY=...
 
 ```
 1. User enters website URL
-   └── POST /api/markets/analyze
+   └── POST /api/analyze-website
        └── Fetch website content
        └── OpenAI: Extract description + keywords
        └── Return to UI
 
-2. User edits keywords & confirms
-   └── POST /api/markets
-       └── Create Market (status: active, with keywords)
-       └── Trigger: market/leads.fetch
+2. User edits keywords/competitors & selects time window
+   └── POST /api/agents
+       └── Create AiAgent (status: PENDING_PAYMENT)
+       └── Create Stripe Checkout Session
+       └── Redirect to Stripe
 
-3. Fetch Leads (Inngest - daily 1 AM)
+3. Payment completed
+   └── Stripe webhook
+       └── Update status → QUEUED
+       └── Trigger Inngest: agent/run
+
+4. Run Agent (Inngest)
+   └── Status → FETCHING_LEADS
    └── For each keyword:
-       └── ScrapingBee → Reddit JSON API
-       └── Sanitize content
-       └── Upsert leads (dedup by externalId)
+       └── Apify → Reddit search
+       └── Filter by time window
+   └── Status → ANALYZING_LEADS
+   └── AI scores each post
+   └── Save leads
+   └── Status → COMPLETED
+   └── Send email
 
-4. User Views
-   └── /markets - List markets with lead counts
-   └── /markets/[id] - Lead feed with filters
-   └── Settings modal - Edit keywords & description
+5. User Views
+   └── /d - Dashboard with agent list
+   └── /d/agents/[id] - Lead list with sorting
 ```
 
 ---
 
-## Future Improvements
+## UI Components Structure
 
-- [ ] Intent detection using AI (classify leads by buying intent)
-- [ ] Relevance scoring for better lead ranking
-- [ ] AI-generated reply suggestions
-- [ ] Email/Slack notifications for new leads
-- [ ] Export functionality (CSV)
-- [ ] Multiple domains per user (higher tier plans)
-- [ ] Competitor mention tracking
-- [ ] Lead engagement tracking (replied, converted)
+```
+src/components/agents/
+├── CreateAgentForm.tsx      # 3-step form orchestration
+├── CreateAgentModal.tsx     # Modal wrapper for existing users
+├── AgentCard.tsx            # Single agent card in list
+├── AgentsList.tsx           # List of agent cards
+├── EmptyAgentsState.tsx     # First-time user view
+└── steps/
+    ├── WebsiteStep.tsx      # Step 1: Enter URL
+    ├── ReviewStep.tsx       # Step 2: Edit keywords/competitors
+    └── TimeWindowStep.tsx   # Step 3: Select time window + pricing
+```
+
+---
+
+## Dashboard Logic
+
+```
+User arrives at /d
+       │
+       ├── Has agents? → Show AgentsList + "Run an agent" button
+       │                 Button opens CreateAgentModal
+       │
+       └── No agents? → Show EmptyAgentsState
+                        Form displayed directly on page
+```
+
+---
+
+## Agent Detail Page Features
+
+- **Processing states**: QUEUED, FETCHING_LEADS, ANALYZING_LEADS
+  - Shows animated progress indicator
+  - Email notification reminder
+
+- **Completed state**: Lead list with:
+  - Subreddit badge
+  - Intent badge
+  - Relevance score
+  - AI reasoning
+  - Post metadata (author, upvotes, comments, date)
+  - Link to Reddit
+
+- **Sorting**: By relevance (default) or by newest

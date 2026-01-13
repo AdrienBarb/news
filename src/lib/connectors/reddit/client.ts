@@ -1,248 +1,202 @@
-import type { RedditSearchResult } from "./types";
+import { ApifyClient } from "apify-client";
+import type { RedditPost } from "./types";
 
-const REDDIT_PUBLIC_BASE = "https://www.reddit.com";
-const SCRAPINGBEE_API_URL = "https://app.scrapingbee.com/api/v1/";
-
-// Rate limiting for ScrapingBee (they handle Reddit rate limits, but we should still be reasonable)
-const REQUEST_DELAY_MS = 1000; // 1 second between requests
-const MAX_RETRIES = 2;
-
-let lastRequestTime = 0;
+// Apify Reddit Scraper (full version - better results than lite)
+const REDDIT_SCRAPER_ACTOR = "trudax/reddit-scraper";
 
 /**
- * Check if ScrapingBee is configured
+ * Apify response format for Reddit posts
  */
-function isScrapingBeeConfigured(): boolean {
-  return !!process.env.SCRAPINGBEE_API_KEY;
+interface ApifyRedditPost {
+  id: string;
+  parsedId: string;
+  url: string;
+  username: string;
+  title: string;
+  body: string;
+  communityName: string;
+  parsedCommunityName: string;
+  numberOfComments: number;
+  upVotes: number;
+  isVideo: boolean;
+  isAd: boolean;
+  over18: boolean;
+  createdAt: string;
+  scrapedAt: string;
+  dataType: "post" | "comment" | "community" | "user";
 }
 
 /**
- * Delay execution for specified milliseconds
+ * Initialize Apify client
  */
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Make a request through ScrapingBee proxy
- * ScrapingBee handles rate limiting, IP rotation, and anti-bot measures
- */
-async function scrapingBeeRequest<T>(
-  targetUrl: string,
-  retryCount = 0
-): Promise<T> {
-  const apiKey = process.env.SCRAPINGBEE_API_KEY;
-
-  if (!apiKey) {
+function getApifyClient(): ApifyClient {
+  const token = process.env.APIFY_API;
+  if (!token) {
     throw new Error(
-      "SCRAPINGBEE_API_KEY not configured. Add it to your environment variables."
+      "APIFY_API not configured. Add it to your environment variables."
     );
   }
-
-  // Enforce minimum delay between requests
-  const now = Date.now();
-  const timeSinceLastRequest = now - lastRequestTime;
-  if (timeSinceLastRequest < REQUEST_DELAY_MS) {
-    await delay(REQUEST_DELAY_MS - timeSinceLastRequest);
-  }
-  lastRequestTime = Date.now();
-
-  const params = new URLSearchParams({
-    api_key: apiKey,
-    url: targetUrl,
-    render_js: "false", // Reddit JSON doesn't need JS rendering (saves credits)
-    premium_proxy: "true", // Use residential proxies for Reddit
-  });
-
-  const response = await fetch(`${SCRAPINGBEE_API_URL}?${params.toString()}`);
-
-  // Handle ScrapingBee errors
-  if (response.status === 500) {
-    if (retryCount >= MAX_RETRIES) {
-      throw new Error("ScrapingBee request failed after retries");
-    }
-    console.log(
-      `ScrapingBee error (500). Retry ${retryCount + 1}/${MAX_RETRIES}`
-    );
-    await delay(2000);
-    return scrapingBeeRequest<T>(targetUrl, retryCount + 1);
-  }
-
-  if (response.status === 401) {
-    throw new Error("ScrapingBee API key is invalid");
-  }
-
-  if (response.status === 402) {
-    throw new Error(
-      "ScrapingBee credits exhausted. Please top up your account."
-    );
-  }
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`ScrapingBee error: ${response.status} - ${text}`);
-  }
-
-  const text = await response.text();
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new Error(
-      `Failed to parse Reddit JSON response: ${text.slice(0, 200)}`
-    );
-  }
+  return new ApifyClient({ token });
 }
 
 /**
- * Make a direct request to Reddit (fallback for local development)
+ * Convert Apify post to our RedditPost format
  */
-async function directRedditRequest<T>(url: string, retryCount = 0): Promise<T> {
-  const now = Date.now();
-  const timeSinceLastRequest = now - lastRequestTime;
-  if (timeSinceLastRequest < REQUEST_DELAY_MS * 6) {
-    // 6 seconds for direct requests
-    await delay(REQUEST_DELAY_MS * 6 - timeSinceLastRequest);
-  }
-  lastRequestTime = Date.now();
+function convertApifyPost(post: ApifyRedditPost): RedditPost {
+  // Parse createdAt to Unix timestamp
+  const createdDate = new Date(post.createdAt);
+  const createdUtc = Math.floor(createdDate.getTime() / 1000);
 
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
-      Accept: "application/json",
-    },
-  });
-
-  if (response.status === 429) {
-    if (retryCount >= MAX_RETRIES) {
-      throw new Error("Reddit rate limit exceeded");
-    }
-    const backoffMs = Math.pow(2, retryCount) * 30000;
-    console.log(
-      `Reddit rate limited. Retry ${retryCount + 1}/${MAX_RETRIES} after ${backoffMs / 1000}s`
-    );
-    await delay(backoffMs);
-    return directRedditRequest<T>(url, retryCount + 1);
-  }
-
-  if (response.status === 403) {
-    throw new Error(
-      "Reddit blocked request (403). Configure SCRAPINGBEE_API_KEY for production."
-    );
-  }
-
-  if (!response.ok) {
-    throw new Error(`Reddit API error: ${response.status}`);
-  }
-
-  return response.json();
+  return {
+    id: post.parsedId,
+    name: post.id, // Apify uses "t3_xxx" format for id
+    title: post.title,
+    selftext: post.body || "",
+    url: post.url,
+    permalink: post.url.replace("https://www.reddit.com", ""),
+    subreddit: post.parsedCommunityName || "",
+    author: post.username || "",
+    created_utc: createdUtc,
+    score: post.upVotes || 0,
+    num_comments: post.numberOfComments || 0,
+  };
 }
 
 /**
- * Make a request to Reddit, using ScrapingBee if configured
+ * Search Reddit using Apify Reddit Scraper (full version)
+ * Returns structured JSON directly with full post bodies
+ *
+ * @param query - Search query
+ * @param options - Search options including time filter and limits
+ * @param options.sort - Sort order (relevance, hot, top, new)
+ * @param options.t - Time filter (hour, day, week, month, year, all)
+ * @param options.limit - Maximum posts to return per query
+ * @param options.maxAgeDays - Maximum age of posts in days (filters client-side)
  */
-async function redditRequest<T>(url: string): Promise<T> {
-  if (isScrapingBeeConfigured()) {
-    console.log(`📡 Using ScrapingBee for Reddit request`);
-    return scrapingBeeRequest<T>(url);
-  } else {
-    console.log(`📡 Using direct Reddit request (dev mode)`);
-    return directRedditRequest<T>(url);
-  }
-}
-
-/**
- * Search Reddit posts
- */
-export async function searchReddit(
+export async function scrapeRedditSearch(
   query: string,
   options: {
-    sort?: "relevance" | "hot" | "top" | "new" | "comments";
+    sort?: "relevance" | "hot" | "top" | "new";
     t?: "hour" | "day" | "week" | "month" | "year" | "all";
     limit?: number;
-    after?: string;
-    subreddit?: string;
+    maxAgeDays?: number;
   } = {}
-): Promise<RedditSearchResult> {
-  const params = new URLSearchParams({
-    q: query,
-    sort: options.sort || "relevance",
-    t: options.t || "week",
-    limit: String(options.limit || 25),
-    type: "link",
-    raw_json: "1",
-  });
+): Promise<RedditPost[]> {
+  const sort = options.sort || "relevance";
+  const time = options.t || "week";
+  const limit = options.limit || 50;
+  const maxAgeDays = options.maxAgeDays || 365; // Default to 1 year
 
-  if (options.after) {
-    params.append("after", options.after);
+  console.log(
+    `   🔍 Searching Reddit via Apify: "${query}" (sort=${sort}, time=${time}, limit=${limit}, maxAge=${maxAgeDays}d)`
+  );
+
+  const client = getApifyClient();
+
+  // Prepare Apify actor input (full version has more options)
+  const input = {
+    searches: [query],
+    searchPosts: true,
+    searchComments: false,
+    searchCommunities: false,
+    searchUsers: false,
+    sort: sort,
+    time: time,
+    maxItems: limit * 2, // Get more items to filter
+    maxPostCount: limit,
+    maxComments: 0, // No comments needed
+    skipComments: true,
+    skipUserPosts: true,
+    skipCommunity: true,
+    includeNSFW: false,
+    scrollTimeout: 60, // Increased from 40 - Reddit can be slow
+    proxy: {
+      useApifyProxy: true,
+      apifyProxyGroups: ["RESIDENTIAL"], // Required to avoid Reddit blocks
+    },
+  };
+
+  try {
+    // Run the actor and wait for it to finish
+    const run = await client.actor(REDDIT_SCRAPER_ACTOR).call(input);
+
+    // Fetch results from the dataset
+    const { items } = await client.dataset(run.defaultDatasetId).listItems();
+
+    console.log(`   📥 Received ${items.length} items from Apify`);
+
+    // Filter and convert posts
+    const cutoffDate = Date.now() - maxAgeDays * 24 * 60 * 60 * 1000;
+    const posts: RedditPost[] = [];
+
+    for (const item of items) {
+      const apifyPost = item as unknown as ApifyRedditPost;
+
+      // Only process posts (not comments, communities, users)
+      if (apifyPost.dataType !== "post") {
+        continue;
+      }
+
+      // Skip ads
+      if (apifyPost.isAd) {
+        continue;
+      }
+
+      // Skip NSFW content
+      if (apifyPost.over18) {
+        continue;
+      }
+
+      // Skip old posts based on dynamic maxAgeDays
+      const postDate = new Date(apifyPost.createdAt).getTime();
+      if (postDate < cutoffDate) {
+        console.log(
+          `   ⏭️ Skipping old post: ${apifyPost.title?.slice(0, 40)}...`
+        );
+        continue;
+      }
+
+      posts.push(convertApifyPost(apifyPost));
+    }
+
+    console.log(`   ✅ Parsed ${posts.length} posts from Apify`);
+    return posts;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`   ❌ Apify error for "${query}": ${errorMessage}`);
+
+    // Return empty array to allow other keywords to continue
+    return [];
   }
-
-  const url = options.subreddit
-    ? `${REDDIT_PUBLIC_BASE}/r/${options.subreddit}/search.json?${params.toString()}&restrict_sr=1`
-    : `${REDDIT_PUBLIC_BASE}/search.json?${params.toString()}`;
-
-  return redditRequest<RedditSearchResult>(url);
 }
 
 /**
- * Get comments for a specific post
- */
-export async function getPostComments(
-  subreddit: string,
-  postId: string,
-  options: {
-    sort?: "best" | "top" | "new" | "controversial" | "old" | "qa";
-    limit?: number;
-  } = {}
-): Promise<RedditSearchResult[]> {
-  const params = new URLSearchParams({
-    sort: options.sort || "top",
-    limit: String(options.limit || 50),
-    raw_json: "1",
-  });
-
-  const url = `${REDDIT_PUBLIC_BASE}/r/${subreddit}/comments/${postId}.json?${params.toString()}`;
-
-  return redditRequest<RedditSearchResult[]>(url);
-}
-
-/**
- * Test Reddit access - checks both direct and ScrapingBee
+ * Test Reddit access via Apify
  */
 export async function testRedditAccess(): Promise<{
   success: boolean;
-  method: "scrapingbee" | "direct";
-  status?: number;
+  method: "apify";
   message: string;
   postsFound?: number;
 }> {
-  const testUrl = `${REDDIT_PUBLIC_BASE}/r/technology/hot.json?limit=5&raw_json=1`;
-
   try {
-    if (isScrapingBeeConfigured()) {
-      const data = await scrapingBeeRequest<RedditSearchResult>(testUrl);
-      const postsFound = data?.data?.children?.length || 0;
-      return {
-        success: true,
-        method: "scrapingbee",
-        message: "Reddit accessible via ScrapingBee",
-        postsFound,
-      };
-    } else {
-      const data = await directRedditRequest<RedditSearchResult>(testUrl);
-      const postsFound = data?.data?.children?.length || 0;
-      return {
-        success: true,
-        method: "direct",
-        message: "Reddit accessible directly (dev mode)",
-        postsFound,
-      };
-    }
+    const posts = await scrapeRedditSearch("test", {
+      sort: "new",
+      t: "day",
+      limit: 5,
+      maxAgeDays: 1,
+    });
+
+    return {
+      success: true,
+      method: "apify",
+      message: "Reddit accessible via Apify",
+      postsFound: posts.length,
+    };
   } catch (error) {
     return {
       success: false,
-      method: isScrapingBeeConfigured() ? "scrapingbee" : "direct",
+      method: "apify",
       message: error instanceof Error ? error.message : String(error),
     };
   }

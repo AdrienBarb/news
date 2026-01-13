@@ -7,44 +7,44 @@ import {
 
 const faqs = [
   {
-    question: "How does the app find leads on Reddit?",
+    question: "How fast will I get my leads?",
     answer:
-      "When you enter your website, our AI analyzes it to understand what you sell, who your customers are, and what keywords they use. We then search Reddit daily for posts where people are asking for recommendations, comparing tools, expressing frustration, or looking for solutions that match your product.",
-  },
-  {
-    question: "Is this against Reddit's terms of service?",
-    answer:
-      "No. We don't automate posting, commenting, or any engagement on Reddit. We simply help you discover relevant conversations. You manually review leads and engage authentically. This is exactly how Reddit is meant to be used — finding relevant discussions and adding value.",
+      "Most searches complete in 2-5 minutes. We'll email you when your leads are ready, so you can close the tab and come back later.",
   },
   {
     question: "What kind of leads will I find?",
     answer:
-      "You'll find people actively expressing buying intent: asking for recommendations, searching for alternatives to competitors, complaining about existing tools, or asking questions your product answers. These are warm leads — people who are already in the market.",
+      "People actively expressing buying intent on Reddit: asking for recommendations, looking for alternatives to competitors, complaining about current tools, or comparing options. These are warm leads already in the market for a solution.",
   },
   {
     question: "How is this different from manually searching Reddit?",
     answer:
-      "Manual searching is time-consuming, inconsistent, and easy to miss. We scan Reddit daily using AI-generated keywords, track competitor mentions, and surface only high-intent posts. You save hours and never miss an opportunity.",
+      "We use AI to search across hundreds of posts, score each one for relevance to your product, and filter out the noise. What would take you hours takes us minutes — and we find posts you'd never discover manually.",
   },
   {
-    question: "Does the app post or comment for me?",
+    question: "Is this a subscription?",
     answer:
-      "No. We are strictly human-in-the-loop. We surface opportunities and can suggest replies, but you always review, edit, and post manually. This keeps your engagement authentic and avoids any spam concerns.",
+      "No. You pay once per search. No recurring charges, no monthly fees. When you want more leads, you run a new search.",
   },
   {
-    question: "How quickly will I see leads?",
+    question: "Do you post or comment on Reddit for me?",
     answer:
-      "Once you enter your website, we analyze it and start scanning Reddit. You'll typically see your first leads within 24 hours, depending on how active your market is on Reddit.",
+      "No. We only find leads. You decide which posts to engage with and how. This keeps your outreach authentic and avoids any spam concerns.",
   },
   {
-    question: "Can I track specific competitors?",
+    question: "What if I don't find good leads?",
     answer:
-      "Yes. We automatically detect competitors from your website, but you can also add specific competitors to track. You'll see posts where people mention them, ask for alternatives, or express frustration.",
+      "The number and quality of leads depends on how active your market is on Reddit. Most founders find 10-50 relevant leads per search. If your niche isn't discussed much on Reddit, you may find fewer leads.",
   },
   {
-    question: "Can I cancel anytime?",
+    question: "Can I search for competitor mentions?",
     answer:
-      "Yes. You can cancel your subscription at any time with no questions asked.",
+      "Yes! Add your competitors in the form and we'll find posts where people are asking for alternatives, complaining about them, or comparing options.",
+  },
+  {
+    question: "Which time window should I choose?",
+    answer:
+      "7 days is great for fresh, active conversations. 30 days gives you the best balance of volume and relevance (our most popular option). 12 months is ideal for deep research or if you're in a slower-moving niche.",
   },
 ];
 
@@ -53,8 +53,8 @@ export default function FAQSection() {
     <section className="relative py-24 bg-background">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl xl:text-6xl text-foreground mb-4">
-            FAQ
+          <h2 className="text-4xl lg:text-5xl text-foreground mb-4">
+            Questions? We&apos;ve got answers.
           </h2>
         </div>
 
