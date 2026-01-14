@@ -28,13 +28,13 @@ export function genPageMetadata({
     : `${siteMetadata.siteUrl}${siteMetadata.socialBanner}`;
 
   // Full title following template: <Primary Keyword or Promise> | Prediqte
-  const fullTitle = `${title} | ${siteMetadata.brandName}`;
+  const fullTitle = `${title}`;
 
   return {
     metadataBase: new URL(siteMetadata.siteUrl),
     title: {
       default: fullTitle,
-      template: `%s | ${siteMetadata.brandName}`,
+      template: `%s`,
     },
     description: description || siteMetadata.description,
     keywords: [
