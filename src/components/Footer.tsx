@@ -1,43 +1,26 @@
 import Link from "next/link";
 import BrandLogo from "./BrandLogo";
+import { client } from "@/lib/sanity/client";
+
+// Fetch categories for Resources section
+const FOOTER_CATEGORIES_QUERY = `*[
+  _type == "category" 
+  && defined(slug.current)
+] | order(order asc) [0...4] {
+  title,
+  "slug": slug.current
+}`;
+
+// Fetch latest posts for Our Last Articles section
+const FOOTER_POSTS_QUERY = `*[
+  _type == "post" 
+  && defined(slug.current)
+] | order(publishedAt desc) [0...4] {
+  title,
+  "slug": slug.current
+}`;
 
 const footerLinks = {
-  useCases: {
-    title: "Use cases",
-    links: [
-      { href: "/use-cases", label: "Use cases" },
-      {
-        href: "/use-cases/find-saas-customers-on-reddit",
-        label: "Find SaaS customers on Reddit",
-      },
-      {
-        href: "/use-cases/validate-saas-idea-on-reddit",
-        label: "Validate a SaaS idea on Reddit",
-      },
-      {
-        href: "/use-cases/launch-saas-on-reddit",
-        label: "Launch a SaaS on Reddit",
-      },
-    ],
-  },
-  resources: {
-    title: "Resources",
-    links: [
-      { href: "/blog", label: "Blog" },
-      {
-        href: "/blog/how-to-find-customers-on-reddit",
-        label: "How to find customers on Reddit",
-      },
-      {
-        href: "/blog/reddit-buying-intent-signals",
-        label: "Reddit buying intent signals",
-      },
-      {
-        href: "/blog/reddit-market-research-for-saas",
-        label: "Reddit market research for SaaS",
-      },
-    ],
-  },
   product: {
     title: "Product",
     links: [
@@ -52,7 +35,35 @@ const footerLinks = {
   },
 };
 
-export default function Footer() {
+export default async function Footer() {
+  // Fetch categories and posts from Sanity
+  const [categories, posts] = await Promise.all([
+    client.fetch<{ title: string; slug: string }[]>(
+      FOOTER_CATEGORIES_QUERY,
+      {},
+      { next: { revalidate: 3600 } }
+    ),
+    client.fetch<{ title: string; slug: string }[]>(
+      FOOTER_POSTS_QUERY,
+      {},
+      { next: { revalidate: 3600 } }
+    ),
+  ]);
+
+  // Build dynamic resources links (Blog + Categories)
+  const resourcesLinks = [
+    { href: "/blog", label: "Blog" },
+    ...categories.map((category) => ({
+      href: `/blog/category/${category.slug}`,
+      label: category.title,
+    })),
+  ];
+
+  // Build dynamic articles links
+  const articlesLinks = posts.map((post) => ({
+    href: `/blog/${post.slug}`,
+    label: post.title,
+  }));
   return (
     <footer className="bg-foreground text-background">
       <div className="container mx-auto px-4 py-16">
@@ -68,13 +79,11 @@ export default function Footer() {
 
         {/* Links Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-          {/* Use cases */}
+          {/* Resources (Categories from Sanity) */}
           <div>
-            <h3 className="text-background font-semibold mb-4">
-              {footerLinks.useCases.title}
-            </h3>
+            <h3 className="text-background font-semibold mb-4">Resources</h3>
             <ul className="space-y-3">
-              {footerLinks.useCases.links.map((link) => (
+              {resourcesLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -87,17 +96,17 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Resources */}
+          {/* Our Last Articles (Posts from Sanity) */}
           <div>
             <h3 className="text-background font-semibold mb-4">
-              {footerLinks.resources.title}
+              Our Last Articles
             </h3>
             <ul className="space-y-3">
-              {footerLinks.resources.links.map((link) => (
+              {articlesLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-background/60 hover:text-secondary text-sm transition-colors"
+                    className="text-background/60 hover:text-secondary text-sm transition-colors line-clamp-1"
                   >
                     {link.label}
                   </Link>

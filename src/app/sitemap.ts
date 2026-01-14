@@ -1,5 +1,10 @@
 import { MetadataRoute } from "next";
 import { siteMetadata } from "@/data/siteMetadata";
+import { client } from "@/lib/sanity/client";
+import {
+  SITEMAP_POSTS_QUERY,
+  SITEMAP_CATEGORIES_QUERY,
+} from "@/lib/sanity/queries";
 
 // Static use cases pages
 const useCasesPages = [
@@ -9,16 +14,14 @@ const useCasesPages = [
   "/use-cases/launch-saas-on-reddit",
 ];
 
-// Static blog pages
-const blogPages = [
-  "/blog",
-  "/blog/how-to-find-customers-on-reddit",
-  "/blog/reddit-buying-intent-signals",
-  "/blog/reddit-market-research-for-saas",
-];
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = siteMetadata.siteUrl;
+
+  // Fetch dynamic content from Sanity
+  const [posts, categories] = await Promise.all([
+    client.fetch<{ slug: string; updatedAt: string }[]>(SITEMAP_POSTS_QUERY),
+    client.fetch<{ slug: string }[]>(SITEMAP_CATEGORIES_QUERY),
+  ]);
 
   // Landing page
   const landingPage: MetadataRoute.Sitemap = [
@@ -30,7 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Use cases pages
+  // Use cases pages (static)
   const useCasesSitemap: MetadataRoute.Sitemap = useCasesPages.map((path) => ({
     url: `${baseUrl}${path}`,
     lastModified: new Date(),
@@ -38,19 +41,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: path === "/use-cases" ? 0.9 : 0.8,
   }));
 
-  // Blog pages
-  const blogSitemap: MetadataRoute.Sitemap = blogPages.map((path) => ({
-    url: `${baseUrl}${path}`,
+  // Blog index page
+  const blogIndexSitemap: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/blog`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+  ];
+
+  // Blog category pages (dynamic from Sanity)
+  const categorySitemap: MetadataRoute.Sitemap = categories.map((category) => ({
+    url: `${baseUrl}/blog/category/${category.slug}`,
     lastModified: new Date(),
     changeFrequency: "weekly",
-    priority: path === "/blog" ? 0.9 : 0.8,
+    priority: 0.8,
   }));
 
-  // TODO: Add dynamic use cases from database
-  // const dynamicUseCases = await getUseCasesFromDB();
+  // Blog post pages (dynamic from Sanity)
+  const postsSitemap: MetadataRoute.Sitemap = posts.map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: new Date(post.updatedAt),
+    changeFrequency: "monthly",
+    priority: 0.7,
+  }));
 
-  // TODO: Add dynamic blog articles from database
-  // const dynamicBlogPosts = await getBlogPostsFromDB();
-
-  return [...landingPage, ...useCasesSitemap, ...blogSitemap];
+  return [
+    ...landingPage,
+    // ...useCasesSitemap,
+    ...blogIndexSitemap,
+    ...categorySitemap,
+    ...postsSitemap,
+  ];
 }

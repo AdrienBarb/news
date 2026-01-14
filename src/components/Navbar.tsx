@@ -5,7 +5,7 @@ import NavbarAuth from "./navbar/NavbarAuth";
 const navLinks = [
   { href: "/#how-it-works", label: "How it works" },
   { href: "/#pricing", label: "Pricing" },
-  { href: "/use-cases", label: "Use cases" },
+  // { href: "/use-cases", label: "Use cases" },
   { href: "/blog", label: "Blog" },
 ];
 
