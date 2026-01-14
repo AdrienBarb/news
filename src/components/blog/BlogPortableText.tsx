@@ -11,24 +11,35 @@ function generateSlug(text: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+function extractTextFromChildren(
+  children: Array<{ text?: string; _type?: string }> | undefined
+): string {
+  if (!children) return "";
+  return children.map((child) => child.text || "").join("");
+}
+
 const components: PortableTextComponents = {
   block: {
     h2: ({ children, value }) => {
-      const text =
-        value.children?.map((child: { text?: string }) => child.text || "").join("") || "";
+      const text = extractTextFromChildren(value.children);
       const id = generateSlug(text);
       return (
-        <h2 id={id} className="text-2xl font-bold text-foreground mt-10 mb-4 scroll-mt-24">
+        <h2
+          id={id}
+          className="text-2xl font-bold text-foreground mt-10 mb-4 scroll-mt-24"
+        >
           {children}
         </h2>
       );
     },
     h3: ({ children, value }) => {
-      const text =
-        value.children?.map((child: { text?: string }) => child.text || "").join("") || "";
+      const text = extractTextFromChildren(value.children);
       const id = generateSlug(text);
       return (
-        <h3 id={id} className="text-xl font-semibold text-foreground mt-8 mb-3 scroll-mt-24">
+        <h3
+          id={id}
+          className="text-xl font-semibold text-foreground mt-8 mb-3 scroll-mt-24"
+        >
           {children}
         </h3>
       );
@@ -88,7 +99,11 @@ const components: PortableTextComponents = {
     },
   },
   types: {
-    image: ({ value }: { value: SanityImage & { alt?: string; caption?: string } }) => {
+    image: ({
+      value,
+    }: {
+      value: SanityImage & { alt?: string; caption?: string };
+    }) => {
       const imageUrl = getImageUrl(value, 800);
       if (!imageUrl) return null;
 
