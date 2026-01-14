@@ -9,7 +9,10 @@ export default function HeroSection({
   getStartedUrl: string;
 }) {
   return (
-    <div className="relative overflow-hidden min-h-screen flex flex-col">
+    <section
+      aria-label="Hero"
+      className="relative overflow-hidden min-h-screen flex flex-col"
+    >
       {/* Hero Content - Centered */}
       <div className="flex-1 flex items-center justify-center">
         <div className="container mx-auto px-4 py-16">
@@ -72,6 +75,6 @@ export default function HeroSection({
 
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#FF4500]/5 via-transparent to-primary/5 -z-10"></div>
-    </div>
+    </section>
   );
 }

@@ -52,7 +52,7 @@ export default function PricingSection({
   const discountedPrice = config.price / 2;
 
   return (
-    <section className="py-24 px-6 bg-gradient-to-b from-background to-muted/30">
+    <section id="pricing" className="py-24 px-6 bg-gradient-to-b from-background to-muted/30 scroll-mt-20">
       <div className="max-w-4xl mx-auto">
         {/* Badge */}
         <div className="flex justify-center mb-8">
@@ -63,8 +63,8 @@ export default function PricingSection({
 
         {/* Header */}
         <div className="text-center mb-12">
-          <h2 className="text-4xl lg:text-5xl text-foreground mb-4">
-            One price. One search. All the leads.
+          <h2 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">
+            Simple Pricing for Reddit Lead Generation
           </h2>
           <p className="text-lg text-foreground/60">
             No subscriptions. No monthly fees. Pay once, get your leads.

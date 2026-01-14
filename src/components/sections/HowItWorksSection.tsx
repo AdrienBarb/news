@@ -30,7 +30,7 @@ export default function HowItWorksSection() {
   ];
 
   return (
-    <section className="py-24 px-6 bg-background">
+    <section id="how-it-works" className="py-24 px-6 bg-background scroll-mt-20">
       <div className="max-w-6xl mx-auto">
         {/* Badge */}
         <div className="flex justify-center mb-8">
@@ -41,8 +41,8 @@ export default function HowItWorksSection() {
 
         {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl text-foreground mb-4">
-            From website to leads in under 5 minutes
+          <h2 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">
+            From Website to Reddit Leads in Under 5 Minutes
           </h2>
           <p className="text-lg text-foreground/60">
             No setup. No learning curve. Just results.
@@ -78,7 +78,9 @@ export default function HowItWorksSection() {
                     </h3>
 
                     {/* Description */}
-                    <p className="text-foreground/60 mb-4">{step.description}</p>
+                    <p className="text-foreground/60 mb-4">
+                      {step.description}
+                    </p>
 
                     {/* Time Badge */}
                     <div className="inline-flex items-center gap-1.5 bg-foreground/5 rounded-full px-3 py-1 text-sm text-foreground/50">

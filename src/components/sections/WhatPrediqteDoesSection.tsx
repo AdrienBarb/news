@@ -38,10 +38,10 @@ export default function WhatPrediqteDoesSection() {
 
           {/* Heading */}
           <div className="text-center mb-16">
-            <h2 className="text-4xl lg:text-5xl text-foreground mb-4">
-              Reddit has your customers.
+            <h2 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">
+              Reddit Has Your Customers.
               <br />
-              <span className="text-foreground/50">Finding them is the hard part.</span>
+              <span className="text-foreground/50 font-normal">Finding them is the hard part.</span>
             </h2>
           </div>
 
