@@ -112,3 +112,30 @@ export interface CategoryPreview {
   image?: SanityImage;
   postCount?: number;
 }
+
+// ============================================
+// COMPETITOR PAGE TYPES
+// ============================================
+
+export interface CompetitorPage {
+  _id: string;
+  _type: "competitorPage";
+  title: string;
+  slug: SanitySlug;
+  excerpt?: string;
+  logo?: SanityImage;
+  body: Array<SanityBlock | SanityImage>;
+  faq?: FAQBlock;
+  seo?: SEO;
+  featured?: boolean;
+  internalNotes?: string;
+}
+
+export interface CompetitorPreview {
+  _id: string;
+  title: string;
+  slug: SanitySlug;
+  excerpt?: string;
+  logo?: SanityImage;
+  featured?: boolean;
+}

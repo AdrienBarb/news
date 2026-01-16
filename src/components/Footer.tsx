@@ -20,6 +20,16 @@ const FOOTER_POSTS_QUERY = `*[
   "slug": slug.current
 }`;
 
+// Fetch featured competitors for Alternatives section
+const FOOTER_COMPETITORS_QUERY = `*[
+  _type == "competitorPage" 
+  && featured == true
+  && defined(slug.current)
+] | order(title asc) [0...5] {
+  title,
+  "slug": slug.current
+}`;
+
 const footerLinks = {
   product: {
     title: "Product",
@@ -36,8 +46,8 @@ const footerLinks = {
 };
 
 export default async function Footer() {
-  // Fetch categories and posts from Sanity
-  const [categories, posts] = await Promise.all([
+  // Fetch categories, posts, and competitors from Sanity
+  const [categories, posts, competitors] = await Promise.all([
     client.fetch<{ title: string; slug: string }[]>(
       FOOTER_CATEGORIES_QUERY,
       {},
@@ -45,6 +55,11 @@ export default async function Footer() {
     ),
     client.fetch<{ title: string; slug: string }[]>(
       FOOTER_POSTS_QUERY,
+      {},
+      { next: { revalidate: 3600 } }
+    ),
+    client.fetch<{ title: string; slug: string }[]>(
+      FOOTER_COMPETITORS_QUERY,
       {},
       { next: { revalidate: 3600 } }
     ),
@@ -64,6 +79,12 @@ export default async function Footer() {
     href: `/blog/${post.slug}`,
     label: post.title,
   }));
+
+  // Build dynamic alternatives links
+  const alternativesLinks = competitors.map((competitor) => ({
+    href: `/alternatives/${competitor.slug}`,
+    label: `${competitor.title} Alternative`,
+  }));
   return (
     <footer className="bg-foreground text-background">
       <div className="container mx-auto px-4 py-16">
@@ -78,7 +99,7 @@ export default async function Footer() {
         </div>
 
         {/* Links Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           {/* Resources (Categories from Sanity) */}
           <div>
             <h3 className="text-background font-semibold mb-4">Resources</h3>
@@ -114,6 +135,27 @@ export default async function Footer() {
               ))}
             </ul>
           </div>
+
+          {/* Alternatives (Competitors from Sanity) */}
+          {alternativesLinks.length > 0 && (
+            <div>
+              <h3 className="text-background font-semibold mb-4">
+                Alternatives
+              </h3>
+              <ul className="space-y-3">
+                {alternativesLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-background/60 hover:text-secondary text-sm transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Product */}
           <div>

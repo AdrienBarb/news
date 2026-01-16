@@ -201,3 +201,71 @@ export const SITEMAP_CATEGORIES_QUERY = `*[
 ] {
   "slug": slug.current
 }`;
+
+// ============================================
+// COMPETITOR PAGE QUERIES
+// ============================================
+
+export const COMPETITOR_PAGES_QUERY = `*[
+  _type == "competitorPage" 
+  && defined(slug.current)
+] | order(title asc) {
+  _id,
+  title,
+  slug,
+  excerpt,
+  logo,
+  featured
+}`;
+
+export const FEATURED_COMPETITORS_QUERY = `*[
+  _type == "competitorPage" 
+  && featured == true
+  && defined(slug.current)
+] | order(title asc) {
+  _id,
+  title,
+  slug,
+  excerpt,
+  logo
+}`;
+
+export const COMPETITOR_BY_SLUG_QUERY = `*[
+  _type == "competitorPage" 
+  && slug.current == $slug
+][0] {
+  _id,
+  title,
+  slug,
+  excerpt,
+  logo,
+  body,
+  faq,
+  seo
+}`;
+
+export const COMPETITOR_SLUGS_QUERY = `*[
+  _type == "competitorPage" 
+  && defined(slug.current)
+] {
+  "slug": slug.current
+}`;
+
+// Footer query for competitors (featured only)
+export const FOOTER_COMPETITORS_QUERY = `*[
+  _type == "competitorPage" 
+  && featured == true
+  && defined(slug.current)
+] | order(title asc) [0...5] {
+  title,
+  "slug": slug.current
+}`;
+
+// Sitemap query for competitors
+export const SITEMAP_COMPETITORS_QUERY = `*[
+  _type == "competitorPage" 
+  && defined(slug.current)
+] {
+  "slug": slug.current,
+  "updatedAt": _updatedAt
+}`;

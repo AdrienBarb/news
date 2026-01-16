@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight, Calendar, Clock, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import config from "@/lib/config";
+import { APP_ROUTER } from "@/lib/constants/appRouter";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -128,7 +129,10 @@ export default async function PostPage({ params }: PostPageProps) {
       <article className="container mx-auto px-4 py-16">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
-          <Link href="/blog" className="hover:text-foreground transition-colors">
+          <Link
+            href="/blog"
+            className="hover:text-foreground transition-colors"
+          >
             Blog
           </Link>
           <ChevronRight className="w-4 h-4" />
@@ -146,6 +150,19 @@ export default async function PostPage({ params }: PostPageProps) {
 
         {/* Header */}
         <header className="max-w-3xl mx-auto text-center mb-12">
+          {coverImageUrl && (
+            <div className="max-w-4xl mx-auto mb-12">
+              <Image
+                src={coverImageUrl}
+                alt={post.title}
+                width={1200}
+                height={630}
+                className="rounded-2xl w-full"
+                priority
+              />
+            </div>
+          )}
+
           {/* Category */}
           <Link
             href={`/blog/category/${post.category.slug.current}`}
@@ -161,7 +178,9 @@ export default async function PostPage({ params }: PostPageProps) {
 
           {/* Meta */}
           <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground flex-wrap">
-            <span className="font-medium text-foreground">{post.authorName}</span>
+            <span className="font-medium text-foreground">
+              {post.authorName}
+            </span>
             <span>·</span>
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
@@ -187,20 +206,6 @@ export default async function PostPage({ params }: PostPageProps) {
           )}
         </header>
 
-        {/* Cover Image */}
-        {coverImageUrl && (
-          <div className="max-w-4xl mx-auto mb-12">
-            <Image
-              src={coverImageUrl}
-              alt={post.title}
-              width={1200}
-              height={630}
-              className="rounded-2xl w-full"
-              priority
-            />
-          </div>
-        )}
-
         {/* Content Layout */}
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-12">
           {/* Main Content */}
@@ -224,8 +229,8 @@ export default async function PostPage({ params }: PostPageProps) {
                 asChild
                 className="bg-secondary hover:bg-secondary/90 text-white rounded-full px-8"
               >
-                <Link href="/d">
-                  Try Prediqte Free
+                <Link href={APP_ROUTER.HOME}>
+                  Get Your Leads Now
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
@@ -234,9 +239,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
           {/* Sidebar - TOC */}
           <aside className="hidden lg:block">
-            {headings.length > 0 && (
-              <BlogTableOfContents headings={headings} />
-            )}
+            {headings.length > 0 && <BlogTableOfContents headings={headings} />}
           </aside>
         </div>
 

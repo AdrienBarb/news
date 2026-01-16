@@ -12,6 +12,7 @@ import BlogPostCard from "@/components/blog/BlogPostCard";
 import BlogCategoryCard from "@/components/blog/BlogCategoryCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { APP_ROUTER } from "@/lib/constants/appRouter";
 
 export const metadata: Metadata = genPageMetadata({
   title: "Prediqte Blog — Reddit Lead Generation, SaaS Growth & Lead Finders",
@@ -117,8 +118,8 @@ export default async function BlogPage() {
           asChild
           className="bg-secondary hover:bg-secondary/90 text-white rounded-full px-8"
         >
-          <Link href="/d">
-            Get Started
+          <Link href={APP_ROUTER.HOME}>
+            Get Your Leads Now
             <ArrowRight className="w-4 h-4 ml-2" />
           </Link>
         </Button>

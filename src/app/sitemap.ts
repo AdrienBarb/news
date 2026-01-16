@@ -4,6 +4,7 @@ import { client } from "@/lib/sanity/client";
 import {
   SITEMAP_POSTS_QUERY,
   SITEMAP_CATEGORIES_QUERY,
+  SITEMAP_COMPETITORS_QUERY,
 } from "@/lib/sanity/queries";
 
 // Static use cases pages
@@ -18,9 +19,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = siteMetadata.siteUrl;
 
   // Fetch dynamic content from Sanity
-  const [posts, categories] = await Promise.all([
+  const [posts, categories, competitors] = await Promise.all([
     client.fetch<{ slug: string; updatedAt: string }[]>(SITEMAP_POSTS_QUERY),
     client.fetch<{ slug: string }[]>(SITEMAP_CATEGORIES_QUERY),
+    client.fetch<{ slug: string; updatedAt: string }[]>(
+      SITEMAP_COMPETITORS_QUERY
+    ),
   ]);
 
   // Landing page
@@ -67,11 +71,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  // Alternatives index page
+  const alternativesIndexSitemap: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/alternatives`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+  ];
+
+  // Competitor/Alternative pages (dynamic from Sanity)
+  const competitorsSitemap: MetadataRoute.Sitemap = competitors.map(
+    (competitor) => ({
+      url: `${baseUrl}/alternatives/${competitor.slug}`,
+      lastModified: new Date(competitor.updatedAt),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    })
+  );
+
   return [
     ...landingPage,
     // ...useCasesSitemap,
     ...blogIndexSitemap,
     ...categorySitemap,
     ...postsSitemap,
+    ...alternativesIndexSitemap,
+    ...competitorsSitemap,
   ];
 }
