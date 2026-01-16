@@ -75,6 +75,22 @@ export default function HeroSection({
 
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#FF4500]/5 via-transparent to-primary/5 -z-10"></div>
+
+      {/* Demo Video */}
+      <div className="container mx-auto px-4 pb-16">
+        <div className="max-w-5xl mx-auto">
+          <video
+            className="w-full rounded-lg shadow-2xl"
+            autoPlay
+            muted
+            loop
+            playsInline
+          >
+            <source src="/prediqte-demo.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      </div>
     </section>
   );
 }
