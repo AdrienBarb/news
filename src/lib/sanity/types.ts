@@ -46,8 +46,8 @@ export interface FAQBlock {
 }
 
 export interface SEO {
-  title?: string;
-  description?: string;
+  title: string;
+  description: string;
   canonicalUrl?: string;
   ogImage?: SanityImage;
   noindex?: boolean;
@@ -126,7 +126,7 @@ export interface CompetitorPage {
   logo?: SanityImage;
   body: Array<SanityBlock | SanityImage>;
   faq?: FAQBlock;
-  seo?: SEO;
+  seo: SEO;
   featured?: boolean;
   internalNotes?: string;
 }

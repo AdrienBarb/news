@@ -47,13 +47,8 @@ export async function generateMetadata({
     return {};
   }
 
-  const title =
-    competitor.seo?.title ||
-    `Best ${competitor.title} Alternative for SaaS Founders`;
-  const description =
-    competitor.seo?.description ||
-    competitor.excerpt ||
-    `Looking for a ${competitor.title} alternative? Discover why Prediqte is the best choice for finding high-intent leads on Reddit.`;
+  const title = competitor.seo.title;
+  const description = competitor.seo?.description;
   const imageUrl = getImageUrl(
     competitor.seo?.ogImage || competitor.logo,
     1200,
@@ -190,7 +185,7 @@ export default async function CompetitorPageView({
 
           {/* Title */}
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6 leading-tight">
-            Best {competitor.title} Alternative for SaaS Founders
+            {competitor.title}
           </h1>
 
           {/* Subtitle */}
