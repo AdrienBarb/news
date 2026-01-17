@@ -80,23 +80,6 @@ export default async function CompetitorPageView({
 
   const logoUrl = getImageUrl(competitor.logo, 1200, 630);
 
-  // FAQ structured data
-  const faqStructuredData =
-    competitor.faq && competitor.faq.items?.length > 0
-      ? {
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          mainEntity: competitor.faq.items.map((item) => ({
-            "@type": "Question",
-            name: item.question,
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: item.answer,
-            },
-          })),
-        }
-      : null;
-
   // Comparison structured data
   const comparisonStructuredData = {
     "@context": "https://schema.org",
@@ -141,15 +124,6 @@ export default async function CompetitorPageView({
           __html: JSON.stringify(comparisonStructuredData),
         }}
       />
-      {faqStructuredData && (
-        <Script
-          id="faq-structured-data"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(faqStructuredData),
-          }}
-        />
-      )}
 
       <article className="container mx-auto px-4 py-16">
         {/* Breadcrumb */}
