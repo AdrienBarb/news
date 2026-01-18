@@ -139,3 +139,10 @@ export interface CompetitorPreview {
   logo?: SanityImage;
   featured?: boolean;
 }
+
+export interface RelatedCompetitor {
+  _id: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+}

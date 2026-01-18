@@ -269,3 +269,15 @@ export const SITEMAP_COMPETITORS_QUERY = `*[
   "slug": slug.current,
   "updatedAt": _updatedAt
 }`;
+
+// Related competitors (excluding current)
+export const RELATED_COMPETITORS_QUERY = `*[
+  _type == "competitorPage" 
+  && slug.current != $currentSlug
+  && defined(slug.current)
+] | order(title asc) {
+  _id,
+  title,
+  "slug": slug.current,
+  excerpt
+}`;

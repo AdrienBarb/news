@@ -7,8 +7,9 @@ import { client } from "@/lib/sanity/client";
 import {
   COMPETITOR_BY_SLUG_QUERY,
   COMPETITOR_SLUGS_QUERY,
+  RELATED_COMPETITORS_QUERY,
 } from "@/lib/sanity/queries";
-import type { CompetitorPage } from "@/lib/sanity/types";
+import type { CompetitorPage, RelatedCompetitor } from "@/lib/sanity/types";
 import { genPageMetadata } from "@/lib/seo/genPageMetadata";
 import { getImageUrl } from "@/lib/sanity/image";
 import BlogPortableText from "@/components/blog/BlogPortableText";
@@ -68,11 +69,18 @@ export default async function CompetitorPageView({
 }: CompetitorPageProps) {
   const { slug } = await params;
 
-  const competitor = await client.fetch<CompetitorPage | null>(
-    COMPETITOR_BY_SLUG_QUERY,
-    { slug },
-    fetchOptions
-  );
+  const [competitor, relatedCompetitors] = await Promise.all([
+    client.fetch<CompetitorPage | null>(
+      COMPETITOR_BY_SLUG_QUERY,
+      { slug },
+      fetchOptions
+    ),
+    client.fetch<RelatedCompetitor[]>(
+      RELATED_COMPETITORS_QUERY,
+      { currentSlug: slug },
+      fetchOptions
+    ),
+  ]);
 
   if (!competitor) {
     notFound();
@@ -93,16 +101,30 @@ export default async function CompetitorPageView({
       name: config.project.brandName,
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
+      url: config.project.url,
+      brand: {
+        "@type": "Brand",
+        name: config.project.brandName,
+      },
       offers: {
         "@type": "Offer",
         priceCurrency: "USD",
-        price: "19",
+        price: "9.50",
         priceSpecification: {
           "@type": "UnitPriceSpecification",
-          price: "19",
+          price: "9.50",
           priceCurrency: "USD",
           unitText: "One-time payment",
         },
+      },
+    },
+    publisher: {
+      "@type": "Organization",
+      name: config.project.brandName,
+      url: config.project.url,
+      logo: {
+        "@type": "ImageObject",
+        url: `${config.project.url}${config.project.logo}`,
       },
     },
   };
@@ -190,6 +212,40 @@ export default async function CompetitorPageView({
 
           {/* FAQ */}
           {competitor.faq && <BlogFAQ faq={competitor.faq} />}
+
+          {/* Related Competitors */}
+          {relatedCompetitors.length > 0 && (
+            <section className="mt-16 p-6 bg-muted/50 rounded-xl border border-border">
+              <h2 className="text-xl font-bold text-foreground mb-2 flex items-center gap-2">
+                🔍 Compare More Reddit Tools
+              </h2>
+              <p className="text-muted-foreground mb-4">
+                If you&apos;re exploring Reddit lead generation tools, check out
+                our reviews of:
+              </p>
+              <ul className="space-y-2">
+                {relatedCompetitors.map((comp) => (
+                  <li key={comp._id} className="flex items-start gap-2">
+                    <span className="text-secondary">•</span>
+                    <div>
+                      <Link
+                        href={`/alternatives/${comp.slug}`}
+                        className="text-foreground font-medium hover:text-secondary transition-colors underline underline-offset-2"
+                      >
+                        {comp.title}
+                      </Link>
+                      {comp.excerpt && (
+                        <span className="text-muted-foreground">
+                          {" "}
+                          – {comp.excerpt}
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {/* CTA Section */}
           <div className="mt-16 bg-gradient-to-br from-secondary/10 to-secondary/5 rounded-2xl border border-secondary/20 p-8 md:p-12">

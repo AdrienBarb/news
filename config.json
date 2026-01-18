@@ -29,15 +29,9 @@
     "twitterHandle": "@prediqte"
   },
   "contact": {
-    "email": "hello@prediqte.com",
-    "telegram": "@adrienbrb",
-    "telegramUrl": "https://t.me/adrienbrb"
+    "email": "hello@prediqte.com"
   },
   "social": {
-    "twitter": "https://twitter.com/thehackerbrief",
-    "github": "https://github.com/yourusername",
-    "linkedin": "https://linkedin.com/company/thehackerbrief",
-    "instagram": "https://instagram.com/thehackerbrief",
-    "tiktok": "https://tiktok.com/@thehackerbrief"
+    "twitter": "https://x.com/prediqte"
   }
 }
