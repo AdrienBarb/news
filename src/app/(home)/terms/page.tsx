@@ -225,14 +225,14 @@ export default function TermsPage() {
           <h2 className="text-2xl font-semibold mb-4">11. Contact Us</h2>
           <p className="text-muted-foreground">
             If you have questions about these Terms, you can reach us on
-            Telegram:{" "}
+            email:{" "}
             <a
-              href={config.contact.telegramUrl}
+              href={`mailto:${config.contact.email}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              {config.contact.telegram}
+              {config.contact.email}
             </a>
           </p>
         </section>

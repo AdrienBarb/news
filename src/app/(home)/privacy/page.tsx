@@ -211,14 +211,14 @@ export default function PrivacyPage() {
             <li>Withdraw consent at any time</li>
           </ul>
           <p className="text-muted-foreground mt-4">
-            To exercise these rights, contact us on Telegram:{" "}
+            To exercise these rights, contact us on email:{" "}
             <a
-              href={config.contact.telegramUrl}
+              href={`mailto:${config.contact.email}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              {config.contact.telegram}
+              {config.contact.email}
             </a>
             .
           </p>
@@ -255,14 +255,14 @@ export default function PrivacyPage() {
           <h2 className="text-2xl font-semibold mb-4">11. Contact Us</h2>
           <p className="text-muted-foreground">
             If you have questions about this Privacy Policy, you can reach us on
-            Telegram:{" "}
+            email:{" "}
             <a
-              href={config.contact.telegramUrl}
+              href={`mailto:${config.contact.email}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              {config.contact.telegram}
+              {config.contact.email}
             </a>
           </p>
         </section>
