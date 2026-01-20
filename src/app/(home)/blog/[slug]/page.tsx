@@ -19,7 +19,7 @@ import BlogTableOfContents from "@/components/blog/BlogTableOfContents";
 import BlogPostCard from "@/components/blog/BlogPostCard";
 import BlogFAQ from "@/components/blog/BlogFAQ";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Calendar, Clock, ArrowRight } from "lucide-react";
+import { ChevronRight, Calendar, Clock, ArrowRight, Lightbulb } from "lucide-react";
 import { format } from "date-fns";
 import config from "@/lib/config";
 import { APP_ROUTER } from "@/lib/constants/appRouter";
@@ -78,12 +78,15 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
-  // Fetch related posts
-  const relatedPosts = await client.fetch<PostPreview[]>(
-    RELATED_POSTS_QUERY,
-    { categorySlug: post.category.slug.current, currentSlug: slug },
-    fetchOptions
-  );
+  // Use manual related posts if available, otherwise fetch auto-generated ones
+  let relatedPosts: PostPreview[] = post.manualRelatedPosts || [];
+  if (relatedPosts.length === 0) {
+    relatedPosts = await client.fetch<PostPreview[]>(
+      RELATED_POSTS_QUERY,
+      { categorySlug: post.category.slug.current, currentSlug: slug },
+      fetchOptions
+    );
+  }
 
   const coverImageUrl = getImageUrl(post.coverImage, 1200, 630);
   const headings = extractHeadings(post.body);
@@ -199,6 +202,12 @@ export default async function PostPage({ params }: PostPageProps) {
             )}
           </div>
 
+          {post.authorBio && (
+            <p className="mt-3 text-sm text-muted-foreground italic">
+              {post.authorBio}
+            </p>
+          )}
+
           {post.updatedAt && (
             <p className="mt-2 text-xs text-muted-foreground">
               Updated: {format(new Date(post.updatedAt), "MMM d, yyyy")}
@@ -210,6 +219,29 @@ export default async function PostPage({ params }: PostPageProps) {
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-12">
           {/* Main Content */}
           <div className="max-w-3xl">
+            {/* Key Takeaways / TL;DR */}
+            {post.keyTakeaways && post.keyTakeaways.length > 0 && (
+              <div className="mb-10 p-6 bg-secondary/5 border border-secondary/20 rounded-xl">
+                <div className="flex items-center gap-2 mb-4">
+                  <Lightbulb className="w-5 h-5 text-secondary" />
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Key Takeaways
+                  </h2>
+                </div>
+                <ul className="space-y-2">
+                  {post.keyTakeaways.map((takeaway, index) => (
+                    <li
+                      key={index}
+                      className="flex items-start gap-3 text-muted-foreground"
+                    >
+                      <span className="text-secondary font-medium mt-0.5">•</span>
+                      <span>{takeaway}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <BlogPortableText value={post.body} />
 
             {/* FAQ */}

@@ -53,7 +53,7 @@ export const CATEGORY_SLUGS_QUERY = `*[
 // ============================================
 
 export const POSTS_QUERY = `*[
-  _type == "post" 
+  _type == "post"
   && defined(slug.current)
 ] | order(publishedAt desc) [0...$limit] {
   _id,
@@ -69,11 +69,12 @@ export const POSTS_QUERY = `*[
   authorName,
   publishedAt,
   readingTime,
-  featured
+  featured,
+  primaryKeyword
 }`;
 
 export const FEATURED_POSTS_QUERY = `*[
-  _type == "post" 
+  _type == "post"
   && featured == true
   && defined(slug.current)
 ] | order(publishedAt desc) [0...3] {
@@ -90,11 +91,12 @@ export const FEATURED_POSTS_QUERY = `*[
   authorName,
   publishedAt,
   readingTime,
-  featured
+  featured,
+  primaryKeyword
 }`;
 
 export const LATEST_POSTS_QUERY = `*[
-  _type == "post" 
+  _type == "post"
   && defined(slug.current)
 ] | order(publishedAt desc) [0...6] {
   _id,
@@ -109,11 +111,12 @@ export const LATEST_POSTS_QUERY = `*[
   },
   authorName,
   publishedAt,
-  readingTime
+  readingTime,
+  primaryKeyword
 }`;
 
 export const POSTS_BY_CATEGORY_QUERY = `*[
-  _type == "post" 
+  _type == "post"
   && category->slug.current == $categorySlug
   && defined(slug.current)
 ] | order(publishedAt desc) {
@@ -129,11 +132,12 @@ export const POSTS_BY_CATEGORY_QUERY = `*[
   },
   authorName,
   publishedAt,
-  readingTime
+  readingTime,
+  primaryKeyword
 }`;
 
 export const POST_BY_SLUG_QUERY = `*[
-  _type == "post" 
+  _type == "post"
   && slug.current == $slug
 ][0] {
   _id,
@@ -147,16 +151,33 @@ export const POST_BY_SLUG_QUERY = `*[
     slug
   },
   authorName,
+  authorBio,
   publishedAt,
   updatedAt,
   readingTime,
+  keyTakeaways,
   body,
   faq,
-  seo
+  seo,
+  "manualRelatedPosts": relatedPosts[]-> {
+    _id,
+    title,
+    slug,
+    excerpt,
+    coverImage,
+    category-> {
+      _id,
+      title,
+      slug
+    },
+    publishedAt,
+    readingTime,
+    primaryKeyword
+  }
 }`;
 
 export const RELATED_POSTS_QUERY = `*[
-  _type == "post" 
+  _type == "post"
   && category->slug.current == $categorySlug
   && slug.current != $currentSlug
   && defined(slug.current)
@@ -172,7 +193,8 @@ export const RELATED_POSTS_QUERY = `*[
     slug
   },
   publishedAt,
-  readingTime
+  readingTime,
+  primaryKeyword
 }`;
 
 export const POST_SLUGS_QUERY = `*[

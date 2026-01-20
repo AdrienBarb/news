@@ -76,13 +76,16 @@ export interface Post {
   coverImage?: SanityImage;
   category: Category;
   authorName: string;
+  authorBio?: string;
   publishedAt: string;
   updatedAt?: string;
   readingTime?: number;
   featured?: boolean;
+  keyTakeaways?: string[];
   body: Array<SanityBlock | SanityImage>;
   faq?: FAQBlock;
   seo?: SEO;
+  manualRelatedPosts?: PostPreview[];
   internalNotes?: string;
 }
 
@@ -98,10 +101,11 @@ export interface PostPreview {
     title: string;
     slug: SanitySlug;
   };
-  authorName: string;
+  authorName?: string;
   publishedAt: string;
   readingTime?: number;
   featured?: boolean;
+  primaryKeyword?: string;
 }
 
 export interface CategoryPreview {

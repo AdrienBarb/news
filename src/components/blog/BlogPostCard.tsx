@@ -57,7 +57,9 @@ export default function BlogPostCard({
             featured ? "text-2xl" : "text-lg"
           }`}
         >
-          <Link href={`/blog/${post.slug.current}`}>{post.title}</Link>
+          <Link href={`/blog/${post.slug.current}`}>
+            {post.primaryKeyword || post.title}
+          </Link>
         </h3>
 
         {/* Excerpt */}
