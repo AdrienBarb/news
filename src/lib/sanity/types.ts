@@ -121,32 +121,63 @@ export interface CategoryPreview {
 // COMPETITOR PAGE TYPES
 // ============================================
 
+export interface ComparisonRow {
+  feature: string;
+  competitor: string;
+  prediqte: string;
+}
+
 export interface CompetitorPage {
   _id: string;
   _type: "competitorPage";
+  competitorName: string;
   title: string;
   slug: SanitySlug;
   excerpt?: string;
   logo?: SanityImage;
+  keyTakeaways?: string[];
+  competitorWebsite?: string;
+  competitorPricing?: string;
+  pricingModel?: "per-action" | "subscription" | "one-time" | "credits" | "freemium";
+  comparisonTable?: ComparisonRow[];
+  primaryKeyword?: string;
+  authorName: string;
+  authorBio?: string;
+  publishedAt: string;
+  updatedAt?: string;
   body: Array<SanityBlock | SanityImage>;
   faq?: FAQBlock;
   seo: SEO;
   featured?: boolean;
+  manualRelatedCompetitors?: RelatedCompetitor[];
+  manualRelatedPosts?: RelatedPost[];
   internalNotes?: string;
 }
 
 export interface CompetitorPreview {
   _id: string;
+  competitorName?: string;
   title: string;
   slug: SanitySlug;
   excerpt?: string;
   logo?: SanityImage;
   featured?: boolean;
+  primaryKeyword?: string;
 }
 
 export interface RelatedCompetitor {
   _id: string;
+  competitorName?: string;
   title: string;
   slug: string;
   excerpt?: string;
+  primaryKeyword?: string;
+}
+
+export interface RelatedPost {
+  _id: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+  primaryKeyword?: string;
 }

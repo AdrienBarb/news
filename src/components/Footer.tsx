@@ -25,8 +25,10 @@ const FOOTER_POSTS_QUERY = `*[
 const FOOTER_COMPETITORS_QUERY = `*[
   _type == "competitorPage"
   && defined(slug.current)
-] | order(title asc) {
+] | order(order asc, title asc) {
+  competitorName,
   title,
+  primaryKeyword,
   "slug": slug.current
 }`;
 
@@ -58,11 +60,12 @@ export default async function Footer() {
       {},
       { next: { revalidate: 3600 } }
     ),
-    client.fetch<{ title: string; slug: string }[]>(
-      FOOTER_COMPETITORS_QUERY,
-      {},
-      { next: { revalidate: 3600 } }
-    ),
+    client.fetch<{
+      competitorName?: string;
+      title: string;
+      primaryKeyword?: string;
+      slug: string;
+    }[]>(FOOTER_COMPETITORS_QUERY, {}, { next: { revalidate: 3600 } }),
   ]);
 
   // Build dynamic resources links (Blog + Categories)
@@ -80,10 +83,12 @@ export default async function Footer() {
     label: post.primaryKeyword || post.title,
   }));
 
-  // Build dynamic alternatives links
+  // Build dynamic alternatives links (use primaryKeyword for anchor text)
   const alternativesLinks = competitors.map((competitor) => ({
     href: `/alternatives/${competitor.slug}`,
-    label: `${competitor.title} Alternative`,
+    label:
+      competitor.primaryKeyword ||
+      `${competitor.competitorName || competitor.title} Alternative`,
   }));
   return (
     <footer className="bg-foreground text-background">

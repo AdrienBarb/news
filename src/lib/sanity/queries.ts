@@ -229,15 +229,17 @@ export const SITEMAP_CATEGORIES_QUERY = `*[
 // ============================================
 
 export const COMPETITOR_PAGES_QUERY = `*[
-  _type == "competitorPage" 
+  _type == "competitorPage"
   && defined(slug.current)
-] | order(title asc) {
+] | order(order asc, title asc) {
   _id,
+  competitorName,
   title,
   slug,
   excerpt,
   logo,
-  featured
+  featured,
+  primaryKeyword
 }`;
 
 export const FEATURED_COMPETITORS_QUERY = `*[
@@ -253,17 +255,43 @@ export const FEATURED_COMPETITORS_QUERY = `*[
 }`;
 
 export const COMPETITOR_BY_SLUG_QUERY = `*[
-  _type == "competitorPage" 
+  _type == "competitorPage"
   && slug.current == $slug
 ][0] {
   _id,
+  competitorName,
   title,
   slug,
   excerpt,
   logo,
+  keyTakeaways,
+  competitorWebsite,
+  competitorPricing,
+  pricingModel,
+  comparisonTable,
+  primaryKeyword,
+  authorName,
+  authorBio,
+  publishedAt,
+  updatedAt,
   body,
   faq,
-  seo
+  seo,
+  "manualRelatedCompetitors": relatedCompetitors[]-> {
+    _id,
+    competitorName,
+    title,
+    "slug": slug.current,
+    excerpt,
+    primaryKeyword
+  },
+  "manualRelatedPosts": relatedPosts[]-> {
+    _id,
+    title,
+    "slug": slug.current,
+    excerpt,
+    primaryKeyword
+  }
 }`;
 
 export const COMPETITOR_SLUGS_QUERY = `*[
@@ -294,12 +322,14 @@ export const SITEMAP_COMPETITORS_QUERY = `*[
 
 // Related competitors (excluding current)
 export const RELATED_COMPETITORS_QUERY = `*[
-  _type == "competitorPage" 
+  _type == "competitorPage"
   && slug.current != $currentSlug
   && defined(slug.current)
-] | order(title asc) {
+] | order(order asc, title asc) {
   _id,
+  competitorName,
   title,
   "slug": slug.current,
-  excerpt
+  excerpt,
+  primaryKeyword
 }`;
