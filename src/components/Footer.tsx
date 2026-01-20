@@ -2,30 +2,30 @@ import Link from "next/link";
 import BrandLogo from "./BrandLogo";
 import { client } from "@/lib/sanity/client";
 
-// Fetch categories for Resources section
+// Fetch all categories for Resources section
 const FOOTER_CATEGORIES_QUERY = `*[
-  _type == "category" 
+  _type == "category"
   && defined(slug.current)
-] | order(order asc) [0...4] {
+] | order(order asc) {
   title,
   "slug": slug.current
 }`;
 
-// Fetch latest posts for Our Last Articles section
+// Fetch all posts for Our Last Articles section
 const FOOTER_POSTS_QUERY = `*[
-  _type == "post" 
+  _type == "post"
   && defined(slug.current)
-] | order(publishedAt desc) [0...4] {
+] | order(publishedAt desc) {
   title,
+  primaryKeyword,
   "slug": slug.current
 }`;
 
-// Fetch featured competitors for Alternatives section
+// Fetch all competitors for Alternatives section
 const FOOTER_COMPETITORS_QUERY = `*[
-  _type == "competitorPage" 
-  && featured == true
+  _type == "competitorPage"
   && defined(slug.current)
-] | order(title asc) [0...5] {
+] | order(title asc) {
   title,
   "slug": slug.current
 }`;
@@ -53,7 +53,7 @@ export default async function Footer() {
       {},
       { next: { revalidate: 3600 } }
     ),
-    client.fetch<{ title: string; slug: string }[]>(
+    client.fetch<{ title: string; slug: string; primaryKeyword?: string }[]>(
       FOOTER_POSTS_QUERY,
       {},
       { next: { revalidate: 3600 } }
@@ -74,10 +74,10 @@ export default async function Footer() {
     })),
   ];
 
-  // Build dynamic articles links
+  // Build dynamic articles links (use primaryKeyword for anchor text)
   const articlesLinks = posts.map((post) => ({
     href: `/blog/${post.slug}`,
-    label: post.title,
+    label: post.primaryKeyword || post.title,
   }));
 
   // Build dynamic alternatives links
