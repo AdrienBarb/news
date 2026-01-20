@@ -1,0 +1,47 @@
+# Prediqte
+
+> Prediqte is a Reddit lead generation tool that helps SaaS founders find high-intent leads on Reddit in under 5 minutes using AI-powered relevance scoring.
+
+## About
+
+Prediqte analyzes your website and automatically finds Reddit posts and comments where people are looking for solutions like yours. It uses AI to score relevance and detect intent signals like recommendations, alternatives, and complaints.
+
+Key features:
+- AI-powered relevance scoring
+- Intent detection (recommendations, alternatives, complaints)
+- Competitor mention tracking
+- One-time payment (no subscription)
+- Results delivered in 2-5 minutes
+
+## Target Audience
+
+- SaaS founders (solo and co-founders)
+- B2B SaaS companies
+- Indie hackers and bootstrappers
+- Founders looking for alternative lead generation channels
+
+## Important Pages
+
+- Homepage: https://www.prediqte.com
+- How It Works: https://www.prediqte.com/how-it-works
+- Pricing: https://www.prediqte.com/pricing
+- Blog: https://www.prediqte.com/blog
+
+## Blog Topics
+
+Our blog covers:
+- Reddit lead generation strategies
+- SaaS lead generation tactics
+- Reddit marketing for B2B
+- Finding customers on Reddit
+- Outbound sales strategies
+
+## Contact
+
+- Website: https://www.prediqte.com
+
+## Optional
+
+- Founder: Adrien
+- Pricing: One-time payment ($24.50-$49)
+- Category: SaaS, Lead Generation, Sales Tools
