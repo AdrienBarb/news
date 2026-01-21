@@ -7,6 +7,11 @@ import {
   SITEMAP_COMPETITORS_QUERY,
 } from "@/lib/sanity/queries";
 
+// Revalidate sitemap every 60 seconds (ISR)
+export const revalidate = 60;
+
+const fetchOptions = { next: { revalidate: 60 } };
+
 // Static use cases pages
 const useCasesPages = [
   "/use-cases",
@@ -20,10 +25,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Fetch dynamic content from Sanity
   const [posts, categories, competitors] = await Promise.all([
-    client.fetch<{ slug: string; updatedAt: string }[]>(SITEMAP_POSTS_QUERY),
-    client.fetch<{ slug: string }[]>(SITEMAP_CATEGORIES_QUERY),
     client.fetch<{ slug: string; updatedAt: string }[]>(
-      SITEMAP_COMPETITORS_QUERY
+      SITEMAP_POSTS_QUERY,
+      {},
+      fetchOptions
+    ),
+    client.fetch<{ slug: string }[]>(
+      SITEMAP_CATEGORIES_QUERY,
+      {},
+      fetchOptions
+    ),
+    client.fetch<{ slug: string; updatedAt: string }[]>(
+      SITEMAP_COMPETITORS_QUERY,
+      {},
+      fetchOptions
     ),
   ]);
 
