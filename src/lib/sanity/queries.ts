@@ -98,7 +98,7 @@ export const FEATURED_POSTS_QUERY = `*[
 export const LATEST_POSTS_QUERY = `*[
   _type == "post"
   && defined(slug.current)
-] | order(publishedAt desc) [0...6] {
+] | order(publishedAt desc) {
   _id,
   title,
   slug,

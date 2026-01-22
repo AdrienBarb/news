@@ -53,19 +53,19 @@ export default async function Footer() {
     client.fetch<{ title: string; slug: string }[]>(
       FOOTER_CATEGORIES_QUERY,
       {},
-      { next: { revalidate: 3600 } }
+      { next: { revalidate: 60 } }
     ),
     client.fetch<{ title: string; slug: string; primaryKeyword?: string }[]>(
       FOOTER_POSTS_QUERY,
       {},
-      { next: { revalidate: 3600 } }
+      { next: { revalidate: 60 } }
     ),
     client.fetch<{
       competitorName?: string;
       title: string;
       primaryKeyword?: string;
       slug: string;
-    }[]>(FOOTER_COMPETITORS_QUERY, {}, { next: { revalidate: 3600 } }),
+    }[]>(FOOTER_COMPETITORS_QUERY, {}, { next: { revalidate: 60 } }),
   ]);
 
   // Build dynamic resources links (Blog + Categories)
