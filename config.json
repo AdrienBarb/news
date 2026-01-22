@@ -29,7 +29,9 @@
     "twitterHandle": "@prediqte"
   },
   "contact": {
-    "email": "adrien-barbier@hotmail.fr"
+    "email": "adrien-barbier@hotmail.fr",
+    "prediqteEmail": "hello@prediqte.com",
+    "leadsEmail": "leads@prediqte.com"
   },
   "social": {
     "twitter": "https://x.com/prediqte"

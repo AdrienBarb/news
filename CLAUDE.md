@@ -271,3 +271,50 @@ STRIPE_WEBHOOK_SECRET=
 # App
 NEXT_PUBLIC_BASE_URL=
 ```
+
+## MCP Servers
+
+This project uses MCP (Model Context Protocol) servers to extend Claude Code capabilities.
+
+### Available Servers
+
+| Server | Purpose |
+|--------|---------|
+| **context7** | Up-to-date documentation for Next.js, Prisma, Stripe, React Query, etc. |
+| **puppeteer** | Browser automation, screenshots, UI testing |
+| **github** | PR creation, issue management, branch operations |
+| **prisma** | Migration status, schema management, Prisma CLI |
+| **postgres** | Direct database queries for debugging |
+
+### Usage Guidelines
+
+1. **Always use Context7** when working with external libraries:
+   - Before implementing features with Next.js, Prisma, Stripe, or any library
+   - Add `use context7` to prompts or let the skill auto-detect
+
+2. **Use Puppeteer** for:
+   - Taking screenshots of the dashboard UI
+   - Visual regression testing
+   - Debugging frontend issues
+
+3. **Use GitHub MCP** for:
+   - Creating PRs with proper descriptions
+   - Managing issues
+   - Branch operations
+
+4. **Use Prisma MCP** for:
+   - Checking migration status (`prisma migrate status`)
+   - Generating client after schema changes
+   - Database workflow assistance
+
+5. **Use PostgreSQL MCP** for:
+   - Debugging data issues with direct SQL queries
+   - Exploring database state
+   - Quick data verification
+
+### Configuration
+
+MCP servers are configured in `~/.claude.json`. Ensure environment variables are set:
+
+- `GITHUB_PERSONAL_ACCESS_TOKEN` for GitHub operations
+- `DATABASE_URL` for PostgreSQL access

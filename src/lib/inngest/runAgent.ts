@@ -8,6 +8,7 @@ import { resendClient } from "@/lib/resend/resendClient";
 import { LeadsReadyEmail } from "@/lib/emails/LeadsReadyEmail";
 import type { IntentType } from "@prisma/client";
 import type { TimeWindow } from "@/lib/constants/timeWindow";
+import config from "../config";
 
 const APP_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://prediqte.com";
 const REDDIT_BASE_URL = "https://www.reddit.com";
@@ -608,7 +609,7 @@ export const runAgentJob = inngest.createFunction(
       await step.run("send-leads-ready-email", async () => {
         try {
           await resendClient.emails.send({
-            from: "Reddit Lead Finder <leads@prediqte.com>",
+            from: `Reddit Lead Finder <${config.contact.leadsEmail}>`,
             to: agent.user!.email,
             subject: `🎯 ${totalKept} leads ready for you!`,
             react: LeadsReadyEmail({
