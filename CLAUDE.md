@@ -16,6 +16,7 @@ Founders pay once to run an AI agent that scans Reddit based on their product co
 - **Stripe** for one-time payments
 - **React Query** (via useApi hook) for client-side data fetching
 - **Zustand** for client-side global state
+- **react-hook-form** + Zod for form handling and validation
 - **Tailwind CSS** + shadcn/ui for styling
 
 ## Commands
@@ -223,11 +224,73 @@ export const createAgentSchema = z.object({
 });
 ```
 
-### Styling
+### Forms (react-hook-form + Zod + shadcn/ui)
+
+Always use `react-hook-form` with Zod validation and shadcn/ui Form components for all forms.
+
+```typescript
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+
+const formSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(2),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+export function MyForm() {
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { email: "", name: "" },
+  });
+
+  const onSubmit = (data: FormValues) => {
+    // Handle submission
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input placeholder="email@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit">Submit</Button>
+      </form>
+    </Form>
+  );
+}
+```
+
+### Styling & Design
 
 - Use Tailwind CSS utility classes
-- Use shadcn/ui components from `@/components/ui/`
-- Use theme-aware classes (`text-foreground`, `bg-background`)
+- Use shadcn/ui components from `@/components/ui/` for all UI elements
+- Use theme-aware classes (`text-foreground`, `bg-background`, `text-muted-foreground`, etc.)
+- **Respect the existing design**: Match the current app's visual style, spacing, and color palette
+- Do not introduce new colors or design patterns without explicit approval
+- Keep UI consistent with existing components and pages
 
 ### Import Organization
 
