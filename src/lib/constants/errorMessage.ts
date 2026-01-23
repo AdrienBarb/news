@@ -8,4 +8,10 @@ export const errorMessages = {
   NOT_FOUND: "Resource not found",
   AGENT_NOT_FOUND: "Agent not found",
   USER_NOT_FOUND: "User not found",
+  ICP_REPORT_NOT_FOUND: "ICP report not found",
+  ICP_REPORT_NOT_GENERATED: "ICP report has not been generated yet",
+  ICP_ANALYSIS_FAILED: "Failed to analyze input. Please try again.",
+  ICP_GENERATION_FAILED: "Failed to generate ICP report. Please try again.",
+  ICP_EMAIL_FAILED: "Failed to send email. Please try again.",
+  RATE_LIMIT_EXCEEDED: "Too many requests. Please try again later.",
 };

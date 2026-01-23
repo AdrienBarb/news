@@ -1,6 +1,7 @@
 import Link from "next/link";
 import BrandLogo from "./BrandLogo";
 import NavbarAuth from "./navbar/NavbarAuth";
+import ToolsDropdown from "./navbar/ToolsDropdown";
 
 const navLinks = [
   { href: "/#how-it-works", label: "How it works" },
@@ -29,6 +30,9 @@ export default function Navbar() {
               </Link>
             </li>
           ))}
+          <li>
+            <ToolsDropdown />
+          </li>
         </ul>
 
         <NavbarAuth />

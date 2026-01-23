@@ -14,6 +14,7 @@ Founders pay once to run an AI agent that scans Reddit based on their product co
 - **OpenAI** for website analysis & lead scoring
 - **Apify** for Reddit data fetching
 - **Stripe** for one-time payments
+- **Upstash Redis** for rate limiting (protects free tools)
 - **React Query** (via useApi hook) for client-side data fetching
 - **Zustand** for client-side global state
 - **react-hook-form** + Zod for form handling and validation
@@ -91,15 +92,33 @@ User (1) ──→ (N) AiAgent ──→ (N) Lead
 | `src/lib/constants/errorMessage.ts`   | Centralized error messages            |
 | `src/lib/errors/errorHandler.ts`      | Centralized error handler             |
 | `src/lib/better-auth/strictlyAuth.ts` | Auth HOC for protected routes         |
+| `src/lib/ratelimit/client.ts`         | Upstash Redis rate limiters           |
+| `src/lib/ratelimit/checkRateLimit.ts` | Rate limit check utility              |
 
 ## API Routes
 
-| Route                   | Methods   | Purpose                         |
-| ----------------------- | --------- | ------------------------------- |
-| `/api/agents`           | GET, POST | List agents / Create + checkout |
-| `/api/agents/[agentId]` | GET       | Get agent details with leads    |
-| `/api/analyze-website`  | POST      | AI-analyze website for keywords |
-| `/api/webhooks/stripe`  | POST      | Handle Stripe payment events    |
+| Route                                      | Methods | Purpose                             | Rate Limited |
+| ------------------------------------------ | ------- | ----------------------------------- | ------------ |
+| `/api/agents`                              | GET, POST | List agents / Create + checkout   | No (auth)    |
+| `/api/agents/[agentId]`                    | GET     | Get agent details with leads        | No (auth)    |
+| `/api/analyze-website`                     | POST    | AI-analyze website for keywords     | No (auth)    |
+| `/api/webhooks/stripe`                     | POST    | Handle Stripe payment events        | No           |
+| `/api/tools/icp-generator/analyze`         | POST    | Analyze input for ICP data          | 10/hour      |
+| `/api/tools/icp-generator/generate`        | POST    | Generate comprehensive ICP report   | 5/hour       |
+| `/api/tools/icp-generator/send-email`      | POST    | Email ICP report to user            | 5/hour       |
+
+### Rate Limiting
+
+Free public tools (ICP Generator) are rate-limited by IP address using **Upstash Redis** to prevent abuse and control OpenAI API costs:
+
+- **Analyze endpoint**: 10 requests/hour (uses gpt-4o-mini)
+- **Generate endpoint**: 5 requests/hour (uses gpt-4o - most expensive)
+- **Email endpoint**: 5 requests/hour (Resend costs)
+
+Rate limits use a **sliding window** algorithm and return:
+- **429 status** when limit exceeded
+- **X-RateLimit-*** headers (Limit, Remaining, Reset)
+- Error message: "Too many requests. Please try again later."
 
 ## Core Flows
 
@@ -141,6 +160,7 @@ User (1) ──→ (N) AiAgent ──→ (N) Lead
 
 ### API Routes Pattern
 
+**Authenticated Route:**
 ```typescript
 import { errorMessages } from "@/lib/constants/errorMessage";
 import { errorHandler } from "@/lib/errors/errorHandler";
@@ -168,6 +188,31 @@ export const POST = strictlyAuth(async (req: NextRequest) => {
     return errorHandler(error);
   }
 });
+```
+
+**Public Route with Rate Limiting:**
+```typescript
+import { errorMessages } from "@/lib/constants/errorMessage";
+import { errorHandler } from "@/lib/errors/errorHandler";
+import { NextResponse, NextRequest } from "next/server";
+import { checkRateLimit } from "@/lib/ratelimit/checkRateLimit";
+import { someLimiter } from "@/lib/ratelimit/client";
+
+export async function POST(req: NextRequest) {
+  try {
+    // Rate limit check (FIRST THING in public routes)
+    const rateLimit = await checkRateLimit(req, someLimiter);
+    if (!rateLimit.success) return rateLimit.response;
+
+    const body = await req.json();
+    const validatedData = someSchema.parse(body);
+    const result = await someService({ data: validatedData });
+
+    return NextResponse.json(result, { status: 201 });
+  } catch (error) {
+    return errorHandler(error);
+  }
+}
 ```
 
 ### Client-Side Data Fetching (useApi Hook)
@@ -330,6 +375,10 @@ BETTER_AUTH_SECRET=
 # Stripe
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
+
+# Upstash Redis (Rate Limiting)
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
 
 # App
 NEXT_PUBLIC_BASE_URL=

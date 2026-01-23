@@ -124,8 +124,34 @@ model Lead {
 }
 
 // ============================================================================
+// ICP Generator (Free Tool)
+// ============================================================================
+
+model IcpReport {
+  id           String     @id @default(cuid())
+  createdAt    DateTime   @default(now())
+  input        String     // Original URL or description
+  inputType    InputType
+  analyzedData Json       // AI-prefilled fields from step 1
+  finalData    Json?      // User-edited fields from step 2
+  report       String?    @db.Text // Generated ICP markdown
+  email        String?
+  emailSentAt  DateTime?
+  source       String?    // utm_source tracking
+
+  @@index([createdAt])
+  @@index([email])
+  @@map("icp_report")
+}
+
+// ============================================================================
 // Enums
 // ============================================================================
+
+enum InputType {
+  URL
+  DESCRIPTION
+}
 
 enum TimeWindow {
   LAST_7_DAYS
