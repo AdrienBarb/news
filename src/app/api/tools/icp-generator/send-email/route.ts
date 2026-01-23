@@ -42,20 +42,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Extract product name from the report data
-    const analyzedData = report.analyzedData as {
-      productDescription?: string;
-    };
-    const productName =
-      analyzedData.productDescription?.split(".")[0] || "Your Product";
-
     // Send email via Resend
     await resendClient.emails.send({
       from: `Prediqte <${config.contact.prediqteEmail}>`,
       to: email,
-      subject: `🎯 Your ICP Report for ${productName}`,
+      subject: `🎯 Your ICP Report`,
       react: IcpReportEmail({
-        productName,
         report: report.report,
       }),
     });

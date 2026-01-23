@@ -18,14 +18,13 @@ interface IcpReportEmailProps {
 }
 
 export const IcpReportEmail = ({
-  productName = "Your Product",
   report,
 }: IcpReportEmailProps) => {
   return (
     <Html>
       <Head />
       <Preview>
-        {`Your Ideal Customer Profile for ${productName} is ready!`}
+        {`Your Ideal Customer Profile Report is ready!`}
       </Preview>
       <Tailwind>
         <Body className="bg-gray-50 font-sans">
@@ -41,8 +40,7 @@ export const IcpReportEmail = ({
               </Heading>
 
               <Text className="text-gray-600 text-base mb-6 text-center">
-                Here&apos;s your comprehensive Ideal Customer Profile for{" "}
-                {productName}
+                Here&apos;s your comprehensive Ideal Customer Profile
               </Text>
 
               {/* Report Content */}
