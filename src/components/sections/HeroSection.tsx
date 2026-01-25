@@ -28,11 +28,12 @@ export default function HeroSection({
             {/* Headlines */}
             <div className="space-y-6 mb-10">
               <h1 className="text-5xl lg:text-6xl xl:text-7xl font-rethink-sans font-bold leading-tight text-foreground">
-                Find High-Intent Leads on Reddit
+                Find High-Intent Leads for Your SaaS
               </h1>
 
               <p className="text-xl lg:text-2xl text-foreground/70 leading-relaxed max-w-3xl mx-auto">
-                Enter your website. Pick a time window. Get a list of people{" "}
+                Enter your website. We analyze your ICP and scan Reddit,
+                HackerNews & more to find people{" "}
                 <span className="text-foreground font-medium">
                   actively looking for solutions like yours
                 </span>
@@ -42,19 +43,17 @@ export default function HeroSection({
 
             {/* Value Props */}
             <div className="flex flex-wrap justify-center gap-6 mb-10">
-              {[
-                "No subscription",
-                "Leads in minutes",
-                "AI-scored relevance",
-              ].map((prop) => (
-                <div
-                  key={prop}
-                  className="flex items-center gap-2 text-foreground/70"
-                >
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span>{prop}</span>
-                </div>
-              ))}
+              {["No subscription", "Pay per lead", "AI-scored relevance"].map(
+                (prop) => (
+                  <div
+                    key={prop}
+                    className="flex items-center gap-2 text-foreground/70"
+                  >
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <span>{prop}</span>
+                  </div>
+                )
+              )}
             </div>
 
             {/* CTA Button */}
@@ -66,7 +65,7 @@ export default function HeroSection({
                 <Link href={getStartedUrl}>Get Your Leads Now</Link>
               </Button>
               <p className="text-sm text-foreground/50">
-                Starting at $9.50 · No credit card to browse
+                Starting at $9.50 · No subscription
               </p>
             </div>
           </div>
@@ -77,7 +76,7 @@ export default function HeroSection({
       <div className="absolute inset-0 bg-gradient-to-br from-[#FF4500]/5 via-transparent to-primary/5 -z-10"></div>
 
       {/* Demo Video */}
-      <div className="container mx-auto px-4 pb-16">
+      {/* <div className="container mx-auto px-4 pb-16">
         <div className="max-w-5xl mx-auto">
           <video
             className="w-full rounded-lg shadow-2xl"
@@ -90,7 +89,7 @@ export default function HeroSection({
             Your browser does not support the video tag.
           </video>
         </div>
-      </div>
+      </div> */}
     </section>
   );
 }

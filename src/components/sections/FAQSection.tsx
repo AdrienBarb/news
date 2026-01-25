@@ -10,42 +10,37 @@ const faqs = [
   {
     question: "How fast will I get my leads?",
     answer:
-      "Most searches complete in 2-5 minutes. We'll email you when your leads are ready, so you can close the tab and come back later.",
+      "Most searches complete in 2-5 minutes. You'll get an email when your leads are ready.",
+  },
+  {
+    question: "What platforms do you search?",
+    answer:
+      "Currently Reddit and HackerNews. We're adding more platforms soon including Twitter and LinkedIn.",
+  },
+  {
+    question: "How does pricing work?",
+    answer:
+      "You pay per lead. 10 leads for $9.50, 30 leads for $24.50, or 75 leads for $49.50. No subscriptions, no monthly fees. Pay once, get your leads.",
   },
   {
     question: "What kind of leads will I find?",
     answer:
-      "People actively expressing buying intent on Reddit: asking for recommendations, looking for alternatives to competitors, complaining about current tools, or comparing options. These are warm leads already in the market for a solution.",
+      "People actively asking for recommendations, complaining about competitors, or looking for solutions like yours. Every lead includes an AI explanation of why they match your ICP.",
   },
   {
-    question: "How is this different from manually searching Reddit?",
+    question: "How is this different from a lead database?",
     answer:
-      "We use AI to search across hundreds of posts, score each one for relevance to your product, and filter out the noise. What would take you hours takes us minutes — and we find posts you'd never discover manually.",
+      "Lead databases give you contact info for random people. We find people who are actively looking for what you sell right now — real buying intent, not cold data.",
   },
   {
     question: "Is this a subscription?",
     answer:
-      "No. You pay once per search. No recurring charges, no monthly fees. When you want more leads, you run a new search.",
-  },
-  {
-    question: "Do you post or comment on Reddit for me?",
-    answer:
-      "No. We only find leads. You decide which posts to engage with and how. This keeps your outreach authentic and avoids any spam concerns.",
+      "No. Pay once, get your leads. Come back when you need more.",
   },
   {
     question: "What if I don't find good leads?",
     answer:
-      "The number and quality of leads depends on how active your market is on Reddit. Most founders find 10-50 relevant leads per search. If your niche isn't discussed much on Reddit, you may find fewer leads.",
-  },
-  {
-    question: "Can I search for competitor mentions?",
-    answer:
-      "Yes! Add your competitors in the form and we'll find posts where people are asking for alternatives, complaining about them, or comparing options.",
-  },
-  {
-    question: "Which time window should I choose?",
-    answer:
-      "7 days is great for fresh, active conversations. 30 days gives you the best balance of volume and relevance (our most popular option). 12 months is ideal for deep research or if you're in a slower-moving niche.",
+      "Every search is different. Start with the $9.50 Starter tier to test. If your ICP is active on the platforms we search, you'll find them.",
   },
 ];
 
