@@ -327,6 +327,39 @@ Remember: QUALITY over QUANTITY. 5 perfect leads > 50 random posts. Be extremely
 }
 
 /**
+ * Inngest function to fetch leads for a single keyword
+ * This is invoked in parallel by runAgentJob for true concurrency
+ */
+export const fetchKeywordJob = inngest.createFunction(
+  {
+    id: "fetch-keyword",
+    retries: 2,
+    // Concurrency limit controls how many keyword fetches run in parallel across ALL users
+    // Set slightly below Apify limit (32) to leave buffer for other potential Apify usage
+    concurrency: {
+      limit: 28,
+    },
+  },
+  { event: "agent/fetch-keyword" },
+  async ({ event, step }) => {
+    const { keyword, agentId, timeWindow, existingIds } = event.data as {
+      keyword: string;
+      agentId: string;
+      timeWindow: TimeWindow;
+      existingIds: string[];
+    };
+
+    const existingIdsSet = new Set(existingIds);
+
+    const result = await step.run("fetch", async () => {
+      return fetchForKeyword(keyword, agentId, timeWindow, existingIdsSet);
+    });
+
+    return { keyword, ...result };
+  }
+);
+
+/**
  * Inngest function to run an AI agent
  * Fetches leads from Reddit and analyzes them with AI
  */
@@ -460,83 +493,122 @@ export const runAgentJob = inngest.createFunction(
       return { status: "failed", reason: "Invalid agent configuration" };
     }
 
-    // Fetch leads for all keywords
-    let totalFetched = 0;
-    let totalNew = 0;
+    // Fetch leads for all keywords IN PARALLEL using step.invoke
+    // Each keyword fetch runs as a separate Inngest function - Inngest job queue handles parallelization
     const errors: string[] = [];
-    const allLeadIds: string[] = [];
 
     console.log(`\n${"─".repeat(60)}`);
-    console.log(`🔎 Processing ${allKeywords.length} keywords...`);
+    console.log(`🔎 Invoking ${allKeywords.length} parallel keyword fetches...`);
     console.log(`${"─".repeat(60)}`);
 
-    for (let kwIndex = 0; kwIndex < allKeywords.length; kwIndex++) {
-      const keyword = allKeywords[kwIndex];
-      const result = await step.run(`fetch-kw-${kwIndex}`, async () =>
-        fetchForKeyword(keyword, agentId, searchTimeWindow, existingIdsSet)
-      );
+    // Note: Inngest serializes data as JSON, so dates become strings
+    type SerializedLeadInput = Omit<LeadInput, "publishedAt"> & {
+      publishedAt: string | null;
+    };
+    type FetchResult = {
+      keyword: string;
+      leads: SerializedLeadInput[];
+      error?: string;
+    };
 
+    // Invoke ALL keyword fetches at once - Inngest discovers them all and runs them in parallel
+    // The concurrency is controlled by fetchKeywordJob's concurrency.limit setting
+    const fetchResults = (await Promise.all(
+      allKeywords.map((keyword, kwIndex) =>
+        step.invoke(`fetch-kw-${kwIndex}`, {
+          function: fetchKeywordJob,
+          data: {
+            keyword,
+            agentId,
+            timeWindow: searchTimeWindow,
+            existingIds: existingIds, // Pass as array, converted to Set in child function
+          },
+        })
+      )
+    )) as FetchResult[];
+
+    // Step 2: Collect results and deduplicate
+    // Note: Inngest serializes data as JSON, so Dates become strings - we need to convert them back
+    const allFetchedLeads: LeadInput[] = [];
+    const seenExternalIds = new Set<string>();
+    let totalFetched = 0;
+
+    for (const result of fetchResults) {
       if (result.error) {
-        errors.push(`${keyword}: ${result.error}`);
+        errors.push(`${result.keyword}: ${result.error}`);
       }
 
       totalFetched += result.leads.length;
 
-      if (result.leads.length > 0) {
-        const savedIds = await step.run(`save-kw-${kwIndex}`, async () => {
-          const ids: string[] = [];
+      for (const lead of result.leads) {
+        // Deduplicate across all keywords
+        if (
+          !seenExternalIds.has(lead.externalId) &&
+          !existingIdsSet.has(lead.externalId)
+        ) {
+          seenExternalIds.add(lead.externalId);
+          // Convert publishedAt back to Date if it was serialized as string
+          allFetchedLeads.push({
+            ...lead,
+            publishedAt: lead.publishedAt ? new Date(lead.publishedAt) : null,
+          });
+        }
+      }
+    }
 
-          for (const lead of result.leads) {
-            try {
-              const saved = await prisma.lead.create({
-                data: {
-                  agentId: lead.agentId,
-                  source: "reddit",
-                  externalId: lead.externalId,
-                  url: lead.url,
-                  subreddit: lead.subreddit,
-                  title: lead.title,
-                  content: lead.content,
-                  author: lead.author,
-                  score: lead.score,
-                  numComments: lead.numComments,
-                  publishedAt: lead.publishedAt,
-                },
-              });
-              ids.push(saved.id);
-              existingIdsSet.add(lead.externalId);
-            } catch (error) {
-              if (
-                error instanceof Error &&
-                error.message.includes("Unique constraint")
-              ) {
-                continue;
-              }
-              throw error;
-            }
-          }
+    console.log(
+      `   📥 Total fetched: ${totalFetched}, unique new: ${allFetchedLeads.length}`
+    );
 
-          console.log(`   💾 Saved ${ids.length} leads to database`);
-          return ids;
+    // Step 3: Save all leads in batch
+    const allLeadIds: string[] = [];
+    let totalNew = 0;
+
+    if (allFetchedLeads.length > 0) {
+      const savedLeads = await step.run("save-all-leads", async () => {
+        // Use createMany for batch insertion (much faster)
+        await prisma.lead.createMany({
+          data: allFetchedLeads.map((lead) => ({
+            agentId: lead.agentId,
+            source: "reddit" as const,
+            externalId: lead.externalId,
+            url: lead.url,
+            subreddit: lead.subreddit,
+            title: lead.title,
+            content: lead.content,
+            author: lead.author,
+            score: lead.score,
+            numComments: lead.numComments,
+            publishedAt: lead.publishedAt,
+          })),
+          skipDuplicates: true,
         });
 
-        console.log(
-          `   ✅ Keyword ${kwIndex + 1}/${allKeywords.length} complete: ${savedIds.length} new leads`
-        );
-        allLeadIds.push(...savedIds);
-        totalNew += savedIds.length;
-      } else {
-        console.log(
-          `   ⏭️ Keyword ${kwIndex + 1}/${allKeywords.length} complete: no new leads`
-        );
-      }
+        // Fetch the IDs of saved leads for analysis phase
+        const saved = await prisma.lead.findMany({
+          where: {
+            agentId,
+            externalId: { in: allFetchedLeads.map((l) => l.externalId) },
+          },
+          select: { id: true },
+        });
+
+        console.log(`   💾 Batch saved ${saved.length} leads to database`);
+        return saved.map((l) => l.id);
+      });
+
+      allLeadIds.push(...savedLeads);
+      totalNew = savedLeads.length;
     }
 
     console.log(`\n${"─".repeat(60)}`);
     console.log(`📊 FETCH SUMMARY`);
     console.log(`${"─".repeat(60)}`);
-    console.log(`   └── Keywords processed: ${allKeywords.length}`);
+    console.log(
+      `   └── Keywords processed: ${allKeywords.length} (in parallel)`
+    );
     console.log(`   └── Total leads fetched: ${totalFetched}`);
+    console.log(`   └── Unique leads after dedup: ${allFetchedLeads.length}`);
     console.log(`   └── New leads saved: ${totalNew}`);
 
     if (totalNew === 0) {
