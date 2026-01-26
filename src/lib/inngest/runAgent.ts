@@ -359,7 +359,7 @@ export const analyzeLeadsBatchJob = inngest.createFunction(
     // Conservative limit to respect OpenAI rate limits
     // Tier 1: 500 RPM, Tier 2: 5000 RPM - adjust based on your tier
     concurrency: {
-      limit: 10,
+      limit: 5,
     },
   },
   { event: "agent/analyze-batch" },
@@ -519,7 +519,7 @@ export const fetchKeywordJob = inngest.createFunction(
     // Concurrency limit controls how many keyword fetches run in parallel across ALL users
     // Set slightly below Apify limit (32) to leave buffer for other potential Apify usage
     concurrency: {
-      limit: 28,
+      limit: 5,
     },
   },
   { event: "agent/fetch-keyword" },
