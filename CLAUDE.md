@@ -2,9 +2,9 @@
 
 ## Project Overview
 
-**Reddit Lead Finder** is a one-time lead discovery tool for SaaS founders. It helps founders find high-intent Reddit conversations where people are actively expressing problems, asking for recommendations, or comparing tools.
+**Prediqte** is a pay-per-lead discovery tool for B2B SaaS founders. It helps founders find high-intent conversations across multiple platforms (Reddit, HackerNews, Twitter, LinkedIn) where people are actively expressing problems, asking for recommendations, or comparing tools.
 
-Founders pay once to run an AI agent that scans Reddit based on their product context and delivers a curated list of leads. The app does not automate posting or messaging - it finds opportunities, the founder decides which ones to engage with.
+Founders pay once to run an AI agent that scans their chosen platform based on their product context and ICP (Ideal Customer Profile), delivering a guaranteed number of qualified leads. The app does not automate posting or messaging - it finds opportunities, the founder decides which ones to engage with.
 
 ## Tech Stack
 
@@ -63,23 +63,34 @@ User (1) ──→ (N) AiAgent ──→ (N) Lead
 
 ### Key Entities
 
-| Entity      | Purpose                                         |
-| ----------- | ----------------------------------------------- |
-| **User**    | Authenticated user                              |
-| **AiAgent** | One-time job to find leads (website + keywords) |
-| **Lead**    | Reddit post with potential buying intent        |
+| Entity      | Purpose                                                     |
+| ----------- | ----------------------------------------------------------- |
+| **User**    | Authenticated user                                          |
+| **AiAgent** | One-time job to find leads (website + keywords + platform)  |
+| **Lead**    | Post/conversation with potential buying intent (any platform)|
 
 ### AgentStatus Flow
 
 `PENDING_PAYMENT` → `QUEUED` → `FETCHING_LEADS` → `ANALYZING_LEADS` → `COMPLETED` (or `FAILED`)
 
-### Time Windows & Pricing
+### Platforms
 
-| Time Window     | Label          | Price  | Posts/Keyword |
-| --------------- | -------------- | ------ | ------------- |
-| `LAST_7_DAYS`   | Recent signals | $9.50  | 10            |
-| `LAST_30_DAYS`  | Market scan    | $24.50 | 20            |
-| `LAST_365_DAYS` | Deep research  | $49.50 | 30            |
+| Platform      | Status       | Description                        |
+| ------------- | ------------ | ---------------------------------- |
+| `reddit`      | Live         | Find leads in Reddit discussions   |
+| `hackernews`  | Coming Soon  | Find leads in HN discussions       |
+| `twitter`     | Coming Soon  | Find leads in Twitter conversations|
+| `linkedin`    | Coming Soon  | Find leads in LinkedIn posts       |
+
+### Lead Tiers & Pricing (Pay-Per-Lead)
+
+| Lead Tier  | Leads Included | Price  | Search Depth |
+| ---------- | -------------- | ------ | ------------ |
+| `STARTER`  | 10 leads       | $9.50  | 30 days      |
+| `GROWTH`   | 30 leads       | $24.50 | 90 days      |
+| `SCALE`    | 75 leads       | $49.50 | 365 days     |
+
+*Note: Legacy agents may still use `timeWindow` field for backward compatibility.*
 
 ## Key Files
 
@@ -88,7 +99,9 @@ User (1) ──→ (N) AiAgent ──→ (N) Lead
 | `src/lib/inngest/runAgent.ts`         | Main lead fetching & analysis job     |
 | `src/lib/connectors/reddit/client.ts` | Apify integration for Reddit scraping |
 | `src/lib/hooks/useApi.ts`             | Centralized API hook (React Query)    |
-| `src/lib/constants/timeWindow.ts`     | Time window config, pricing, limits   |
+| `src/lib/constants/platforms.ts`      | Platform config (Reddit, HN, etc.)    |
+| `src/lib/constants/leadTiers.ts`      | Lead tier config, pricing, limits     |
+| `src/lib/constants/timeWindow.ts`     | Legacy time window config             |
 | `src/lib/constants/errorMessage.ts`   | Centralized error messages            |
 | `src/lib/errors/errorHandler.ts`      | Centralized error handler             |
 | `src/lib/better-auth/strictlyAuth.ts` | Auth HOC for protected routes         |
@@ -124,21 +137,24 @@ Rate limits use a **sliding window** algorithm and return:
 
 ### Agent Creation Flow
 
-1. User enters website URL → POST `/api/analyze-website` → AI returns description + keywords
-2. User reviews/edits keywords + competitors (max 20 keywords, max 3 competitors)
-3. User selects time window → POST `/api/agents` → Create AiAgent (PENDING_PAYMENT) + Stripe Checkout
-4. Payment completed → Stripe webhook → Status → QUEUED → Trigger Inngest `agent/run`
+1. User enters website URL → POST `/api/analyze-website` → AI returns description + keywords + target personas + platform suggestions
+2. User reviews/edits description, keywords, competitors, and target personas (ICP)
+3. User selects platform (Reddit live, others coming soon)
+4. User selects lead tier (Starter/Growth/Scale) → POST `/api/agents` → Create AiAgent (PENDING_PAYMENT) + Stripe Checkout
+5. Payment completed → Stripe webhook → Status → QUEUED → Trigger Inngest `agent/run`
 
 ### Lead Discovery Flow (Inngest)
 
 1. Status → FETCHING_LEADS
-2. For each keyword: fetch Reddit posts via Apify, filter by time window
-3. Deduplicate by externalId
-4. Status → ANALYZING_LEADS
-5. AI scores each post for relevance (0-100), classifies intent
-6. Save leads to database
-7. Status → COMPLETED
-8. Send email notification
+2. Determine search depth from lead tier (30/90/365 days)
+3. For each keyword: fetch posts from selected platform via Apify
+4. Deduplicate by externalId
+5. Status → ANALYZING_LEADS
+6. AI scores each post for relevance (0-100), classifies intent
+7. **Guarantee lead count**: Select top N leads by relevance to match tier (10/30/75)
+8. Save leads to database, trim excess
+9. Status → COMPLETED
+10. Send email notification
 
 ---
 
@@ -265,7 +281,13 @@ import { z } from "zod";
 export const createAgentSchema = z.object({
   websiteUrl: z.string().url(),
   keywords: z.array(z.string()).max(20),
-  timeWindow: z.enum(["LAST_7_DAYS", "LAST_30_DAYS", "LAST_365_DAYS"]),
+  competitors: z.array(z.string()).max(3),
+  targetPersonas: z.array(z.object({
+    title: z.string(),
+    description: z.string(),
+  })).optional(),
+  platform: z.enum(["reddit", "hackernews", "twitter", "linkedin"]),
+  leadTier: z.enum(["STARTER", "GROWTH", "SCALE"]),
 });
 ```
 
