@@ -250,12 +250,12 @@ export default async function PostPage({ params }: PostPageProps) {
             {/* CTA */}
             <div className="mt-16 bg-card rounded-2xl border border-border/50 p-8 text-center">
               <h2 className="text-xl font-bold text-foreground mb-3">
-                Want to find leads on Reddit automatically?
+                Want to find high-intent leads automatically?
               </h2>
               <p className="text-muted-foreground mb-6">
-                Stop scrolling through Reddit manually. Prediqte finds
-                high-intent leads who are actively looking for solutions like
-                yours.
+                Stop searching manually. Prediqte finds people actively looking
+                for solutions like yours on Reddit, HackerNews, Twitter &
+                LinkedIn.
               </p>
               <Button
                 asChild

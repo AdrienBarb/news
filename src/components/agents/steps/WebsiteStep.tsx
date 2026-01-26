@@ -22,11 +22,11 @@ export default function WebsiteStep({
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Find leads on Reddit
+          Find high-intent leads for your SaaS
         </h2>
         <p className="text-gray-600">
-          Enter your website URL and we&apos;ll analyze it to find relevant
-          keywords.
+          Enter your website URL and we&apos;ll analyze your ICP to find people
+          actively looking for solutions like yours.
         </p>
       </div>
 

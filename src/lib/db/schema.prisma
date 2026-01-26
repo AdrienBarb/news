@@ -82,7 +82,16 @@ model AiAgent {
   description     String?
   keywords        String[]
   competitors     String[]
-  timeWindow      TimeWindow
+  targetPersonas  Json?       // Array of {title: string, description: string}
+
+  // New pay-per-lead model
+  platform        Platform    @default(reddit)
+  leadTier        LeadTier?
+  leadsIncluded   Int?        // 10, 30, or 75
+
+  // DEPRECATED: Keep for backward compatibility
+  timeWindow      TimeWindow?
+
   stripeSessionId String?     @unique
   amountPaid      Int? // Amount paid in cents
   status          AgentStatus @default(PENDING_PAYMENT)
@@ -153,6 +162,19 @@ enum InputType {
   DESCRIPTION
 }
 
+enum Platform {
+  reddit
+  hackernews
+  twitter
+  linkedin
+}
+
+enum LeadTier {
+  STARTER // 10 leads
+  GROWTH  // 30 leads
+  SCALE   // 75 leads
+}
+
 enum TimeWindow {
   LAST_7_DAYS
   LAST_30_DAYS
@@ -170,6 +192,9 @@ enum AgentStatus {
 
 enum SourceType {
   reddit
+  hackernews
+  twitter
+  linkedin
 }
 
 enum IntentType {

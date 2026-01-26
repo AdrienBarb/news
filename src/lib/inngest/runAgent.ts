@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { scrapeRedditSearch } from "@/lib/connectors/reddit/client";
 import { sanitizeContent } from "@/lib/utils/textSanitizer";
 import { getTimeWindowConfig } from "@/lib/constants/timeWindow";
+import { getLeadTierConfig } from "@/lib/constants/leadTiers";
 import { openai } from "@/lib/openai/client";
 import { resendClient } from "@/lib/resend/resendClient";
 import { LeadsReadyEmail } from "@/lib/emails/LeadsReadyEmail";
@@ -355,7 +356,10 @@ export const runAgentJob = inngest.createFunction(
           description: true,
           keywords: true,
           competitors: true,
-          timeWindow: true,
+          platform: true,
+          leadTier: true,
+          leadsIncluded: true,
+          timeWindow: true, // Keep for backward compatibility
           user: {
             select: {
               email: true,
@@ -373,11 +377,21 @@ export const runAgentJob = inngest.createFunction(
 
     const allKeywords = [...agent.keywords, ...agent.competitors];
 
+    // Determine if this is a new agent (with leadTier) or legacy (with timeWindow)
+    const isNewAgent = agent.leadTier !== null && agent.leadsIncluded !== null;
+
     console.log(`📊 Agent config:`);
     console.log(`   └── Website: ${agent.websiteUrl}`);
     console.log(`   └── Keywords: ${agent.keywords.length}`);
     console.log(`   └── Competitors: ${agent.competitors.length}`);
-    console.log(`   └── Time window: ${agent.timeWindow}`);
+
+    if (isNewAgent) {
+      console.log(`   └── Platform: ${agent.platform}`);
+      console.log(`   └── Lead Tier: ${agent.leadTier}`);
+      console.log(`   └── Leads Included: ${agent.leadsIncluded}`);
+    } else {
+      console.log(`   └── Time window: ${agent.timeWindow} (LEGACY)`);
+    }
 
     if (allKeywords.length === 0) {
       console.log(`❌ No keywords configured for agent`);
@@ -410,6 +424,42 @@ export const runAgentJob = inngest.createFunction(
 
     const existingIdsSet = new Set(existingIds);
 
+    // Determine search parameters
+    let searchTimeWindow: TimeWindow;
+    let searchMaxAgeDays: number;
+    let searchLimit: number;
+
+    if (isNewAgent && agent.leadTier) {
+      // New agent: use lead tier config
+      const tierConfig = getLeadTierConfig(agent.leadTier);
+      searchMaxAgeDays = tierConfig.maxAgeDays;
+      // Calculate posts per keyword based on total leads needed and keyword count
+      // Fetch 3x more to ensure we get enough after filtering
+      const targetTotal = agent.leadsIncluded! * 3;
+      searchLimit = Math.ceil(targetTotal / allKeywords.length);
+      // Map to a time window for the scraper
+      searchTimeWindow =
+        searchMaxAgeDays <= 7
+          ? "LAST_7_DAYS"
+          : searchMaxAgeDays <= 30
+            ? "LAST_30_DAYS"
+            : "LAST_365_DAYS";
+
+      console.log(
+        `   └── Search depth: ${searchMaxAgeDays} days (from ${agent.leadTier})`
+      );
+      console.log(`   └── Posts per keyword: ${searchLimit}`);
+    } else if (agent.timeWindow) {
+      // Legacy agent: use time window config
+      const config = getTimeWindowConfig(agent.timeWindow);
+      searchTimeWindow = agent.timeWindow;
+      searchMaxAgeDays = config.maxAgeDays;
+      searchLimit = config.limitPerKeyword;
+    } else {
+      console.log(`❌ Agent has neither leadTier nor timeWindow`);
+      return { status: "failed", reason: "Invalid agent configuration" };
+    }
+
     // Fetch leads for all keywords
     let totalFetched = 0;
     let totalNew = 0;
@@ -423,7 +473,7 @@ export const runAgentJob = inngest.createFunction(
     for (let kwIndex = 0; kwIndex < allKeywords.length; kwIndex++) {
       const keyword = allKeywords[kwIndex];
       const result = await step.run(`fetch-kw-${kwIndex}`, async () =>
-        fetchForKeyword(keyword, agentId, agent.timeWindow, existingIdsSet)
+        fetchForKeyword(keyword, agentId, searchTimeWindow, existingIdsSet)
       );
 
       if (result.error) {
@@ -595,6 +645,46 @@ export const runAgentJob = inngest.createFunction(
       }
     }
 
+    // For new agents: Guarantee exact lead count
+    if (isNewAgent && agent.leadsIncluded) {
+      await step.run("guarantee-lead-count", async () => {
+        const targetLeads = agent.leadsIncluded!;
+
+        // Get all analyzed leads sorted by relevance
+        const allAnalyzedLeads = await prisma.lead.findMany({
+          where: { agentId },
+          orderBy: { relevance: "desc" },
+          select: { id: true, relevance: true },
+        });
+
+        const currentLeadCount = allAnalyzedLeads.length;
+
+        console.log(`\n📊 Lead Count Guarantee:`);
+        console.log(`   └── Target: ${targetLeads}`);
+        console.log(`   └── Current: ${currentLeadCount}`);
+
+        if (currentLeadCount > targetLeads) {
+          // We have more than needed - delete the lowest-scoring ones
+          const leadsToDelete = allAnalyzedLeads.slice(targetLeads);
+          const idsToDelete = leadsToDelete.map((l) => l.id);
+
+          await prisma.lead.deleteMany({
+            where: { id: { in: idsToDelete } },
+          });
+
+          console.log(`   └── Trimmed ${idsToDelete.length} excess leads`);
+        } else if (currentLeadCount < targetLeads) {
+          // We have fewer than needed - need to adjust quality bar
+          console.log(
+            `   ⚠️ Only found ${currentLeadCount}/${targetLeads} qualified leads`
+          );
+          // This is acceptable - deliver what we found
+        } else {
+          console.log(`   ✅ Exact lead count achieved`);
+        }
+      });
+    }
+
     // Set agent status to COMPLETED
     await step.run("set-completed-status", async () => {
       await prisma.aiAgent.update({
@@ -604,18 +694,29 @@ export const runAgentJob = inngest.createFunction(
       console.log(`\n📝 Agent status updated to: COMPLETED`);
     });
 
+    // Get final lead count after guarantee logic
+    const finalLeadCount = await step.run("get-final-lead-count", async () => {
+      return await prisma.lead.count({ where: { agentId } });
+    });
+
     // Send email notification
-    if (totalKept > 0 && agent.user?.email) {
+    if (finalLeadCount > 0 && agent.user?.email) {
       await step.run("send-leads-ready-email", async () => {
         try {
+          const platformName = agent.platform
+            ? agent.platform.charAt(0).toUpperCase() + agent.platform.slice(1)
+            : "Reddit";
+
           await resendClient.emails.send({
-            from: `Reddit Lead Finder <${config.contact.leadsEmail}>`,
+            from: `Lead Finder <${config.contact.leadsEmail}>`,
             to: agent.user!.email,
-            subject: `🎯 ${totalKept} leads ready for you!`,
+            subject: `🎯 ${finalLeadCount} leads ready for you!`,
             react: LeadsReadyEmail({
               name: agent.user!.name || undefined,
               marketName: agent.websiteUrl,
-              leadCount: totalKept,
+              leadCount: finalLeadCount,
+              leadsIncluded: agent.leadsIncluded || undefined,
+              platform: platformName,
               dashboardUrl: `${APP_URL}/d/agents/${agentId}`,
             }),
           });
@@ -633,6 +734,14 @@ export const runAgentJob = inngest.createFunction(
       `   └── Leads kept (score >= ${MIN_RELEVANCE_SCORE}): ${totalKept}`
     );
     console.log(`   └── Leads deleted: ${totalDeleted}`);
+    console.log(`   └── Final lead count: ${finalLeadCount}`);
+
+    if (isNewAgent && agent.leadsIncluded) {
+      console.log(`   └── Target leads: ${agent.leadsIncluded}`);
+      console.log(
+        `   └── Guarantee met: ${finalLeadCount >= agent.leadsIncluded ? "✅ Yes" : "⚠️ Partial"}`
+      );
+    }
 
     console.log(`\n${"=".repeat(60)}`);
     console.log(`✅ [RUN AGENT JOB] Completed for agent: ${agentId}`);
@@ -645,6 +754,8 @@ export const runAgentJob = inngest.createFunction(
       totalFetched,
       totalKept,
       totalDeleted,
+      finalLeadCount,
+      targetLeads: agent.leadsIncluded,
       errors: errors.length > 0 ? errors : undefined,
     };
   }

@@ -10,6 +10,8 @@ import {
   TIME_WINDOW_CONFIG,
   type TimeWindow,
 } from "@/lib/constants/timeWindow";
+import { PLATFORM_CONFIG, type PlatformKey } from "@/lib/constants/platforms";
+import { LEAD_TIER_CONFIG, type LeadTierKey } from "@/lib/constants/leadTiers";
 import {
   ArrowLeft,
   Loader2,
@@ -64,7 +66,12 @@ interface Agent {
   description: string | null;
   keywords: string[];
   competitors: string[];
-  timeWindow: TimeWindow;
+  // New pay-per-lead fields
+  platform: PlatformKey;
+  leadTier: LeadTierKey | null;
+  leadsIncluded: number | null;
+  // Legacy field (optional for backward compat)
+  timeWindow: TimeWindow | null;
   status: AgentStatus;
   amountPaid: number | null;
   createdAt: string;
@@ -88,7 +95,7 @@ const STATUS_MESSAGES: Record<
     icon: Sparkles,
   },
   FETCHING_LEADS: {
-    text: "Searching Reddit",
+    text: "Searching for leads",
     subtext: "Finding conversations matching your keywords",
     icon: Search,
   },
@@ -362,7 +369,14 @@ export default function AgentDetailPage() {
             {agent.websiteUrl}
           </h1>
           <p className="text-sm text-gray-500">
-            {TIME_WINDOW_CONFIG[agent.timeWindow as TimeWindow].label} &middot;{" "}
+            {agent.leadTier ? (
+              <>
+                {PLATFORM_CONFIG[agent.platform]?.label || agent.platform} &middot;{" "}
+                {LEAD_TIER_CONFIG[agent.leadTier]?.label || agent.leadTier} &middot;{" "}
+              </>
+            ) : agent.timeWindow ? (
+              <>{TIME_WINDOW_CONFIG[agent.timeWindow].label} &middot; </>
+            ) : null}
             {agent.keywords.length} keywords
           </p>
         </div>

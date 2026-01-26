@@ -11,9 +11,22 @@ const analyzeWebsiteSchema = z.object({
   websiteUrl: z.string().url(),
 });
 
+interface PlatformSuggestion {
+  platform: "reddit" | "hackernews" | "twitter" | "linkedin";
+  reason: string;
+  confidence: "high" | "medium" | "low";
+}
+
+interface TargetPersona {
+  title: string; // e.g., "SaaS Founder", "Product Designer"
+  description: string; // Brief description of this persona
+}
+
 interface AnalysisResult {
   description: string;
   keywords: string[];
+  targetPersonas: TargetPersona[];
+  suggestedPlatforms: PlatformSuggestion[];
 }
 
 /**
@@ -53,7 +66,14 @@ export async function POST(req: NextRequest) {
     // Use OpenAI to analyze the website
     const prompt = `Analyze this website content and extract:
 1. A concise product/service description (2-3 sentences max)
-2. A list of 10-15 keywords that people would search for on Reddit when looking for this type of product/service
+2. The target personas (ICP) - who would use this product? (2-4 personas)
+3. A list of 10-15 keywords that people would search for when looking for this type of product/service
+4. Which platforms the ideal customer profile (ICP) for this product likely uses
+
+For target personas:
+- Identify 2-4 specific job titles or roles (e.g., "SaaS Founder", "Product Designer", "Marketing Manager")
+- Focus on decision makers who would purchase/use this product
+- Be specific (not just "business owners" but "E-commerce Store Owners")
 
 The keywords should be:
 - Problem-focused (what pain points does this solve?)
@@ -62,13 +82,32 @@ The keywords should be:
 - Include both short and long-tail keywords
 - NO competitor names (just generic terms)
 
+For platform suggestions, consider:
+- Reddit: Technical products, B2B SaaS, developer tools, niche communities
+- HackerNews: Startups, tech products, developer tools, tech-savvy audience
+- Twitter: Marketing tools, consumer products, thought leadership products
+- LinkedIn: B2B products, enterprise software, professional services
+
 Website content:
 ${truncatedContent}
 
 Return JSON in this exact format:
 {
   "description": "A brief description of what the product/service does",
-  "keywords": ["keyword1", "keyword2", "keyword3", ...]
+  "targetPersonas": [
+    {
+      "title": "SaaS Founder",
+      "description": "Founders of early-stage SaaS companies looking to grow"
+    }
+  ],
+  "keywords": ["keyword1", "keyword2", "keyword3", ...],
+  "suggestedPlatforms": [
+    {
+      "platform": "reddit",
+      "reason": "Brief explanation why this ICP uses Reddit",
+      "confidence": "high"
+    }
+  ]
 }`;
 
     const response = await openai.chat.completions.create({
@@ -96,19 +135,29 @@ Return JSON in this exact format:
     const result = JSON.parse(responseContent) as AnalysisResult;
 
     // Ensure we have valid data
-    if (!result.description || !Array.isArray(result.keywords)) {
+    if (
+      !result.description ||
+      !Array.isArray(result.keywords) ||
+      !Array.isArray(result.targetPersonas) ||
+      !Array.isArray(result.suggestedPlatforms)
+    ) {
       throw new Error("Invalid AI response format");
     }
 
-    // Limit keywords to 15
+    // Limit keywords to 15 and personas to 4
     const keywords = result.keywords.slice(0, 15);
+    const targetPersonas = result.targetPersonas.slice(0, 4);
 
-    console.log(`✅ Analysis complete: ${keywords.length} keywords extracted`);
+    console.log(
+      `✅ Analysis complete: ${keywords.length} keywords, ${targetPersonas.length} personas extracted`
+    );
 
     return NextResponse.json(
       {
         description: result.description,
+        targetPersonas,
         keywords,
+        suggestedPlatforms: result.suggestedPlatforms,
       },
       { status: 200 }
     );

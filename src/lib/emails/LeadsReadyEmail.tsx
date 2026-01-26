@@ -15,6 +15,8 @@ interface LeadsReadyEmailProps {
   name?: string;
   marketName: string;
   leadCount: number;
+  leadsIncluded?: number;
+  platform?: string;
   dashboardUrl: string;
 }
 
@@ -22,6 +24,8 @@ export const LeadsReadyEmail = ({
   name = "there",
   marketName,
   leadCount,
+  leadsIncluded,
+  platform = "Reddit",
   dashboardUrl,
 }: LeadsReadyEmailProps) => {
   return (
@@ -44,24 +48,26 @@ export const LeadsReadyEmail = ({
               </Heading>
 
               <Text className="text-gray-600 text-base mb-6">
-                Hey {name}, great news! We&apos;ve finished analyzing Reddit
+                Hey {name}, great news! We&apos;ve finished analyzing {platform}{" "}
                 for your market.
               </Text>
 
               {/* Stats Box */}
               <Section className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-6 mb-6">
                 <Text className="text-4xl font-bold text-orange-600 mb-1">
-                  {String(leadCount)}
+                  {leadsIncluded ? `${String(leadCount)}/${String(leadsIncluded)}` : String(leadCount)}
                 </Text>
                 <Text className="text-gray-700 font-medium mb-0">
-                  high-intent leads found
+                  {leadsIncluded ? "qualified leads delivered" : "high-intent leads found"}
                 </Text>
-                <Text className="text-gray-500 text-sm">for {marketName}</Text>
+                <Text className="text-gray-500 text-sm">
+                  from {platform} for {marketName}
+                </Text>
               </Section>
 
               <Text className="text-gray-600 text-sm mb-6">
-                These are people actively looking for solutions like yours on
-                Reddit. Check them out and start engaging!
+                These are people actively looking for solutions like yours on{" "}
+                {platform}. Check them out and start engaging!
               </Text>
 
               <Button
