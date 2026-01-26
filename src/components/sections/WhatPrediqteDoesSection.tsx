@@ -5,13 +5,13 @@ export default function WhatPrediqteDoesSection() {
   const painPoints = [
     {
       icon: Clock,
-      pain: "Hours wasted scrolling Reddit",
-      solution: "We do the searching for you",
+      pain: "Hours wasted scrolling forums and social media",
+      solution: "We scan multiple platforms for you",
     },
     {
       icon: Search,
-      pain: "Missing relevant conversations",
-      solution: "AI finds posts you'd never find",
+      pain: "No idea where your ICP hangs out",
+      solution: "AI finds where your customers are",
     },
     {
       icon: Target,
@@ -39,9 +39,11 @@ export default function WhatPrediqteDoesSection() {
           {/* Heading */}
           <div className="text-center mb-16">
             <h2 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">
-              Reddit Has Your Customers.
+              Your Future Customers Are Out There.
               <br />
-              <span className="text-foreground/50 font-normal">Finding them is the hard part.</span>
+              <span className="text-foreground/50 font-normal">
+                Finding Them Is the Hard Part.
+              </span>
             </h2>
           </div>
 
@@ -70,16 +72,6 @@ export default function WhatPrediqteDoesSection() {
                 </div>
               );
             })}
-          </div>
-
-          {/* Bottom stat */}
-          <div className="mt-16 text-center">
-            <div className="inline-flex items-center gap-3 bg-green-500/10 border border-green-500/20 rounded-full px-6 py-3">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-green-600 font-medium">
-                Founders find 10-50 qualified leads per search
-              </span>
-            </div>
           </div>
         </div>
       </div>

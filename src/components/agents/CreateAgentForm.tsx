@@ -8,8 +8,21 @@ import useApi from "@/lib/hooks/useApi";
 import { cn } from "@/lib/utils";
 import WebsiteStep from "./steps/WebsiteStep";
 import ReviewStep from "./steps/ReviewStep";
-import TimeWindowStep from "./steps/TimeWindowStep";
-import type { TimeWindow } from "@/lib/constants/timeWindow";
+import PlatformStep from "./steps/PlatformStep";
+import LeadTierStep from "./steps/LeadTierStep";
+import type { PlatformKey } from "@/lib/constants/platforms";
+import type { LeadTierKey } from "@/lib/constants/leadTiers";
+
+interface PlatformSuggestion {
+  platform: PlatformKey;
+  reason: string;
+  confidence: "high" | "medium" | "low";
+}
+
+export interface TargetPersona {
+  title: string;
+  description: string;
+}
 
 // Step 1 Schema - Website URL
 export const step1Schema = z.object({
@@ -45,10 +58,18 @@ export default function CreateAgentForm({ onSuccess }: CreateAgentFormProps) {
   // Step 2 form data (populated after analysis)
   const [keywords, setKeywords] = useState<string[]>([]);
   const [competitors, setCompetitors] = useState<string[]>([]);
+  const [targetPersonas, setTargetPersonas] = useState<TargetPersona[]>([]);
+  const [suggestedPlatforms, setSuggestedPlatforms] = useState<
+    PlatformSuggestion[]
+  >([]);
 
-  // Step 3 selection
-  const [selectedTimeWindow, setSelectedTimeWindow] =
-    useState<TimeWindow | null>(null);
+  // Step 3 selection - Platform
+  const [selectedPlatform, setSelectedPlatform] =
+    useState<PlatformKey | null>("reddit"); // Default to Reddit
+
+  // Step 4 selection - Lead Tier
+  const [selectedLeadTier, setSelectedLeadTier] =
+    useState<LeadTierKey | null>(null);
 
   // Step 1 Form
   const step1Form = useForm<Step1Data>({
@@ -68,10 +89,17 @@ export default function CreateAgentForm({ onSuccess }: CreateAgentFormProps) {
 
   // API calls
   const { mutate: analyzeWebsite } = usePost("/analyze-website", {
-    onSuccess: (data: { description: string; keywords: string[] }) => {
+    onSuccess: (data: {
+      description: string;
+      keywords: string[];
+      targetPersonas: TargetPersona[];
+      suggestedPlatforms: PlatformSuggestion[];
+    }) => {
       step2Form.setValue("description", data.description);
       step2Form.setValue("keywords", data.keywords);
       setKeywords(data.keywords);
+      setTargetPersonas(data.targetPersonas || []);
+      setSuggestedPlatforms(data.suggestedPlatforms);
       setIsAnalyzing(false);
       setStep(2);
     },
@@ -96,16 +124,22 @@ export default function CreateAgentForm({ onSuccess }: CreateAgentFormProps) {
     analyzeWebsite({ websiteUrl: data.websiteUrl });
   };
 
-  // Step 2: Proceed to time window selection
+  // Step 2: Proceed to platform selection
   const handleStep2Submit = () => {
     step2Form.setValue("keywords", keywords);
     step2Form.setValue("competitors", competitors);
     setStep(3);
   };
 
-  // Step 3: Create agent and redirect to payment
+  // Step 3: Proceed to lead tier selection
   const handleStep3Submit = () => {
-    if (!selectedTimeWindow) return;
+    if (!selectedPlatform) return;
+    setStep(4);
+  };
+
+  // Step 4: Create agent and redirect to payment
+  const handleStep4Submit = () => {
+    if (!selectedPlatform || !selectedLeadTier) return;
 
     const step2Data = step2Form.getValues();
 
@@ -114,7 +148,9 @@ export default function CreateAgentForm({ onSuccess }: CreateAgentFormProps) {
       description: step2Data.description,
       keywords,
       competitors,
-      timeWindow: selectedTimeWindow,
+      targetPersonas,
+      platform: selectedPlatform,
+      leadTier: selectedLeadTier,
     });
   };
 
@@ -122,7 +158,7 @@ export default function CreateAgentForm({ onSuccess }: CreateAgentFormProps) {
     <div className="space-y-6">
       {/* Step indicator dots */}
       <div className="flex gap-2">
-        {[1, 2, 3].map((s) => (
+        {[1, 2, 3, 4].map((s) => (
           <div
             key={s}
             className={cn(
@@ -151,18 +187,31 @@ export default function CreateAgentForm({ onSuccess }: CreateAgentFormProps) {
           setKeywords={setKeywords}
           competitors={competitors}
           setCompetitors={setCompetitors}
+          targetPersonas={targetPersonas}
+          setTargetPersonas={setTargetPersonas}
           onSubmit={handleStep2Submit}
           onBack={() => setStep(1)}
         />
       )}
 
-      {/* Step 3: Time Window Selection */}
+      {/* Step 3: Platform Selection */}
       {step === 3 && (
-        <TimeWindowStep
-          selectedTimeWindow={selectedTimeWindow}
-          setSelectedTimeWindow={setSelectedTimeWindow}
+        <PlatformStep
+          selectedPlatform={selectedPlatform}
+          setSelectedPlatform={setSelectedPlatform}
+          suggestedPlatforms={suggestedPlatforms}
           onSubmit={handleStep3Submit}
           onBack={() => setStep(2)}
+        />
+      )}
+
+      {/* Step 4: Lead Tier Selection */}
+      {step === 4 && (
+        <LeadTierStep
+          selectedLeadTier={selectedLeadTier}
+          setSelectedLeadTier={setSelectedLeadTier}
+          onSubmit={handleStep4Submit}
+          onBack={() => setStep(3)}
           isCreating={creatingAgent}
         />
       )}

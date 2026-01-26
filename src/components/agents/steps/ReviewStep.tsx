@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, ArrowRight, ArrowLeft } from "lucide-react";
-import type { Step2Data } from "../CreateAgentForm";
+import { Plus, X, ArrowRight, ArrowLeft, Users } from "lucide-react";
+import type { Step2Data, TargetPersona } from "../CreateAgentForm";
 
 interface ReviewStepProps {
   form: UseFormReturn<Step2Data>;
@@ -16,6 +16,8 @@ interface ReviewStepProps {
   setKeywords: (keywords: string[]) => void;
   competitors: string[];
   setCompetitors: (competitors: string[]) => void;
+  targetPersonas: TargetPersona[];
+  setTargetPersonas: (personas: TargetPersona[]) => void;
   onSubmit: () => void;
   onBack: () => void;
 }
@@ -26,11 +28,16 @@ export default function ReviewStep({
   setKeywords,
   competitors,
   setCompetitors,
+  targetPersonas,
+  setTargetPersonas,
   onSubmit,
   onBack,
 }: ReviewStepProps) {
   const [keywordInput, setKeywordInput] = useState("");
   const [competitorInput, setCompetitorInput] = useState("");
+  const [personaTitleInput, setPersonaTitleInput] = useState("");
+  const [personaDescInput, setPersonaDescInput] = useState("");
+  const [showAddPersona, setShowAddPersona] = useState(false);
 
   const handleAddKeyword = () => {
     const trimmed = keywordInput.trim();
@@ -64,6 +71,23 @@ export default function ReviewStep({
     form.setValue("competitors", newCompetitors);
   };
 
+  const handleAddPersona = () => {
+    const title = personaTitleInput.trim();
+    const description = personaDescInput.trim();
+    if (title && description && targetPersonas.length < 6) {
+      const newPersonas = [...targetPersonas, { title, description }];
+      setTargetPersonas(newPersonas);
+      setPersonaTitleInput("");
+      setPersonaDescInput("");
+      setShowAddPersona(false);
+    }
+  };
+
+  const handleRemovePersona = (index: number) => {
+    const newPersonas = targetPersonas.filter((_, i) => i !== index);
+    setTargetPersonas(newPersonas);
+  };
+
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <div>
@@ -89,6 +113,101 @@ export default function ReviewStep({
           <p className="text-sm text-red-500">
             {form.formState.errors.description.message}
           </p>
+        )}
+      </div>
+
+      {/* Target Personas (ICP) */}
+      <div className="space-y-3">
+        <Label className="flex items-center justify-between">
+          <span className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-orange-500" />
+            Target Audience (ICP)
+          </span>
+          <span className="text-sm text-gray-500 font-normal">
+            {targetPersonas.length}/6
+          </span>
+        </Label>
+        <p className="text-sm text-gray-500">
+          Who are your ideal customers? Add or remove personas.
+        </p>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {targetPersonas.map((persona, idx) => (
+            <div
+              key={idx}
+              className="relative bg-orange-50 border border-orange-200 rounded-xl p-4 pr-10"
+            >
+              <button
+                type="button"
+                onClick={() => handleRemovePersona(idx)}
+                className="absolute top-2 right-2 p-1 hover:bg-orange-200 rounded-full text-orange-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <p className="font-semibold text-gray-900">{persona.title}</p>
+              <p className="text-sm text-gray-600 mt-1">
+                {persona.description}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Add Persona Form */}
+        {showAddPersona ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+            <Input
+              placeholder="Job title (e.g., SaaS Founder)"
+              value={personaTitleInput}
+              onChange={(e) => setPersonaTitleInput(e.target.value)}
+              className="h-10"
+            />
+            <Input
+              placeholder="Short description"
+              value={personaDescInput}
+              onChange={(e) => setPersonaDescInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddPersona();
+                }
+              }}
+              className="h-10"
+            />
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setShowAddPersona(false);
+                  setPersonaTitleInput("");
+                  setPersonaDescInput("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleAddPersona}
+                disabled={!personaTitleInput.trim() || !personaDescInput.trim()}
+                className="bg-orange-500 hover:bg-orange-600 text-white"
+              >
+                Add Persona
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAddPersona(true)}
+            disabled={targetPersonas.length >= 6}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Persona
+          </Button>
         )}
       </div>
 

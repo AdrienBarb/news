@@ -150,7 +150,7 @@ export default async function CompetitorPageView({
 
   const ctaFeatures = [
     "One-time payment — no subscription",
-    "AI-powered Reddit lead discovery",
+    "AI-powered lead discovery across multiple platforms",
     "Curated leads with relevance scoring",
     "Email notification when leads are ready",
   ];
@@ -344,10 +344,10 @@ export default async function CompetitorPageView({
           {relatedCompetitors.length > 0 && (
             <section className="mt-16 p-6 bg-muted/50 rounded-xl border border-border">
               <h2 className="text-xl font-bold text-foreground mb-2 flex items-center gap-2">
-                Compare More Reddit Tools
+                Compare More Lead Generation Tools
               </h2>
               <p className="text-muted-foreground mb-4">
-                If you&apos;re exploring Reddit lead generation tools, check out
+                If you&apos;re exploring B2B lead generation tools, check out
                 our reviews of:
               </p>
               <ul className="space-y-2">
@@ -412,7 +412,7 @@ export default async function CompetitorPageView({
               </h2>
               <p className="text-muted-foreground text-lg">
                 Join thousands of SaaS founders who use Prediqte to find
-                high-intent leads on Reddit.
+                high-intent leads across Reddit, HackerNews, Twitter & LinkedIn.
               </p>
             </div>
 

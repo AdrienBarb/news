@@ -9,14 +9,23 @@ import {
   getTimeWindowConfig,
   type TimeWindow,
 } from "@/lib/constants/timeWindow";
+import { getLeadTierConfig, type LeadTierKey } from "@/lib/constants/leadTiers";
+import { getPlatformConfig, type PlatformKey } from "@/lib/constants/platforms";
 import { z } from "zod";
+
+const targetPersonaSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().min(1),
+});
 
 const createAgentSchema = z.object({
   websiteUrl: z.string().url(),
   description: z.string().optional(),
   keywords: z.array(z.string()).min(1),
   competitors: z.array(z.string()),
-  timeWindow: z.enum(["LAST_7_DAYS", "LAST_30_DAYS", "LAST_365_DAYS"]),
+  targetPersonas: z.array(targetPersonaSchema).optional(),
+  platform: z.enum(["reddit", "hackernews", "twitter", "linkedin"]),
+  leadTier: z.enum(["STARTER", "GROWTH", "SCALE"]),
 });
 
 /**
@@ -44,7 +53,10 @@ export async function GET() {
         description: true,
         keywords: true,
         competitors: true,
-        timeWindow: true,
+        platform: true,
+        leadTier: true,
+        leadsIncluded: true,
+        timeWindow: true, // Keep for backward compatibility
         status: true,
         amountPaid: true,
         createdAt: true,
@@ -81,10 +93,12 @@ export async function POST(req: NextRequest) {
     const validatedData = createAgentSchema.parse(body);
     console.log("🚀 ~ POST ~ validatedData:", validatedData);
 
-    const timeWindowConfig = getTimeWindowConfig(
-      validatedData.timeWindow as TimeWindow
+    const tierConfig = getLeadTierConfig(validatedData.leadTier as LeadTierKey);
+    const platformConfig = getPlatformConfig(
+      validatedData.platform as PlatformKey
     );
-    console.log("🚀 ~ POST ~ timeWindowConfig:", timeWindowConfig);
+    console.log("🚀 ~ POST ~ tierConfig:", tierConfig);
+    console.log("🚀 ~ POST ~ platformConfig:", platformConfig);
 
     // Create the agent with PENDING_PAYMENT status
     const agent = await prisma.aiAgent.create({
@@ -94,16 +108,16 @@ export async function POST(req: NextRequest) {
         description: validatedData.description,
         keywords: validatedData.keywords,
         competitors: validatedData.competitors,
-        timeWindow: validatedData.timeWindow,
+        targetPersonas: validatedData.targetPersonas || [],
+        platform: validatedData.platform,
+        leadTier: validatedData.leadTier,
+        leadsIncluded: tierConfig.leadsIncluded,
         status: "PENDING_PAYMENT",
       },
     });
 
     // Create Stripe checkout session
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-
-    // Apply 50% discount
-    const discountedPrice = Math.floor(timeWindowConfig.price / 2);
 
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -114,10 +128,10 @@ export async function POST(req: NextRequest) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `Reddit Lead Finder - ${timeWindowConfig.label}`,
-              description: `${timeWindowConfig.description} of Reddit leads for ${validatedData.websiteUrl}`,
+              name: `Lead Finder - ${tierConfig.label}`,
+              description: `${tierConfig.leadsIncluded} qualified leads from ${platformConfig.label} for ${validatedData.websiteUrl}`,
             },
-            unit_amount: discountedPrice,
+            unit_amount: tierConfig.price,
           },
           quantity: 1,
         },

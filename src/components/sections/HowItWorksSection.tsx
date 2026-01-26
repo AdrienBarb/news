@@ -8,15 +8,15 @@ export default function HowItWorksSection() {
       icon: Globe,
       title: "Enter your website",
       description:
-        "We analyze your site in seconds to understand your product and generate relevant keywords.",
+        "We analyze your site to understand your product and identify your ideal customer profile.",
       time: "30 seconds",
     },
     {
       number: 2,
       icon: Sparkles,
-      title: "Pick your time window",
+      title: "Choose your platform",
       description:
-        "Last 7 days, 30 days, or full year. Longer windows = more leads. Pay once.",
+        "Reddit, HackerNews, or more. We show you where your ICP is most active.",
       time: "10 seconds",
     },
     {
@@ -24,13 +24,16 @@ export default function HowItWorksSection() {
       icon: ListChecks,
       title: "Get your leads",
       description:
-        "Our AI scans Reddit, scores each post, and delivers a curated list within minutes.",
+        "Our AI scans thousands of conversations, scores each one for relevance, and delivers a curated list of high-intent leads",
       time: "2-5 minutes",
     },
   ];
 
   return (
-    <section id="how-it-works" className="py-24 px-6 bg-background scroll-mt-20">
+    <section
+      id="how-it-works"
+      className="py-24 px-6 bg-background scroll-mt-20"
+    >
       <div className="max-w-6xl mx-auto">
         {/* Badge */}
         <div className="flex justify-center mb-8">
@@ -42,7 +45,7 @@ export default function HowItWorksSection() {
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            From Website to Reddit Leads in Under 5 Minutes
+            From Website to Leads in Under 5 Minutes
           </h2>
           <p className="text-lg text-foreground/60">
             No setup. No learning curve. Just results.

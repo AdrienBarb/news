@@ -3,6 +3,7 @@ import Script from "next/script";
 import HeroSection from "@/components/sections/HeroSection";
 import WhatPrediqteDoesSection from "@/components/sections/WhatPrediqteDoesSection";
 import HowItWorksSection from "@/components/sections/HowItWorksSection";
+import PlatformsSection from "@/components/sections/PlatformsSection";
 import TestimonialsSection from "@/components/sections/TestimonialsSection";
 import FAQSection from "@/components/sections/FAQSection";
 import PricingSection from "@/components/sections/PricingSection";
@@ -79,6 +80,7 @@ export default async function Home() {
       <HeroSection getStartedUrl={getStartedUrlValue} />
       <WhatPrediqteDoesSection />
       <HowItWorksSection />
+      <PlatformsSection />
       <TestimonialsSection />
       <PricingSection getStartedUrl={getStartedUrlValue} />
       <FAQSection />

@@ -12,7 +12,7 @@ import { ArrowRight } from "lucide-react";
 export const metadata: Metadata = genPageMetadata({
   title: "Prediqte Alternatives & Competitors Comparison",
   description:
-    "Looking for a Reddit lead finder? Compare Prediqte with other tools and discover why SaaS founders choose Prediqte for finding high-intent leads on Reddit.",
+    "Looking for a B2B lead finder? Compare Prediqte with other tools and discover why SaaS founders choose Prediqte for finding high-intent leads.",
   url: "/alternatives",
 });
 
@@ -31,10 +31,10 @@ export default async function AlternativesPage() {
           Prediqte Alternatives & Comparisons
         </h1>
         <p className="text-lg text-muted-foreground leading-relaxed mb-8">
-          Looking for a Reddit lead finder? Compare Prediqte with other tools in
+          Looking for a B2B lead finder? Compare Prediqte with other tools in
           the market. Learn what makes each solution unique and discover why
           thousands of SaaS founders choose Prediqte for finding high-intent
-          leads on Reddit.
+          leads across Reddit, HackerNews, Twitter & LinkedIn.
         </p>
         <Button
           asChild
@@ -103,7 +103,8 @@ export default async function AlternativesPage() {
         </h2>
         <p className="text-muted-foreground mb-6">
           One-time payment. No subscription. Prediqte delivers a curated list of
-          high-intent Reddit leads based on your product&apos;s keywords.
+          high-intent leads from Reddit, HackerNews, Twitter & LinkedIn based on
+          your product&apos;s ICP.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button

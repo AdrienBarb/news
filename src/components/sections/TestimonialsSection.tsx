@@ -38,10 +38,10 @@ export default function TestimonialsSection() {
         {/* Header */}
         <div className="text-center mb-12">
           <h2 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            SaaS Founders Are Finding Leads on Reddit
+            SaaS Founders Are Finding High-Intent Leads
           </h2>
           <p className="text-lg text-foreground/60">
-            Join hundreds of SaaS founders using Reddit for growth
+            Join hundreds of founders using Prediqte to discover qualified prospects
           </p>
         </div>
 

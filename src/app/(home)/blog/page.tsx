@@ -108,11 +108,11 @@ export default async function BlogPage() {
       {/* CTA Section */}
       <section className="bg-card rounded-3xl border border-border/50 p-8 md:p-12 text-center">
         <h2 className="text-2xl font-bold text-foreground mb-4">
-          Ready to Find Leads on Reddit?
+          Ready to Find High-Intent Leads?
         </h2>
         <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-          Stop scrolling through Reddit manually. Let Prediqte find high-intent
-          leads who are actively looking for solutions like yours.
+          Stop searching manually. Let Prediqte find people actively looking for
+          solutions like yours on Reddit, HackerNews, Twitter & LinkedIn.
         </p>
         <Button
           asChild

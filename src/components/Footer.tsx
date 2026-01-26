@@ -99,7 +99,7 @@ export default async function Footer() {
             <BrandLogo />
           </div>
           <p className="text-background/60 leading-relaxed max-w-md">
-            Find high-intent leads on Reddit.
+            Find high-intent leads for your SaaS.
           </p>
         </div>
 
