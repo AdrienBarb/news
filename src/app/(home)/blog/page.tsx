@@ -15,9 +15,9 @@ import { ArrowRight } from "lucide-react";
 import { APP_ROUTER } from "@/lib/constants/appRouter";
 
 export const metadata: Metadata = genPageMetadata({
-  title: "Prediqte Blog — Reddit Lead Generation, SaaS Growth & Lead Finders",
+  title: "Prediqte Blog — Lead Generation, SaaS Growth & Lead Finders",
   description:
-    "Expert guides for SaaS founders and indie hackers on finding high-intent Reddit leads, traffic strategies, and growth systems. Actionable tips and real examples.",
+    "Expert guides for SaaS founders and indie hackers on finding high-intent leads, traffic strategies, and growth systems. Actionable tips and real examples.",
   url: "/blog",
 });
 
@@ -35,21 +35,21 @@ export default async function BlogPage() {
       {/* Header */}
       <header className="max-w-3xl mb-16">
         <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-6">
-          Prediqte Blog — Reddit Lead Generation & SaaS Growth Insights
+          Prediqte Blog — Lead Generation & SaaS Growth Insights
         </h1>
         <div className="text-lg text-muted-foreground leading-relaxed space-y-4">
           <p>
             The Prediqte Blog is your go-to resource for finding high-intent
-            leads, scaling SaaS growth, and leveraging Reddit for traffic and
+            leads, scaling SaaS growth, and leveraging online communities for traffic and
             traction. If you&apos;re a SaaS founder, indie hacker, or solo
-            developer tired of spending hours scrolling Reddit for opportunities
+            developer tired of spending hours searching for opportunities
             — you&apos;re in the right place.
           </p>
           <p>
             Here, we break down the exact strategies, tools, and tactics used by
             successful founders to uncover buyer intent, prioritize
             opportunities, and turn organic signals into real leads. Whether
-            you&apos;re learning how to dissect Reddit conversations, build lead
+            you&apos;re learning how to find conversations with buying intent, build lead
             nurturing workflows, or uncover hidden signals buried in niche
             communities — we write for builders who want results.
           </p>
@@ -112,7 +112,7 @@ export default async function BlogPage() {
         </h2>
         <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
           Stop searching manually. Let Prediqte find people actively looking for
-          solutions like yours on Reddit, HackerNews, Twitter & LinkedIn.
+          solutions like yours across online communities and social platforms.
         </p>
         <Button
           asChild
@@ -136,7 +136,7 @@ export default async function BlogPage() {
               What topics does this blog cover?
             </h3>
             <p className="text-muted-foreground text-sm">
-              Reddit lead gen, SaaS growth tactics, Reddit content workflows,
+              Lead generation strategies, SaaS growth tactics, content workflows,
               founder distribution playbooks, and product traction strategies.
             </p>
           </div>
