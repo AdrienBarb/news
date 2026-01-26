@@ -219,60 +219,80 @@ async function analyzeLeadsBatch(
 **${context.websiteUrl}**: ${context.description}
 
 ## YOUR MISSION
-Find people who are ACTIVELY SEEKING a solution. We want BUYERS, not observers.
+Find people who are ACTIVELY SEEKING a solution to BUY. We want BUYERS, not sellers, teachers, or observers.
+
+## 🚫 INSTANT REJECT (Score 0-20) - CHECK THESE FIRST!
+These are NEVER leads, even if they contain relevant keywords:
+
+**SELLERS/SERVICE PROVIDERS** (they want to SELL, not buy):
+- "I offer [service]..." / "I can help you with..."
+- "Looking for clients" / "DM me if interested"
+- "I've been doing [service] for X years"
+- Anyone offering their services or looking for customers
+
+**TEACHERS/EDUCATORS** (they're sharing knowledge, not seeking solutions):
+- Long posts explaining how something works
+- "Here's how to..." / "The key to [topic] is..."
+- Sharing frameworks, strategies, or methodologies
+- Posts that read like blog articles or tutorials
+
+**ADVICE SEEKERS** (they want knowledge, not tools):
+- "What worked for you?" / "Share your experience"
+- "How do you approach [topic]?" (wanting strategy, not tools)
+- "What's your process for...?" (learning, not buying)
+- Asking for tips, strategies, or best practices
+
+**SELF-PROMOTERS**:
+- "I built..." / "I made..." / "Check out my..."
+- "Just launched..." / "Announcing..."
+- Sharing their own project, tool, or content
 
 ## 🎯 HIGH-INTENT SIGNALS (Score 80-100)
-These are READY TO BUY:
-- "What tool do you recommend for [problem]?"
-- "I need a solution for [problem], any suggestions?"
-- "Looking for alternatives to [competitor]"
+These are READY TO BUY - they explicitly want a TOOL/PRODUCT:
+- "What TOOL do you recommend for [problem]?"
+- "I need SOFTWARE/APP/PLATFORM for [problem]"
+- "Looking for alternatives to [specific tool]"
 - "Can anyone recommend a [product category]?"
-- "What's the best [product category] for [use case]?"
-- "Thinking of switching from [competitor], thoughts?"
-- "Has anyone tried [competitor]? Looking for options"
-- Asking for comparisons between tools in this category
+- "What's the best [tool/software] for [use case]?"
+- "Thinking of switching from [tool], what else is good?"
+- "Has anyone tried [tool]? What other options are there?"
 
 ## ⚠️ MEDIUM-INTENT SIGNALS (Score 60-79)
 These MIGHT become buyers:
-- Complaining about a problem this product solves
-- Frustrated with a competitor's limitations
-- Discussing the challenge without asking for help yet
-- "How do you handle [problem]?" (implicit need)
+- Complaining about a SPECIFIC TOOL they're using
+- Frustrated with a competitor's limitations (naming the tool)
+- "I hate how [tool] does X, is there something better?"
+- Asking how others SOLVE a problem (might need a tool)
 
-## ❌ NOT A LEAD - SCORE BELOW 40
-REJECT these immediately:
+## ❌ LOW-INTENT - REJECT (Score 21-59)
 - Just discussing the industry/topic in general
 - Sharing news, articles, or links
-- Promoting their own product/content
-- Educational posts or tutorials (they're teaching, not buying)
-- "I built/created [something]" posts
 - Already using a solution and happy with it
-- The post is about a DIFFERENT problem
-- Asking technical questions unrelated to finding a tool
-- Sharing experiences without seeking recommendations
+- Asking questions unrelated to finding a tool
 - Generic discussions that happen to contain a keyword
-- Memes, jokes, or entertainment posts
 
 ## CRITICAL RULES
-1. The person must have a PROBLEM they want to SOLVE
-2. They must be OPEN to new solutions (asking or complaining)
-3. Generic discussion = NOT a lead
-4. Already solved = NOT a lead
-5. Just curious = NOT a lead
-6. Teaching others = NOT a lead
-7. Keyword match is NOT enough - they must WANT a solution
+1. Ask yourself: "Is this person looking to BUY something?"
+2. Sellers, teachers, and advisors are NEVER leads
+3. Someone asking "how do you do X?" wants ADVICE, not a tool
+4. Someone explaining "here's how X works" is TEACHING, not buying
+5. Keyword match is NOT enough - they must want to PURCHASE
+6. When in doubt, REJECT - false positives hurt more than false negatives
 
-## INTENT TYPES
-- **recommendation**: Actively asking "what should I use?"
+## INTENT TYPES (only for scores 60+)
+- **recommendation**: Actively asking "what tool should I use?"
 - **alternative**: Looking for alternatives to a specific tool
-- **comparison**: Comparing multiple solutions
-- **complaint**: Frustrated with current solution (might switch)
-- **question**: Has the problem but hasn't asked for tools yet
+- **comparison**: Comparing multiple tools/products
+- **complaint**: Frustrated with current tool (might switch)
+- **question**: Has the problem, might need a tool
 
 ## POSTS TO ANALYZE
 ${JSON.stringify(leadsInfo, null, 2)}
 
 ## OUTPUT FORMAT
+**CRITICAL: You MUST return an analysis for EVERY lead in the input. Do not skip any leads.**
+Return exactly ${leads.length} analyses - one for each lead provided.
+
 Return JSON:
 {
   "leads": [
@@ -285,7 +305,9 @@ Return JSON:
   ]
 }
 
-Remember: QUALITY over QUANTITY. 5 perfect leads > 50 random posts. Be extremely selective.`;
+For low-quality leads (sellers, teachers, self-promoters), give them a score of 0-20 and explain why.
+For irrelevant leads, give them a score of 0-59 and explain why.
+Only leads with score 60+ are kept - but you MUST still analyze and return ALL leads.`;
 
   console.log(`   🤖 Sending ${leads.length} leads to OpenAI for analysis...`);
 
@@ -297,7 +319,7 @@ Remember: QUALITY over QUANTITY. 5 perfect leads > 50 random posts. Be extremely
       {
         role: "system",
         content:
-          "You are a B2B sales qualification expert. Your job is to find BUYERS - people actively looking for a solution. 90% of posts are NOT leads. Only people asking for recommendations, comparing tools, or frustrated with competitors are leads. Be ruthless - we want quality, not quantity.",
+          "You are an expert at identifying BUYERS vs non-buyers. Your job is to find people who want to PURCHASE a tool/software. REJECT: sellers offering services, teachers sharing knowledge, people asking for advice/strategies, self-promoters. ONLY ACCEPT: people explicitly looking for a tool/product to buy. 95% of posts are NOT leads. When in doubt, reject. Quality over quantity.",
       },
       {
         role: "user",
@@ -352,6 +374,10 @@ export const analyzeLeadsBatchJob = inngest.createFunction(
       agentId: string;
     };
 
+    console.log(
+      `\n🔬 [ANALYZE BATCH] Starting analysis for ${batchLeadIds.length} leads (agent: ${agentId})`
+    );
+
     const result = await step.run("analyze", async () => {
       // Fetch full lead data for this batch
       const batch = await prisma.lead.findMany({
@@ -365,12 +391,24 @@ export const analyzeLeadsBatchJob = inngest.createFunction(
         },
       });
 
+      console.log(`   📥 Fetched ${batch.length} leads from DB`);
+
       if (batch.length === 0) {
+        console.log(`   ⚠️ No leads found in batch, skipping analysis`);
         return { kept: 0, deleted: 0 };
       }
 
       // Analyze with LLM
+      console.log(`   🤖 Calling OpenAI for analysis...`);
       const analyses = await analyzeLeadsBatch(batch, context);
+      console.log(`   📊 OpenAI returned ${analyses.length} analyses`);
+
+      // Debug: Log first analysis to verify format
+      if (analyses.length > 0) {
+        console.log(
+          `   📝 Sample analysis: externalId="${analyses[0].externalId}", relevance=${analyses[0].relevance}`
+        );
+      }
 
       let kept = 0;
       let deleted = 0;
@@ -384,9 +422,22 @@ export const analyzeLeadsBatchJob = inngest.createFunction(
       }[] = [];
       const leadsToDelete: string[] = [];
 
+      // Create a map for faster lookup
+      const batchMap = new Map(batch.map((l) => [l.externalId, l]));
+
+      // Track which leads were analyzed
+      const analyzedExternalIds = new Set<string>();
+
       for (const analysis of analyses) {
-        const lead = batch.find((l) => l.externalId === analysis.externalId);
-        if (!lead) continue;
+        const lead = batchMap.get(analysis.externalId);
+        if (!lead) {
+          console.log(
+            `   ⚠️ No matching lead for externalId: ${analysis.externalId}`
+          );
+          continue;
+        }
+
+        analyzedExternalIds.add(analysis.externalId);
 
         if (analysis.relevance >= MIN_RELEVANCE_SCORE) {
           leadsToUpdate.push({
@@ -402,30 +453,57 @@ export const analyzeLeadsBatchJob = inngest.createFunction(
         }
       }
 
-      // Batch update leads to keep
-      await Promise.all(
-        leadsToUpdate.map((lead) =>
-          prisma.lead.update({
-            where: { id: lead.id },
-            data: {
-              intent: lead.intent,
-              relevance: lead.relevance,
-              relevanceReason: lead.reason,
-            },
-          })
-        )
+      // Safety net: Delete any leads that OpenAI didn't return an analysis for
+      // This happens when OpenAI ignores some leads despite being asked to analyze all
+      for (const lead of batch) {
+        if (!analyzedExternalIds.has(lead.externalId)) {
+          console.log(
+            `   ⚠️ OpenAI skipped lead ${lead.externalId}, marking for deletion`
+          );
+          leadsToDelete.push(lead.id);
+          deleted++;
+        }
+      }
+
+      console.log(
+        `   📈 Analysis results: ${kept} to keep, ${deleted} to delete`
       );
+
+      // Batch update leads to keep
+      if (leadsToUpdate.length > 0) {
+        console.log(`   💾 Updating ${leadsToUpdate.length} leads...`);
+        await Promise.all(
+          leadsToUpdate.map((lead) =>
+            prisma.lead.update({
+              where: { id: lead.id },
+              data: {
+                intent: lead.intent,
+                relevance: lead.relevance,
+                relevanceReason: lead.reason,
+              },
+            })
+          )
+        );
+        console.log(`   ✅ Updated ${leadsToUpdate.length} leads`);
+      }
 
       // Batch delete low-relevance leads
       if (leadsToDelete.length > 0) {
+        console.log(
+          `   🗑️ Deleting ${leadsToDelete.length} low-relevance leads...`
+        );
         await prisma.lead.deleteMany({
           where: { id: { in: leadsToDelete } },
         });
+        console.log(`   ✅ Deleted ${leadsToDelete.length} leads`);
       }
 
       return { kept, deleted };
     });
 
+    console.log(
+      `   ✅ [ANALYZE BATCH] Completed: kept=${result.kept}, deleted=${result.deleted}`
+    );
     return result;
   }
 );
@@ -602,7 +680,9 @@ export const runAgentJob = inngest.createFunction(
     const errors: string[] = [];
 
     console.log(`\n${"─".repeat(60)}`);
-    console.log(`🔎 Invoking ${allKeywords.length} parallel keyword fetches...`);
+    console.log(
+      `🔎 Invoking ${allKeywords.length} parallel keyword fetches...`
+    );
     console.log(`${"─".repeat(60)}`);
 
     // Note: Inngest serializes data as JSON, so dates become strings
@@ -753,6 +833,8 @@ export const runAgentJob = inngest.createFunction(
 
     // Invoke ALL batch analyses in parallel - Inngest handles concurrency
     // The concurrency is controlled by analyzeLeadsBatchJob's limit (10) to respect OpenAI rate limits
+    console.log(`\n🚀 Invoking ${batchIds.length} analysis batch jobs...`);
+
     const analysisResults = await Promise.all(
       batchIds.map((currentBatchIds, batchIndex) =>
         step.invoke(`analyze-batch-${batchIndex}`, {
@@ -765,6 +847,9 @@ export const runAgentJob = inngest.createFunction(
         })
       )
     );
+
+    console.log(`\n📊 Analysis batch results received:`);
+    console.log(JSON.stringify(analysisResults, null, 2));
 
     // Aggregate results
     let totalKept = 0;
