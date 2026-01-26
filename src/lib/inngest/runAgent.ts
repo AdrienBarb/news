@@ -327,6 +327,110 @@ Remember: QUALITY over QUANTITY. 5 perfect leads > 50 random posts. Be extremely
 }
 
 /**
+ * Inngest function to analyze a batch of leads using OpenAI
+ * This is invoked in parallel by runAgentJob for faster analysis
+ */
+export const analyzeLeadsBatchJob = inngest.createFunction(
+  {
+    id: "analyze-leads-batch",
+    retries: 2,
+    // Conservative limit to respect OpenAI rate limits
+    // Tier 1: 500 RPM, Tier 2: 5000 RPM - adjust based on your tier
+    concurrency: {
+      limit: 10,
+    },
+  },
+  { event: "agent/analyze-batch" },
+  async ({ event, step }) => {
+    const { batchLeadIds, context, agentId } = event.data as {
+      batchLeadIds: string[];
+      context: {
+        description: string;
+        keywords: string[];
+        websiteUrl: string;
+      };
+      agentId: string;
+    };
+
+    const result = await step.run("analyze", async () => {
+      // Fetch full lead data for this batch
+      const batch = await prisma.lead.findMany({
+        where: { id: { in: batchLeadIds } },
+        select: {
+          id: true,
+          externalId: true,
+          title: true,
+          content: true,
+          subreddit: true,
+        },
+      });
+
+      if (batch.length === 0) {
+        return { kept: 0, deleted: 0 };
+      }
+
+      // Analyze with LLM
+      const analyses = await analyzeLeadsBatch(batch, context);
+
+      let kept = 0;
+      let deleted = 0;
+
+      // Batch the database operations for efficiency
+      const leadsToUpdate: {
+        id: string;
+        intent: IntentType;
+        relevance: number;
+        reason: string;
+      }[] = [];
+      const leadsToDelete: string[] = [];
+
+      for (const analysis of analyses) {
+        const lead = batch.find((l) => l.externalId === analysis.externalId);
+        if (!lead) continue;
+
+        if (analysis.relevance >= MIN_RELEVANCE_SCORE) {
+          leadsToUpdate.push({
+            id: lead.id,
+            intent: analysis.intent,
+            relevance: analysis.relevance,
+            reason: analysis.reason,
+          });
+          kept++;
+        } else {
+          leadsToDelete.push(lead.id);
+          deleted++;
+        }
+      }
+
+      // Batch update leads to keep
+      await Promise.all(
+        leadsToUpdate.map((lead) =>
+          prisma.lead.update({
+            where: { id: lead.id },
+            data: {
+              intent: lead.intent,
+              relevance: lead.relevance,
+              relevanceReason: lead.reason,
+            },
+          })
+        )
+      );
+
+      // Batch delete low-relevance leads
+      if (leadsToDelete.length > 0) {
+        await prisma.lead.deleteMany({
+          where: { id: { in: leadsToDelete } },
+        });
+      }
+
+      return { kept, deleted };
+    });
+
+    return result;
+  }
+);
+
+/**
  * Inngest function to fetch leads for a single keyword
  * This is invoked in parallel by runAgentJob for true concurrency
  */
@@ -638,7 +742,7 @@ export const runAgentJob = inngest.createFunction(
     }
 
     console.log(
-      `\n📦 Analyzing ${allLeadIds.length} leads in ${batchIds.length} batches`
+      `\n📦 Analyzing ${allLeadIds.length} leads in ${batchIds.length} batches (in parallel)`
     );
 
     const analysisContext = {
@@ -647,73 +751,29 @@ export const runAgentJob = inngest.createFunction(
       websiteUrl: agent.websiteUrl,
     };
 
+    // Invoke ALL batch analyses in parallel - Inngest handles concurrency
+    // The concurrency is controlled by analyzeLeadsBatchJob's limit (10) to respect OpenAI rate limits
+    const analysisResults = await Promise.all(
+      batchIds.map((currentBatchIds, batchIndex) =>
+        step.invoke(`analyze-batch-${batchIndex}`, {
+          function: analyzeLeadsBatchJob,
+          data: {
+            batchLeadIds: currentBatchIds,
+            context: analysisContext,
+            agentId,
+          },
+        })
+      )
+    );
+
+    // Aggregate results
     let totalKept = 0;
     let totalDeleted = 0;
 
-    for (let batchIndex = 0; batchIndex < batchIds.length; batchIndex++) {
-      const currentBatchIds = batchIds[batchIndex];
-
-      try {
-        const batchResult = await step.run(
-          `analyze-batch-${batchIndex}`,
-          async () => {
-            // Fetch full lead data for this batch
-            const batch = await prisma.lead.findMany({
-              where: { id: { in: currentBatchIds } },
-              select: {
-                id: true,
-                externalId: true,
-                title: true,
-                content: true,
-                subreddit: true,
-              },
-            });
-
-            if (batch.length === 0) {
-              return { kept: 0, deleted: 0 };
-            }
-
-            // Analyze with LLM
-            const analyses = await analyzeLeadsBatch(batch, analysisContext);
-
-            let kept = 0;
-            let deleted = 0;
-
-            for (const analysis of analyses) {
-              const lead = batch.find(
-                (l) => l.externalId === analysis.externalId
-              );
-              if (!lead) continue;
-
-              if (analysis.relevance >= MIN_RELEVANCE_SCORE) {
-                await prisma.lead.update({
-                  where: { id: lead.id },
-                  data: {
-                    intent: analysis.intent,
-                    relevance: analysis.relevance,
-                    relevanceReason: analysis.reason,
-                  },
-                });
-                kept++;
-              } else {
-                await prisma.lead.delete({
-                  where: { id: lead.id },
-                });
-                deleted++;
-              }
-            }
-
-            return { kept, deleted };
-          }
-        );
-
-        totalKept += batchResult.kept;
-        totalDeleted += batchResult.deleted;
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        console.error(`   ❌ Batch ${batchIndex + 1} failed:`, errorMessage);
-        errors.push(`Analysis batch ${batchIndex + 1}: ${errorMessage}`);
+    for (const result of analysisResults) {
+      if (result) {
+        totalKept += result.kept;
+        totalDeleted += result.deleted;
       }
     }
 
