@@ -21,7 +21,7 @@ export default function HeroSection({
             <div className="flex justify-center mb-6">
               <Badge className="bg-[#FF4500]/10 text-[#FF4500] hover:bg-[#FF4500]/20 border-[#FF4500]/30 px-4 py-1.5">
                 <Zap className="w-3 h-3 mr-1.5" />
-                Pay once, get leads instantly
+                Pay per run, get leads instantly
               </Badge>
             </div>
 
@@ -43,7 +43,7 @@ export default function HeroSection({
 
             {/* Value Props */}
             <div className="flex flex-wrap justify-center gap-6 mb-10">
-              {["No subscription", "Pay per lead", "AI-scored relevance"].map(
+              {["No subscription", "Pay per run", "AI-scored relevance"].map(
                 (prop) => (
                   <div
                     key={prop}

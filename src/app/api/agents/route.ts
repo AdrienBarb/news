@@ -5,12 +5,9 @@ import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/better-auth/auth";
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe/client";
-import {
-  getTimeWindowConfig,
-  type TimeWindow,
-} from "@/lib/constants/timeWindow";
-import { getLeadTierConfig, type LeadTierKey } from "@/lib/constants/leadTiers";
+import { getRunPackConfig, type RunPackKey } from "@/lib/constants/leadTiers";
 import { getPlatformConfig, type PlatformKey } from "@/lib/constants/platforms";
+import { inngest } from "@/lib/inngest/client";
 import { z } from "zod";
 
 const targetPersonaSchema = z.object({
@@ -25,7 +22,7 @@ const createAgentSchema = z.object({
   competitors: z.array(z.string()),
   targetPersonas: z.array(targetPersonaSchema).optional(),
   platform: z.enum(["reddit", "hackernews", "twitter", "linkedin"]),
-  leadTier: z.enum(["STARTER", "GROWTH", "SCALE"]),
+  runPack: z.enum(["STARTER", "GROWTH", "SCALE"]).optional(),
 });
 
 /**
@@ -74,7 +71,9 @@ export async function GET() {
 }
 
 /**
- * POST /api/agents - Create a new agent and redirect to Stripe checkout
+ * POST /api/agents - Create a new agent
+ * - With runPack: user has 0 runs → create PENDING_PAYMENT + Stripe checkout
+ * - Without runPack: user has runs → deduct 1 run, create QUEUED, trigger Inngest
  */
 export async function POST(req: NextRequest) {
   try {
@@ -91,69 +90,109 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const validatedData = createAgentSchema.parse(body);
-    console.log("🚀 ~ POST ~ validatedData:", validatedData);
 
-    const tierConfig = getLeadTierConfig(validatedData.leadTier as LeadTierKey);
     const platformConfig = getPlatformConfig(
       validatedData.platform as PlatformKey
     );
-    console.log("🚀 ~ POST ~ tierConfig:", tierConfig);
-    console.log("🚀 ~ POST ~ platformConfig:", platformConfig);
 
-    // Create the agent with PENDING_PAYMENT status
-    const agent = await prisma.aiAgent.create({
-      data: {
-        userId: session.user.id,
-        websiteUrl: validatedData.websiteUrl,
-        description: validatedData.description,
-        keywords: validatedData.keywords,
-        competitors: validatedData.competitors,
-        targetPersonas: validatedData.targetPersonas || [],
-        platform: validatedData.platform,
-        leadTier: validatedData.leadTier,
-        leadsIncluded: tierConfig.leadsIncluded,
-        status: "PENDING_PAYMENT",
-      },
-    });
+    if (validatedData.runPack) {
+      // Flow A: User needs to buy runs first
+      const packConfig = getRunPackConfig(validatedData.runPack as RunPackKey);
 
-    // Create Stripe checkout session
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-
-    const checkoutSession = await stripe.checkout.sessions.create({
-      mode: "payment",
-      payment_method_types: ["card"],
-      customer_email: session.user.email,
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: `Lead Finder - ${tierConfig.label}`,
-              description: `${tierConfig.leadsIncluded} qualified leads from ${platformConfig.label} for ${validatedData.websiteUrl}`,
-            },
-            unit_amount: tierConfig.price,
-          },
-          quantity: 1,
+      const agent = await prisma.aiAgent.create({
+        data: {
+          userId: session.user.id,
+          websiteUrl: validatedData.websiteUrl,
+          description: validatedData.description,
+          keywords: validatedData.keywords,
+          competitors: validatedData.competitors,
+          targetPersonas: validatedData.targetPersonas || [],
+          platform: validatedData.platform,
+          leadTier: validatedData.runPack,
+          status: "PENDING_PAYMENT",
         },
-      ],
-      metadata: {
-        agentId: agent.id,
-        userId: session.user.id,
-      },
-      success_url: `${baseUrl}/d/agents/${agent.id}?success=true`,
-      cancel_url: `${baseUrl}/d?canceled=true`,
-    });
+      });
 
-    // Update agent with Stripe session ID
-    await prisma.aiAgent.update({
-      where: { id: agent.id },
-      data: { stripeSessionId: checkoutSession.id },
-    });
+      const baseUrl =
+        process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-    return NextResponse.json(
-      { checkoutUrl: checkoutSession.url, agentId: agent.id },
-      { status: 201 }
-    );
+      const checkoutSession = await stripe.checkout.sessions.create({
+        mode: "payment",
+        payment_method_types: ["card"],
+        customer_email: session.user.email,
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: `Run Pack - ${packConfig.label}`,
+                description: `${packConfig.runs} agent run${packConfig.runs > 1 ? "s" : ""} · ${packConfig.estimatedLeads} per run`,
+              },
+              unit_amount: packConfig.price,
+            },
+            quantity: 1,
+          },
+        ],
+        metadata: {
+          agentId: agent.id,
+          userId: session.user.id,
+          runPack: validatedData.runPack,
+        },
+        success_url: `${baseUrl}/d/agents/${agent.id}?success=true`,
+        cancel_url: `${baseUrl}/d?canceled=true`,
+      });
+
+      await prisma.aiAgent.update({
+        where: { id: agent.id },
+        data: { stripeSessionId: checkoutSession.id },
+      });
+
+      return NextResponse.json(
+        { checkoutUrl: checkoutSession.url, agentId: agent.id },
+        { status: 201 }
+      );
+    } else {
+      // Flow B: User has runs available — deduct 1 and launch
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { remainingRuns: true },
+      });
+
+      if (!user || user.remainingRuns < 1) {
+        return NextResponse.json(
+          { error: "No runs remaining. Please purchase a run pack." },
+          { status: 400 }
+        );
+      }
+
+      // Atomically deduct 1 run and create agent
+      const [agent] = await prisma.$transaction([
+        prisma.aiAgent.create({
+          data: {
+            userId: session.user.id,
+            websiteUrl: validatedData.websiteUrl,
+            description: validatedData.description,
+            keywords: validatedData.keywords,
+            competitors: validatedData.competitors,
+            targetPersonas: validatedData.targetPersonas || [],
+            platform: validatedData.platform,
+            status: "QUEUED",
+          },
+        }),
+        prisma.user.update({
+          where: { id: session.user.id },
+          data: { remainingRuns: { decrement: 1 } },
+        }),
+      ]);
+
+      // Trigger Inngest
+      await inngest.send({
+        name: "agent/run",
+        data: { agentId: agent.id },
+      });
+
+      return NextResponse.json({ agentId: agent.id }, { status: 201 });
+    }
   } catch (error) {
     return errorHandler(error);
   }

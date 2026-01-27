@@ -3,13 +3,8 @@
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import {
-  TIME_WINDOW_CONFIG,
-  type TimeWindow,
-} from "@/lib/constants/timeWindow";
 import { PLATFORM_CONFIG, type PlatformKey } from "@/lib/constants/platforms";
-import { type LeadTierKey } from "@/lib/constants/leadTiers";
-import { Loader2, ArrowRight, Clock } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
 
 type AgentStatus =
   | "PENDING_PAYMENT"
@@ -26,9 +21,6 @@ interface Agent {
   keywords: string[];
   competitors: string[];
   platform: PlatformKey;
-  leadTier: LeadTierKey | null;
-  leadsIncluded: number | null;
-  timeWindow: TimeWindow | null; // Now optional for backward compatibility
   status: AgentStatus;
   amountPaid: number | null;
   createdAt: string;
@@ -67,9 +59,6 @@ export default function AgentCard({ agent }: AgentCardProps) {
     agent.status
   );
 
-  // Check if new agent (with leadTier) or legacy (with timeWindow)
-  const isNewAgent = agent.leadTier !== null && agent.leadsIncluded !== null;
-
   return (
     <button
       onClick={() => router.push(`/d/agents/${agent.id}`)}
@@ -87,31 +76,16 @@ export default function AgentCard({ agent }: AgentCardProps) {
             </Badge>
           </div>
           <div className="flex items-center gap-4 text-sm text-gray-500">
-            {/* Show platform for new agents, time window for legacy */}
-            {isNewAgent ? (
-              <span className="font-medium">
-                {PLATFORM_CONFIG[agent.platform].label}
-              </span>
-            ) : agent.timeWindow ? (
-              <span className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                {TIME_WINDOW_CONFIG[agent.timeWindow].label}
-              </span>
-            ) : null}
-
-            {/* Show lead count for new agents */}
-            {isNewAgent && (
-              <span>{agent.leadsIncluded} leads included</span>
-            )}
+            <span className="font-medium">
+              {PLATFORM_CONFIG[agent.platform].label}
+            </span>
 
             <span>{agent.keywords.length} keywords</span>
 
-            {/* Show delivery status for completed agents */}
+            {/* Show leads found for completed agents */}
             {agent.status === "COMPLETED" && (
               <span className="text-green-600 font-medium">
-                {isNewAgent && agent.leadsIncluded
-                  ? `${agent._count.leads}/${agent.leadsIncluded} delivered`
-                  : `${agent._count.leads} leads found`}
+                {agent._count.leads} leads found
               </span>
             )}
           </div>

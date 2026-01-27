@@ -6,12 +6,7 @@ import useApi from "@/lib/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import {
-  TIME_WINDOW_CONFIG,
-  type TimeWindow,
-} from "@/lib/constants/timeWindow";
 import { PLATFORM_CONFIG, type PlatformKey } from "@/lib/constants/platforms";
-import { LEAD_TIER_CONFIG, type LeadTierKey } from "@/lib/constants/leadTiers";
 import {
   ArrowLeft,
   Loader2,
@@ -66,12 +61,7 @@ interface Agent {
   description: string | null;
   keywords: string[];
   competitors: string[];
-  // New pay-per-lead fields
   platform: PlatformKey;
-  leadTier: LeadTierKey | null;
-  leadsIncluded: number | null;
-  // Legacy field (optional for backward compat)
-  timeWindow: TimeWindow | null;
   status: AgentStatus;
   amountPaid: number | null;
   createdAt: string;
@@ -369,14 +359,7 @@ export default function AgentDetailPage() {
             {agent.websiteUrl}
           </h1>
           <p className="text-sm text-gray-500">
-            {agent.leadTier ? (
-              <>
-                {PLATFORM_CONFIG[agent.platform]?.label || agent.platform} &middot;{" "}
-                {LEAD_TIER_CONFIG[agent.leadTier]?.label || agent.leadTier} &middot;{" "}
-              </>
-            ) : agent.timeWindow ? (
-              <>{TIME_WINDOW_CONFIG[agent.timeWindow].label} &middot; </>
-            ) : null}
+            {PLATFORM_CONFIG[agent.platform]?.label || agent.platform} &middot;{" "}
             {agent.keywords.length} keywords
           </p>
         </div>

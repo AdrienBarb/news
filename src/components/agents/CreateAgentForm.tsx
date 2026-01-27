@@ -6,12 +6,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import useApi from "@/lib/hooks/useApi";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 import WebsiteStep from "./steps/WebsiteStep";
 import ReviewStep from "./steps/ReviewStep";
 import PlatformStep from "./steps/PlatformStep";
-import LeadTierStep from "./steps/LeadTierStep";
+import RunPackStep from "./steps/RunPackStep";
 import type { PlatformKey } from "@/lib/constants/platforms";
-import type { LeadTierKey } from "@/lib/constants/leadTiers";
+import type { RunPackKey } from "@/lib/constants/leadTiers";
 
 interface PlatformSuggestion {
   platform: PlatformKey;
@@ -48,7 +49,8 @@ interface CreateAgentFormProps {
 }
 
 export default function CreateAgentForm({ onSuccess }: CreateAgentFormProps) {
-  const { usePost } = useApi();
+  const { usePost, useGet } = useApi();
+  const router = useRouter();
 
   // Form state
   const [step, setStep] = useState(1);
@@ -65,11 +67,17 @@ export default function CreateAgentForm({ onSuccess }: CreateAgentFormProps) {
 
   // Step 3 selection - Platform
   const [selectedPlatform, setSelectedPlatform] =
-    useState<PlatformKey | null>("reddit"); // Default to Reddit
+    useState<PlatformKey | null>("reddit");
 
-  // Step 4 selection - Lead Tier
-  const [selectedLeadTier, setSelectedLeadTier] =
-    useState<LeadTierKey | null>(null);
+  // Step 4 selection - Run Pack (only used when user has 0 runs)
+  const [selectedRunPack, setSelectedRunPack] = useState<RunPackKey | null>(
+    null
+  );
+
+  // Fetch remaining runs
+  const { data: runsData } = useGet("/user/runs");
+  const remainingRuns = (runsData as { remainingRuns: number } | undefined)
+    ?.remainingRuns ?? 0;
 
   // Step 1 Form
   const step1Form = useForm<Step1Data>({
@@ -109,9 +117,12 @@ export default function CreateAgentForm({ onSuccess }: CreateAgentFormProps) {
   });
 
   const { mutate: createAgent, isPending: creatingAgent } = usePost("/agents", {
-    onSuccess: (data: { checkoutUrl: string; agentId: string }) => {
+    onSuccess: (data: { checkoutUrl?: string; agentId: string }) => {
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
+      } else {
+        // Direct launch (user had runs) — redirect to agent detail
+        router.push(`/d/agents/${data.agentId}`);
       }
       onSuccess?.();
     },
@@ -131,15 +142,30 @@ export default function CreateAgentForm({ onSuccess }: CreateAgentFormProps) {
     setStep(3);
   };
 
-  // Step 3: Proceed to lead tier selection
+  // Step 3: Check runs and either launch or go to step 4
   const handleStep3Submit = () => {
     if (!selectedPlatform) return;
-    setStep(4);
+
+    if (remainingRuns > 0) {
+      // User has runs — launch immediately
+      const step2Data = step2Form.getValues();
+      createAgent({
+        websiteUrl,
+        description: step2Data.description,
+        keywords,
+        competitors,
+        targetPersonas,
+        platform: selectedPlatform,
+      });
+    } else {
+      // No runs — go to step 4 to buy a run pack
+      setStep(4);
+    }
   };
 
-  // Step 4: Create agent and redirect to payment
+  // Step 4: Create agent with run pack purchase
   const handleStep4Submit = () => {
-    if (!selectedPlatform || !selectedLeadTier) return;
+    if (!selectedPlatform || !selectedRunPack) return;
 
     const step2Data = step2Form.getValues();
 
@@ -150,15 +176,18 @@ export default function CreateAgentForm({ onSuccess }: CreateAgentFormProps) {
       competitors,
       targetPersonas,
       platform: selectedPlatform,
-      leadTier: selectedLeadTier,
+      runPack: selectedRunPack,
     });
   };
+
+  // Determine total steps based on whether user has runs
+  const totalSteps = remainingRuns > 0 ? 3 : 4;
 
   return (
     <div className="space-y-6">
       {/* Step indicator dots */}
       <div className="flex gap-2">
-        {[1, 2, 3, 4].map((s) => (
+        {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
           <div
             key={s}
             className={cn(
@@ -169,6 +198,17 @@ export default function CreateAgentForm({ onSuccess }: CreateAgentFormProps) {
           />
         ))}
       </div>
+
+      {/* Runs balance indicator */}
+      {remainingRuns > 0 && (
+        <div className="text-sm text-gray-500">
+          You have{" "}
+          <span className="font-semibold text-orange-600">
+            {remainingRuns} run{remainingRuns !== 1 ? "s" : ""}
+          </span>{" "}
+          remaining
+        </div>
+      )}
 
       {/* Step 1: Enter Website URL */}
       {step === 1 && (
@@ -202,14 +242,16 @@ export default function CreateAgentForm({ onSuccess }: CreateAgentFormProps) {
           suggestedPlatforms={suggestedPlatforms}
           onSubmit={handleStep3Submit}
           onBack={() => setStep(2)}
+          isCreating={creatingAgent}
+          hasRuns={remainingRuns > 0}
         />
       )}
 
-      {/* Step 4: Lead Tier Selection */}
+      {/* Step 4: Run Pack Selection (only if no runs) */}
       {step === 4 && (
-        <LeadTierStep
-          selectedLeadTier={selectedLeadTier}
-          setSelectedLeadTier={setSelectedLeadTier}
+        <RunPackStep
+          selectedRunPack={selectedRunPack}
+          setSelectedRunPack={setSelectedRunPack}
           onSubmit={handleStep4Submit}
           onBack={() => setStep(3)}
           isCreating={creatingAgent}
