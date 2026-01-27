@@ -21,7 +21,10 @@ interface BuyRunsModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export default function BuyRunsModal({ open, onOpenChange }: BuyRunsModalProps) {
+export default function BuyRunsModal({
+  open,
+  onOpenChange,
+}: BuyRunsModalProps) {
   const { usePost } = useApi();
   const [selectedPack, setSelectedPack] = useState<RunPackKey | null>(null);
 
@@ -97,7 +100,7 @@ export default function BuyRunsModal({ open, onOpenChange }: BuyRunsModalProps) 
                 </div>
 
                 <p className="text-xs text-gray-500 mb-3">
-                  {config.estimatedLeads} per run
+                  {config.estimatedLeads}
                 </p>
 
                 <div className="mb-1">

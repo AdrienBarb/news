@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
               currency: "usd",
               product_data: {
                 name: `Run Pack - ${packConfig.label}`,
-                description: `${packConfig.runs} agent run${packConfig.runs > 1 ? "s" : ""} · ${packConfig.estimatedLeads} per run`,
+                description: `${packConfig.runs} agent run${packConfig.runs > 1 ? "s" : ""} · ${packConfig.estimatedLeads}`,
               },
               unit_amount: packConfig.price,
             },

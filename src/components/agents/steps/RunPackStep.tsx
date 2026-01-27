@@ -86,7 +86,7 @@ export default function RunPackStep({
 
               {/* Estimated leads */}
               <p className="text-sm text-gray-500 mb-4">
-                {config.estimatedLeads} per run
+                {config.estimatedLeads}
               </p>
 
               {/* Price */}

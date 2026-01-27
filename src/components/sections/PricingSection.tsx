@@ -122,7 +122,7 @@ export default function PricingSection({
 
               {/* Estimated leads */}
               <p className="text-sm text-foreground/50 text-center mb-4">
-                {tier.estimatedLeads} per run
+                {tier.estimatedLeads}
               </p>
 
               {/* Price */}
