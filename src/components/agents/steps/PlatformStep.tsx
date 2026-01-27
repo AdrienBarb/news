@@ -16,6 +16,8 @@ interface PlatformStepProps {
   suggestedPlatforms: PlatformSuggestion[];
   onSubmit: () => void;
   onBack: () => void;
+  isCreating?: boolean;
+  hasRuns?: boolean;
 }
 
 export default function PlatformStep({
@@ -24,6 +26,8 @@ export default function PlatformStep({
   suggestedPlatforms,
   onSubmit,
   onBack,
+  isCreating = false,
+  hasRuns = false,
 }: PlatformStepProps) {
   return (
     <div className="space-y-6">
@@ -141,11 +145,15 @@ export default function PlatformStep({
         <Button
           type="button"
           onClick={onSubmit}
-          disabled={!selectedPlatform}
+          disabled={!selectedPlatform || isCreating}
           className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
         >
-          Continue
-          <ArrowRight className="w-4 h-4" />
+          {isCreating
+            ? "Launching..."
+            : hasRuns
+              ? "Launch Agent"
+              : "Continue"}
+          {!isCreating && !hasRuns && <ArrowRight className="w-4 h-4" />}
         </Button>
       </div>
     </div>

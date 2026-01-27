@@ -15,7 +15,6 @@ interface LeadsReadyEmailProps {
   name?: string;
   marketName: string;
   leadCount: number;
-  leadsIncluded?: number;
   platform?: string;
   dashboardUrl: string;
 }
@@ -24,7 +23,6 @@ export const LeadsReadyEmail = ({
   name = "there",
   marketName,
   leadCount,
-  leadsIncluded,
   platform = "Reddit",
   dashboardUrl,
 }: LeadsReadyEmailProps) => {
@@ -55,10 +53,10 @@ export const LeadsReadyEmail = ({
               {/* Stats Box */}
               <Section className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-6 mb-6">
                 <Text className="text-4xl font-bold text-orange-600 mb-1">
-                  {leadsIncluded ? `${String(leadCount)}/${String(leadsIncluded)}` : String(leadCount)}
+                  {String(leadCount)}
                 </Text>
                 <Text className="text-gray-700 font-medium mb-0">
-                  {leadsIncluded ? "qualified leads delivered" : "high-intent leads found"}
+                  high-intent leads found
                 </Text>
                 <Text className="text-gray-500 text-sm">
                   from {platform} for {marketName}
@@ -78,7 +76,7 @@ export const LeadsReadyEmail = ({
               </Button>
 
               <Text className="text-gray-400 text-xs mt-8">
-                Thanks for using Reddit Lead Finder!
+                Thanks for using Prediqte!
               </Text>
             </Section>
           </Container>
@@ -89,4 +87,3 @@ export const LeadsReadyEmail = ({
 };
 
 export default LeadsReadyEmail;
-

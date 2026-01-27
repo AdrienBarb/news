@@ -3,7 +3,6 @@ import { prisma } from "@/lib/db/prisma";
 import { scrapeRedditSearch } from "@/lib/connectors/reddit/client";
 import { sanitizeContent } from "@/lib/utils/textSanitizer";
 import { getTimeWindowConfig } from "@/lib/constants/timeWindow";
-import { getLeadTierConfig } from "@/lib/constants/leadTiers";
 import { openai } from "@/lib/openai/client";
 import { resendClient } from "@/lib/resend/resendClient";
 import { LeadsReadyEmail } from "@/lib/emails/LeadsReadyEmail";
@@ -15,7 +14,7 @@ const APP_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://prediqte.com";
 const REDDIT_BASE_URL = "https://www.reddit.com";
 
 const BATCH_SIZE = 10;
-const MIN_RELEVANCE_SCORE = 60;
+const MIN_RELEVANCE_SCORE = 40;
 
 // Subreddits that are almost always irrelevant noise
 const BLOCKLIST_SUBREDDITS = new Set([
@@ -573,7 +572,6 @@ export const runAgentJob = inngest.createFunction(
           competitors: true,
           platform: true,
           leadTier: true,
-          leadsIncluded: true,
           timeWindow: true, // Keep for backward compatibility
           user: {
             select: {
@@ -592,8 +590,8 @@ export const runAgentJob = inngest.createFunction(
 
     const allKeywords = [...agent.keywords, ...agent.competitors];
 
-    // Determine if this is a new agent (with leadTier) or legacy (with timeWindow)
-    const isNewAgent = agent.leadTier !== null && agent.leadsIncluded !== null;
+    // Determine if this is a new agent (with leadTier/platform) or legacy (with timeWindow)
+    const isNewAgent = agent.leadTier !== null || agent.timeWindow === null;
 
     console.log(`📊 Agent config:`);
     console.log(`   └── Website: ${agent.websiteUrl}`);
@@ -602,8 +600,7 @@ export const runAgentJob = inngest.createFunction(
 
     if (isNewAgent) {
       console.log(`   └── Platform: ${agent.platform}`);
-      console.log(`   └── Lead Tier: ${agent.leadTier}`);
-      console.log(`   └── Leads Included: ${agent.leadsIncluded}`);
+      console.log(`   └── Search depth: 90 days (fixed)`);
     } else {
       console.log(`   └── Time window: ${agent.timeWindow} (LEGACY)`);
     }
@@ -644,25 +641,13 @@ export const runAgentJob = inngest.createFunction(
     let searchMaxAgeDays: number;
     let searchLimit: number;
 
-    if (isNewAgent && agent.leadTier) {
-      // New agent: use lead tier config
-      const tierConfig = getLeadTierConfig(agent.leadTier);
-      searchMaxAgeDays = tierConfig.maxAgeDays;
-      // Calculate posts per keyword based on total leads needed and keyword count
-      // Fetch 3x more to ensure we get enough after filtering
-      const targetTotal = agent.leadsIncluded! * 3;
-      searchLimit = Math.ceil(targetTotal / allKeywords.length);
-      // Map to a time window for the scraper
-      searchTimeWindow =
-        searchMaxAgeDays <= 7
-          ? "LAST_7_DAYS"
-          : searchMaxAgeDays <= 30
-            ? "LAST_30_DAYS"
-            : "LAST_365_DAYS";
+    if (isNewAgent) {
+      // New agent: fixed 90-day search depth, 30 posts per keyword
+      searchMaxAgeDays = 90;
+      searchLimit = 30;
+      searchTimeWindow = "LAST_365_DAYS";
 
-      console.log(
-        `   └── Search depth: ${searchMaxAgeDays} days (from ${agent.leadTier})`
-      );
+      console.log(`   └── Search depth: ${searchMaxAgeDays} days`);
       console.log(`   └── Posts per keyword: ${searchLimit}`);
     } else if (agent.timeWindow) {
       // Legacy agent: use time window config
@@ -862,46 +847,6 @@ export const runAgentJob = inngest.createFunction(
       }
     }
 
-    // For new agents: Guarantee exact lead count
-    if (isNewAgent && agent.leadsIncluded) {
-      await step.run("guarantee-lead-count", async () => {
-        const targetLeads = agent.leadsIncluded!;
-
-        // Get all analyzed leads sorted by relevance
-        const allAnalyzedLeads = await prisma.lead.findMany({
-          where: { agentId },
-          orderBy: { relevance: "desc" },
-          select: { id: true, relevance: true },
-        });
-
-        const currentLeadCount = allAnalyzedLeads.length;
-
-        console.log(`\n📊 Lead Count Guarantee:`);
-        console.log(`   └── Target: ${targetLeads}`);
-        console.log(`   └── Current: ${currentLeadCount}`);
-
-        if (currentLeadCount > targetLeads) {
-          // We have more than needed - delete the lowest-scoring ones
-          const leadsToDelete = allAnalyzedLeads.slice(targetLeads);
-          const idsToDelete = leadsToDelete.map((l) => l.id);
-
-          await prisma.lead.deleteMany({
-            where: { id: { in: idsToDelete } },
-          });
-
-          console.log(`   └── Trimmed ${idsToDelete.length} excess leads`);
-        } else if (currentLeadCount < targetLeads) {
-          // We have fewer than needed - need to adjust quality bar
-          console.log(
-            `   ⚠️ Only found ${currentLeadCount}/${targetLeads} qualified leads`
-          );
-          // This is acceptable - deliver what we found
-        } else {
-          console.log(`   ✅ Exact lead count achieved`);
-        }
-      });
-    }
-
     // Set agent status to COMPLETED
     await step.run("set-completed-status", async () => {
       await prisma.aiAgent.update({
@@ -932,7 +877,6 @@ export const runAgentJob = inngest.createFunction(
               name: agent.user!.name || undefined,
               marketName: agent.websiteUrl,
               leadCount: finalLeadCount,
-              leadsIncluded: agent.leadsIncluded || undefined,
               platform: platformName,
               dashboardUrl: `${APP_URL}/d/agents/${agentId}`,
             }),
@@ -953,13 +897,6 @@ export const runAgentJob = inngest.createFunction(
     console.log(`   └── Leads deleted: ${totalDeleted}`);
     console.log(`   └── Final lead count: ${finalLeadCount}`);
 
-    if (isNewAgent && agent.leadsIncluded) {
-      console.log(`   └── Target leads: ${agent.leadsIncluded}`);
-      console.log(
-        `   └── Guarantee met: ${finalLeadCount >= agent.leadsIncluded ? "✅ Yes" : "⚠️ Partial"}`
-      );
-    }
-
     console.log(`\n${"=".repeat(60)}`);
     console.log(`✅ [RUN AGENT JOB] Completed for agent: ${agentId}`);
     console.log(`${"=".repeat(60)}\n`);
@@ -972,7 +909,6 @@ export const runAgentJob = inngest.createFunction(
       totalKept,
       totalDeleted,
       finalLeadCount,
-      targetLeads: agent.leadsIncluded,
       errors: errors.length > 0 ? errors : undefined,
     };
   }

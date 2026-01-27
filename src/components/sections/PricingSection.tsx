@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
 const PRICING_TIERS = [
   {
     name: "Starter",
-    leads: 10,
+    runs: 1,
+    estimatedLeads: "~20-50 leads",
     price: 9.5,
     tagline: "Test it out",
     badge: null,
@@ -17,7 +18,8 @@ const PRICING_TIERS = [
   },
   {
     name: "Growth",
-    leads: 30,
+    runs: 3,
+    estimatedLeads: "~60-150 leads",
     price: 24.5,
     tagline: "Most popular",
     badge: "Most popular",
@@ -25,7 +27,8 @@ const PRICING_TIERS = [
   },
   {
     name: "Scale",
-    leads: 75,
+    runs: 10,
+    estimatedLeads: "~200-500 leads",
     price: 49.5,
     tagline: "Best value",
     badge: "Best value",
@@ -67,10 +70,10 @@ export default function PricingSection({
         {/* Header */}
         <div className="text-center mb-12">
           <h2 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            Pay Per Lead. No Subscription.
+            Pay Per Run. No Subscription.
           </h2>
           <p className="text-lg text-foreground/60">
-            Simple pricing. Pay once, get your leads.
+            Buy runs, launch agents, get unlimited leads.
           </p>
         </div>
 
@@ -107,13 +110,20 @@ export default function PricingSection({
                 {tier.name}
               </h3>
 
-              {/* Lead Count */}
-              <div className="text-center mb-4">
+              {/* Runs Count */}
+              <div className="text-center mb-2">
                 <span className="text-5xl font-bold text-foreground">
-                  {tier.leads}
+                  {tier.runs}
                 </span>
-                <span className="text-foreground/60 ml-2">leads</span>
+                <span className="text-foreground/60 ml-2">
+                  run{tier.runs > 1 ? "s" : ""}
+                </span>
               </div>
+
+              {/* Estimated leads */}
+              <p className="text-sm text-foreground/50 text-center mb-4">
+                {tier.estimatedLeads} per run
+              </p>
 
               {/* Price */}
               <div className="text-center mb-2">
@@ -122,9 +132,9 @@ export default function PricingSection({
                 </span>
               </div>
 
-              {/* Tagline */}
+              {/* Per Run Price */}
               <p className="text-sm text-foreground/50 text-center mb-6">
-                {tier.tagline}
+                {formatPrice(tier.price / tier.runs)} per run
               </p>
 
               {/* CTA */}
@@ -150,7 +160,7 @@ export default function PricingSection({
         {/* Features */}
         <div className="bg-card rounded-3xl border-2 border-foreground/10 p-8">
           <p className="text-sm font-medium text-foreground/60 text-center mb-6">
-            WHAT&apos;S INCLUDED IN EVERY PLAN
+            WHAT&apos;S INCLUDED IN EVERY RUN
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {FEATURES.map((feature, idx) => (

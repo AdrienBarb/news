@@ -20,7 +20,7 @@ const faqs = [
   {
     question: "How does pricing work?",
     answer:
-      "You pay per lead. 10 leads for $9.50, 30 leads for $24.50, or 75 leads for $49.50. No subscriptions, no monthly fees. Pay once, get your leads.",
+      "You buy run packs. 1 run for $9.50, 3 runs for $24.50, or 10 runs for $49.50. Each run launches an AI agent that finds all qualified leads for you. No subscriptions, no monthly fees.",
   },
   {
     question: "What kind of leads will I find?",
@@ -35,12 +35,12 @@ const faqs = [
   {
     question: "Is this a subscription?",
     answer:
-      "No. Pay once, get your leads. Come back when you need more.",
+      "No. Buy a run pack, use your runs whenever you want. Come back when you need more.",
   },
   {
     question: "What if I don't find good leads?",
     answer:
-      "Every search is different. Start with the $9.50 Starter tier to test. If your ICP is active on the platforms we search, you'll find them.",
+      "Every search is different. Start with a single run for $9.50 to test. If your ICP is active on the platforms we search, you'll find them.",
   },
 ];
 
