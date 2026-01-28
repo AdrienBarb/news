@@ -11,7 +11,7 @@ export const PLATFORM_CONFIG = {
     id: "hackernews" as const,
     label: "Hacker News",
     description: "Find leads in HN discussions",
-    enabled: false, // Coming soon
+    enabled: true,
     defaultTimeRange: "year",
     maxAgeDays: 365,
   },

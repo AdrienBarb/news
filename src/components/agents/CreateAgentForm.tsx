@@ -66,8 +66,9 @@ export default function CreateAgentForm({ onSuccess }: CreateAgentFormProps) {
   >([]);
 
   // Step 3 selection - Platform
-  const [selectedPlatform, setSelectedPlatform] =
-    useState<PlatformKey | null>("reddit");
+  const [selectedPlatform, setSelectedPlatform] = useState<PlatformKey | null>(
+    "reddit"
+  );
 
   // Step 4 selection - Run Pack (only used when user has 0 runs)
   const [selectedRunPack, setSelectedRunPack] = useState<RunPackKey | null>(
@@ -76,8 +77,8 @@ export default function CreateAgentForm({ onSuccess }: CreateAgentFormProps) {
 
   // Fetch remaining runs
   const { data: runsData } = useGet("/user/runs");
-  const remainingRuns = (runsData as { remainingRuns: number } | undefined)
-    ?.remainingRuns ?? 0;
+  const remainingRuns =
+    (runsData as { remainingRuns: number } | undefined)?.remainingRuns ?? 0;
 
   // Step 1 Form
   const step1Form = useForm<Step1Data>({
@@ -165,6 +166,7 @@ export default function CreateAgentForm({ onSuccess }: CreateAgentFormProps) {
 
   // Step 4: Create agent with run pack purchase
   const handleStep4Submit = () => {
+    console.log("🚀 ~ handleStep4Submit ~ selectedPlatform:", selectedPlatform);
     if (!selectedPlatform || !selectedRunPack) return;
 
     const step2Data = step2Form.getValues();

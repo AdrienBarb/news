@@ -1,6 +1,10 @@
 import { inngest } from "./client";
 import { prisma } from "@/lib/db/prisma";
-import { scrapeRedditSearch } from "@/lib/connectors/reddit/client";
+import {
+  fetchForPlatform,
+  type PlatformKey,
+} from "@/lib/connectors/platformFetcher";
+import { PLATFORM_CONFIG } from "@/lib/constants/platforms";
 import { sanitizeContent } from "@/lib/utils/textSanitizer";
 import { getTimeWindowConfig } from "@/lib/constants/timeWindow";
 import { openai } from "@/lib/openai/client";
@@ -11,7 +15,6 @@ import type { TimeWindow } from "@/lib/constants/timeWindow";
 import config from "../config";
 
 const APP_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://prediqte.com";
-const REDDIT_BASE_URL = "https://www.reddit.com";
 
 const BATCH_SIZE = 10;
 const MIN_RELEVANCE_SCORE = 40;
@@ -72,7 +75,12 @@ const BLOCKLIST_SUBREDDITS = new Set([
   "looksmaxxing",
 ]);
 
-function shouldSkipSubreddit(subreddit: string | null): boolean {
+function shouldSkipSubreddit(
+  subreddit: string | null,
+  platform: PlatformKey
+): boolean {
+  // Only apply subreddit blocklist for Reddit
+  if (platform !== "reddit") return false;
   if (!subreddit) return false;
   return BLOCKLIST_SUBREDDITS.has(subreddit.toLowerCase());
 }
@@ -102,55 +110,54 @@ interface AnalysisResponse {
 }
 
 /**
- * Fetch leads from Reddit for a specific keyword
+ * Fetch leads from a platform for a specific keyword
  */
 async function fetchForKeyword(
   keyword: string,
   agentId: string,
+  platform: PlatformKey,
   timeWindow: TimeWindow,
   existingIds: Set<string>
 ): Promise<{ leads: LeadInput[]; error?: string }> {
   const leads: LeadInput[] = [];
   const seenIds = new Set<string>();
-  const config = getTimeWindowConfig(timeWindow);
+  const timeConfig = getTimeWindowConfig(timeWindow);
 
-  console.log(`\n🔍 [FETCH] Keyword: "${keyword}"`);
+  console.log(`\n🔍 [FETCH] Keyword: "${keyword}" on ${platform}`);
   console.log(
-    `   └── Time window: ${config.label} (${config.maxAgeDays} days)`
+    `   └── Time window: ${timeConfig.label} (${timeConfig.maxAgeDays} days)`
   );
-  console.log(`   └── Limit per keyword: ${config.limitPerKeyword}`);
+  console.log(`   └── Limit per keyword: ${timeConfig.limitPerKeyword}`);
 
   try {
-    const posts = await scrapeRedditSearch(keyword, {
+    const posts = await fetchForPlatform(platform, keyword, {
       sort: "relevance",
-      t: config.apifyTime,
-      limit: config.limitPerKeyword,
-      maxAgeDays: config.maxAgeDays,
+      t: timeConfig.apifyTime,
+      limit: timeConfig.limitPerKeyword,
+      maxAgeDays: timeConfig.maxAgeDays,
     });
 
-    console.log(`   📥 Received ${posts.length} posts from scraper`);
+    console.log(`   📥 Received ${posts.length} posts from ${platform}`);
 
     for (const post of posts) {
-      const postExternalId = `t3_${post.id}`;
-
       // Skip if already in DB or already seen in this batch
-      if (existingIds.has(postExternalId) || seenIds.has(postExternalId)) {
+      if (existingIds.has(post.externalId) || seenIds.has(post.externalId)) {
         continue;
       }
 
-      // Skip deleted users or AutoModerator
+      // Skip deleted users or AutoModerator (Reddit-specific but safe for all)
       if (post.author === "[deleted]" || post.author === "AutoModerator") {
         continue;
       }
 
-      // Skip posts from blocklisted subreddits
-      if (shouldSkipSubreddit(post.subreddit)) {
+      // Skip posts from blocklisted subreddits (Reddit only)
+      if (shouldSkipSubreddit(post.subreddit, platform)) {
         continue;
       }
 
-      seenIds.add(postExternalId);
+      seenIds.add(post.externalId);
 
-      const contentToSanitize = post.selftext || post.title;
+      const contentToSanitize = post.content || post.title;
       const sanitized = sanitizeContent(contentToSanitize);
 
       // Skip very short content or detected injection attempts
@@ -159,18 +166,18 @@ async function fetchForKeyword(
       }
 
       const publishedAt =
-        post.created_utc > 0 ? new Date(post.created_utc * 1000) : null;
+        post.createdUtc > 0 ? new Date(post.createdUtc * 1000) : null;
 
       leads.push({
         agentId,
-        externalId: postExternalId,
-        url: post.url || `${REDDIT_BASE_URL}${post.permalink}`,
+        externalId: post.externalId,
+        url: post.url,
         subreddit: post.subreddit,
         title: post.title,
         content: sanitized.content,
         author: post.author,
         score: post.score || 0,
-        numComments: post.num_comments || 0,
+        numComments: post.numComments || 0,
         publishedAt,
       });
     }
@@ -523,17 +530,29 @@ export const fetchKeywordJob = inngest.createFunction(
   },
   { event: "agent/fetch-keyword" },
   async ({ event, step }) => {
-    const { keyword, agentId, timeWindow, existingIds } = event.data as {
-      keyword: string;
-      agentId: string;
-      timeWindow: TimeWindow;
-      existingIds: string[];
-    };
+    const { keyword, agentId, platform, timeWindow, existingIds } =
+      event.data as {
+        keyword: string;
+        agentId: string;
+        platform: PlatformKey;
+        timeWindow: TimeWindow;
+        existingIds: string[];
+      };
 
     const existingIdsSet = new Set(existingIds);
 
+    console.log(
+      `🔎 [FETCH-KEYWORD] keyword="${keyword}" platform="${platform}" agentId="${agentId}"`
+    );
+
     const result = await step.run("fetch", async () => {
-      return fetchForKeyword(keyword, agentId, timeWindow, existingIdsSet);
+      return fetchForKeyword(
+        keyword,
+        agentId,
+        platform,
+        timeWindow,
+        existingIdsSet
+      );
     });
 
     return { keyword, ...result };
@@ -682,6 +701,8 @@ export const runAgentJob = inngest.createFunction(
 
     // Invoke ALL keyword fetches at once - Inngest discovers them all and runs them in parallel
     // The concurrency is controlled by fetchKeywordJob's concurrency.limit setting
+    const agentPlatform = (agent.platform || "reddit") as PlatformKey;
+
     const fetchResults = (await Promise.all(
       allKeywords.map((keyword, kwIndex) =>
         step.invoke(`fetch-kw-${kwIndex}`, {
@@ -689,6 +710,7 @@ export const runAgentJob = inngest.createFunction(
           data: {
             keyword,
             agentId,
+            platform: agentPlatform,
             timeWindow: searchTimeWindow,
             existingIds: existingIds, // Pass as array, converted to Set in child function
           },
@@ -739,7 +761,7 @@ export const runAgentJob = inngest.createFunction(
         await prisma.lead.createMany({
           data: allFetchedLeads.map((lead) => ({
             agentId: lead.agentId,
-            source: "reddit" as const,
+            source: agentPlatform,
             externalId: lead.externalId,
             url: lead.url,
             subreddit: lead.subreddit,
@@ -865,9 +887,8 @@ export const runAgentJob = inngest.createFunction(
     if (finalLeadCount > 0 && agent.user?.email) {
       await step.run("send-leads-ready-email", async () => {
         try {
-          const platformName = agent.platform
-            ? agent.platform.charAt(0).toUpperCase() + agent.platform.slice(1)
-            : "Reddit";
+          const platformName =
+            PLATFORM_CONFIG[agentPlatform]?.label || "Reddit";
 
           await resendClient.emails.send({
             from: `Lead Finder <${config.contact.leadsEmail}>`,

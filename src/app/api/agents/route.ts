@@ -91,10 +91,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const validatedData = createAgentSchema.parse(body);
 
-    const platformConfig = getPlatformConfig(
-      validatedData.platform as PlatformKey
-    );
-
+    console.log("🚀 ~ POST ~ validatedData:", validatedData);
     if (validatedData.runPack) {
       // Flow A: User needs to buy runs first
       const packConfig = getRunPackConfig(validatedData.runPack as RunPackKey);
@@ -184,6 +181,8 @@ export async function POST(req: NextRequest) {
           data: { remainingRuns: { decrement: 1 } },
         }),
       ]);
+
+      console.log("🚀 ~ POST ~ agent:", agent);
 
       // Trigger Inngest
       await inngest.send({
